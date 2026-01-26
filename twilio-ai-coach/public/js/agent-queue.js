@@ -287,7 +287,8 @@ function renderQueueTable(items) {
     </tr>
   `).join('');
 
-  document.getElementById('totalQueue').textContent = totalItems;
+  const totalQueueEl = document.getElementById('totalQueue');
+  if (totalQueueEl) totalQueueEl.textContent = totalItems;
 }
 
 /**
