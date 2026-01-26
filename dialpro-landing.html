@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DialPro - AI-Powered Sales Outreach</title>
+    <meta name="description" content="AI that listens, coaches, and closes. Smart dialing, real-time coaching, and live analytics for sales teams.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+        }
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+        }
+        .logo span {
+            color: #f97316;
+        }
+        .login-btn {
+            background: transparent;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: 2px solid #f97316;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .login-btn:hover {
+            background: #f97316;
+        }
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+        }
+        .highlight {
+            color: #f97316;
+        }
+        .hero-content p {
+            font-size: 1.2rem;
+            color: #a1a1aa;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: white;
+            padding: 1.25rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(249, 115, 22, 0.5);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .stat-card {
+            background: linear-gradient(145deg, #18181b, #27272a);
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #f97316;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #a1a1aa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .bottom-bar {
+            background: #18181b;
+            padding: 3rem 5%;
+            margin-top: 4rem;
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+        }
+        .bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #a1a1aa;
+        }
+        .bottom-item span {
+            font-size: 1.5rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            padding: 1rem;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 100%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a1a1aa;
+            font-size: 1.75rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-btn:hover {
+            color: white;
+        }
+        .modal p {
+            color: #a1a1aa;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input {
+            width: 100%;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+        .form-group input::placeholder {
+            color: #71717a;
+        }
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .hero-content h1 {
+                font-size: 2.75rem;
+            }
+            .stats-grid {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+            .bottom-bar {
+                flex-direction: column;
+                align-items: center;
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Dial<span>Pro</span></div>
+        <a href="/login" class="login-btn">Login</a>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Your Team. <span class="highlight">10x Faster.</span></h1>
+            <p>AI that listens, coaches, and closes. Stop leaving money on the table with outdated dialing systems.</p>
+            <button class="cta-btn" onclick="openModal()">Start Closing Deals →</button>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">47%</div>
+                <div class="stat-label">More Connections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3.2x</div>
+                <div class="stat-label">Close Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">AI Coaching</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Calls Recorded</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="bottom-bar">
+        <div class="bottom-item"><span>📞</span> Smart Dialing</div>
+        <div class="bottom-item"><span>🤖</span> AI Coaching</div>
+        <div class="bottom-item"><span>📈</span> Live Analytics</div>
+        <div class="bottom-item"><span>👥</span> Team Management</div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Get Started</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <p>Submit your information and we'll get you set up.</p>
+            <form>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="john@company.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" placeholder="Acme Inc.">
+                </div>
+                <button type="submit" class="submit-btn">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('modal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
