@@ -1,0 +1,90 @@
+{
+  "project": "Outreach System",
+  "description": "Full-stack outreach tracking and management system",
+  "tech_stack": {
+    "frontend": "Next.js",
+    "backend": "Supabase",
+    "database": "PostgreSQL (via Supabase)"
+  },
+  "modules": [
+    {
+      "name": "Project Setup",
+      "description": "Initial project configuration and infrastructure",
+      "status": "not_started",
+      "stories": [
+        {
+          "id": "SETUP-001",
+          "title": "Initialize Next.js project",
+          "priority": 100,
+          "passes": false,
+          "acceptance_criteria": [
+            "Next.js project created with TypeScript",
+            "Tailwind CSS configured",
+            "ESLint and Prettier configured",
+            "Project runs locally without errors"
+          ]
+        },
+        {
+          "id": "SETUP-002",
+          "title": "Set up Supabase project",
+          "priority": 99,
+          "passes": false,
+          "acceptance_criteria": [
+            "Supabase project created",
+            "Environment variables configured in .env.local",
+            "Supabase client initialized",
+            "Connection tested successfully"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization",
+      "status": "not_started",
+      "stories": [
+        {
+          "id": "AUTH-001",
+          "title": "Implement user sign-up",
+          "priority": 90,
+          "passes": false,
+          "acceptance_criteria": [
+            "Sign-up form with email and password",
+            "Form validation for email format and password strength",
+            "User created in Supabase Auth",
+            "Success/error feedback displayed"
+          ]
+        },
+        {
+          "id": "AUTH-002",
+          "title": "Implement user login",
+          "priority": 89,
+          "passes": false,
+          "acceptance_criteria": [
+            "Login form with email and password",
+            "Authentication via Supabase",
+            "Session persisted across page refreshes",
+            "Redirect to dashboard on success"
+          ]
+        },
+        {
+          "id": "AUTH-003",
+          "title": "Implement logout",
+          "priority": 88,
+          "passes": false,
+          "acceptance_criteria": [
+            "Logout button visible when logged in",
+            "Session cleared on logout",
+            "Redirect to login page"
+          ]
+        }
+      ]
+    }
+  ],
+  "_notes": {
+    "priority": "Higher number = do first (100 is highest priority)",
+    "passes": "Set to true when ALL acceptance criteria pass",
+    "status_values": ["not_started", "in_progress", "completed"],
+    "story_id_format": "[MODULE]-[NUMBER] (e.g., AUTH-001)"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "The Closer",
+  "version": "1.0.0",
+  "description": "Sales conversion specialist that receives warm leads from Ralph and closes deals",
+  "type": "voice_agent",
+  "role": "closer",
+  "llm": {
+    "model": "gpt-4o",
+    "temperature": 0.6,
+    "max_tokens": 300
+  },
+  "voice": {
+    "provider": "retell",
+    "voice_id": "eleven_labs_adam",
+    "speed": 1.0,
+    "pitch": 1.0,
+    "style": "confident_professional"
+  },
+  "behavior": {
+    "interruption_sensitivity": 0.7,
+    "end_call_after_goodbye": true,
+    "max_call_duration_minutes": 20,
+    "silence_timeout_seconds": 6,
+    "pace": "deliberate"
+  },
+  "personality": {
+    "warmth": 0.7,
+    "confidence": 0.9,
+    "directness": 0.8,
+    "expertise": 0.9,
+    "formality": 0.4
+  },
+  "handoff": {
+    "receives_from": "ralph-wiggum",
+    "requires_notes": true,
+    "reference_previous_conversation": true
+  },
+  "closing": {
+    "techniques": [
+      "direct",
+      "assumptive",
+      "trial_close",
+      "alternative_choice"
+    ],
+    "objection_handling": "direct",
+    "follow_up_if_not_closed": true
+  },
+  "retell_config": {
+    "agent_name": "closer-v1",
+    "language": "en-US",
+    "webhook_url": null,
+    "enable_transcription": true,
+    "post_call_analysis": true
+  },
+  "integrations": {
+    "crm_update": true,
+    "calendar_booking": true,
+    "contract_sending": true
+  },
+  "variables": {
+    "closer_name": "{{CLOSER_NAME}}",
+    "company_name": "{{COMPANY_NAME}}",
+    "product_name": "{{PRODUCT_NAME}}",
+    "ralph_name": "Ralph"
+  }
+}

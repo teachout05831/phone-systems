@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Call History - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Twilio Voice SDK for incoming calls -->
+  <script src="js/twilio.min.js"></script>
+  <style>
+    /* Incoming Call Modal */
+    .incoming-call-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .incoming-call-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .incoming-call-modal {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .incoming-call-overlay.active .incoming-call-modal {
+      transform: scale(1);
+    }
+    .incoming-call-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      animation: ring-pulse 1.5s ease-in-out infinite;
+    }
+    .incoming-call-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+      animation: ring-shake 0.5s ease-in-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+    }
+    @keyframes ring-shake {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
+    }
+    .incoming-call-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: var(--spacing-xs);
+    }
+    .incoming-call-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-lg);
+    }
+    .incoming-call-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+    .incoming-call-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .incoming-call-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    .incoming-call-btn.answer {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .incoming-call-btn.answer:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+    .incoming-call-btn.decline {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    .incoming-call-btn.decline:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+    .incoming-call-btn-label {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: var(--spacing-xs);
+    }
+    .incoming-call-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .filters-bar {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .call-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      background: white;
+      transition: all var(--transition-fast);
+    }
+
+    .call-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .call-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .call-card-phone {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .call-card-date {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .call-card-meta {
+      display: flex;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .call-card-meta span {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .call-card-notes {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      padding: var(--spacing-sm);
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .call-card-callback {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: var(--primary-light);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      color: var(--primary);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .call-card-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-xl);
+    }
+
+    .pagination-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+
+    .pagination-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .pagination-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Enhanced Transcript modal */
+    .transcript-modal {
+      max-width: 900px;
+    }
+
+    /* Recording player section */
+    .recording-section {
+      background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+      color: white;
+    }
+
+    .recording-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .recording-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .recording-title::before {
+      content: '🎙️';
+    }
+
+    .recording-duration {
+      font-size: 0.875rem;
+      color: var(--gray-300);
+    }
+
+    .audio-player {
+      width: 100%;
+      height: 40px;
+      border-radius: var(--radius-sm);
+    }
+
+    .audio-player::-webkit-media-controls-panel {
+      background: var(--gray-700);
+    }
+
+    .recording-unavailable {
+      text-align: center;
+      padding: var(--spacing-md);
+      color: var(--gray-400);
+      font-size: 0.875rem;
+    }
+
+    /* AI Summary section */
+    .ai-summary-section {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ai-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .ai-summary-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .ai-summary-title::before {
+      content: '🤖';
+    }
+
+    .ai-badge {
+      background: #0ea5e9;
+      color: white;
+      font-size: 0.625rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .summary-content {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .summary-overview {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .summary-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .summary-detail-card {
+      background: white;
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-md);
+      border: 1px solid #e0f2fe;
+    }
+
+    .summary-detail-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .summary-detail-value {
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .sentiment-positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .sentiment-neutral {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .sentiment-negative {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .action-items-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .action-items-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-xs);
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .action-items-list li::before {
+      content: '→';
+      color: #0ea5e9;
+      font-weight: bold;
+    }
+
+    /* Transcript section */
+    .transcript-section {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .transcript-header {
+      background: var(--gray-50);
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .transcript-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .transcript-title::before {
+      content: '📝';
+    }
+
+    .transcript-count {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      background: white;
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .transcript-full {
+      max-height: 350px;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+    }
+
+    .transcript-entry {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      gap: var(--spacing-md);
+      transition: background var(--transition-fast);
+    }
+
+    .transcript-entry:hover {
+      background: var(--gray-50);
+    }
+
+    .transcript-entry:last-child {
+      margin-bottom: 0;
+    }
+
+    .transcript-entry-time {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+      min-width: 70px;
+      padding-top: 2px;
+    }
+
+    .transcript-entry-speaker {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      min-width: 80px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-align: center;
+      height: fit-content;
+    }
+
+    .transcript-entry-speaker.rep {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .transcript-entry-speaker.customer {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .transcript-entry-text {
+      flex: 1;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--gray-700);
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      padding-left: 36px;
+    }
+
+    .search-box::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>&#9664;</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Connecting...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <h1 class="top-header-title">Call History</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="btn btn-secondary btn-sm" onclick="exportHistory()">Export</button>
+          <div class="connection-status disconnected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span>Disconnected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="filters-bar">
+            <div class="filter-group">
+              <label>Date</label>
+              <select class="input select" id="dateFilter">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="all" selected>All Time</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <select class="input select" id="statusFilter">
+                <option value="all">All</option>
+                <option value="connected">Connected</option>
+                <option value="missed">Missed</option>
+                <option value="no_answer">No Answer</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Outcome</label>
+              <select class="input select" id="outcomeFilter">
+                <option value="all">All</option>
+                <option value="booked">Booked</option>
+                <option value="callback">Callback Scheduled</option>
+                <option value="not_interested">Not Interested</option>
+                <option value="none">No Outcome</option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 1; min-width: 200px;">
+              <label>Search</label>
+              <div class="search-box">
+                <input type="text" class="input" id="searchInput" placeholder="Search phone, notes...">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Summary -->
+      <div class="flex justify-between items-center mb-3">
+        <div class="text-sm text-muted">
+          Showing <span id="resultsCount">0</span> calls
+        </div>
+        <select class="input select" id="sortBy" style="width: auto;" onchange="applyFilters()">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="longest">Longest Duration</option>
+          <option value="shortest">Shortest Duration</option>
+        </select>
+      </div>
+
+      <!-- Call List -->
+      <div id="callsList">
+        <!-- Calls will be rendered here -->
+        <div class="empty-state">
+          <div class="empty-state-icon">📞</div>
+          <div class="empty-state-title">No calls found</div>
+          <div class="empty-state-text">Call history will appear here</div>
+        </div>
+      </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+          <!-- Pagination will be rendered here -->
+        </div>
+      </main>
+
+      <!-- Mobile Bottom Navigation -->
+      <nav class="mobile-bottom-nav">
+        <div class="mobile-nav-items">
+          <a href="dashboard.html" class="mobile-nav-item">
+            <span class="mobile-nav-icon">&#128202;</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="mobile-nav-item">
+            <span class="mobile-nav-icon">&#128240;</span>
+            <span>Feed</span>
+          </a>
+          <a href="history.html" class="mobile-nav-item active">
+            <span class="mobile-nav-icon">&#128203;</span>
+            <span>History</span>
+          </a>
+          <a href="callbacks.html" class="mobile-nav-item">
+            <span class="mobile-nav-icon">&#128276;</span>
+            <span>Callbacks</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- Call FAB (mobile) -->
+      <button class="call-fab" onclick="window.location.href='call.html'">&#128222;</button>
+    </div>
+  </div>
+
+  <!-- Enhanced Transcript Modal -->
+  <div class="modal-overlay" id="transcriptModal">
+    <div class="modal transcript-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="modalTitle">Call Details</h3>
+          <div class="text-sm text-muted" id="modalSubtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Recording Player Section -->
+        <div class="recording-section" id="recordingSection">
+          <div class="recording-header">
+            <div class="recording-title">Call Recording</div>
+            <div class="recording-duration" id="recordingDuration">4:32</div>
+          </div>
+          <audio id="audioPlayer" class="audio-player" controls>
+            <source src="" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+          <div class="recording-unavailable" id="noRecording" style="display: none;">
+            Recording not available for this call
+          </div>
+        </div>
+
+        <!-- AI Summary Section -->
+        <div class="ai-summary-section" id="aiSummarySection">
+          <div class="ai-summary-header">
+            <div class="ai-summary-title">AI-Generated Summary</div>
+            <span class="ai-badge">POWERED BY AI</span>
+          </div>
+          <div class="summary-content">
+            <div class="summary-overview" id="summaryOverview">
+              Loading summary...
+            </div>
+            <div class="summary-details">
+              <div class="summary-detail-card">
+                <div class="summary-detail-label">Customer Sentiment</div>
+                <div class="summary-detail-value" id="summarySentiment">
+                  <span class="sentiment-positive">Positive</span>
+                </div>
+              </div>
+              <div class="summary-detail-card">
+                <div class="summary-detail-label">Call Outcome</div>
+                <div class="summary-detail-value" id="summaryOutcome">Booked Appointment</div>
+              </div>
+              <div class="summary-detail-card">
+                <div class="summary-detail-label">Action Items</div>
+                <div class="summary-detail-value">
+                  <ul class="action-items-list" id="actionItems">
+                    <li>Loading...</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Transcript Section -->
+        <div class="transcript-section">
+          <div class="transcript-header">
+            <div class="transcript-title">Full Transcript</div>
+            <span class="transcript-count" id="transcriptCount">0 messages</span>
+          </div>
+          <div class="transcript-full" id="transcriptContent">
+            <!-- Transcript entries will be rendered here -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="downloadTranscript()">Download Transcript</button>
+        <button class="btn btn-secondary" onclick="copyTranscript()">Copy to Clipboard</button>
+        <button class="btn btn-primary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Notes Modal -->
+  <div class="modal-overlay" id="notesModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Notes</h3>
+        <button class="modal-close" onclick="closeNotesModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Call Notes</label>
+          <textarea class="input" id="editNotesText" rows="5"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeNotesModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNotes()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Call Modal -->
+  <div class="incoming-call-overlay" id="incomingCallModal">
+    <div class="incoming-call-modal">
+      <div class="incoming-call-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+      <div class="incoming-call-label">Incoming Call</div>
+      <div class="incoming-call-number" id="incomingCallNumber">Unknown</div>
+      <div class="incoming-call-actions">
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn decline" id="declineCallBtn" title="Decline">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Decline</span>
+        </div>
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn answer" id="answerCallBtn" title="Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Answer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Twilio Device for incoming calls
+    let twilioDevice = null;
+    let pendingIncomingCall = null;
+    let ringtoneAudio = null;
+
+    // State
+    let calls = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const pageSize = 10;
+    let currentCallSid = null;
+    let ws = null;
+    // Use fixed identity so incoming calls can reach any page
+    const repIdentity = 'sales-rep';
+
+    // Sidebar state
+    let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+    // Initialize sidebar state
+    function initSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebarCollapsed && window.innerWidth > 1024) {
+        sidebar.classList.add('collapsed');
+      }
+    }
+
+    // Toggle sidebar (desktop)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarCollapsed = !sidebarCollapsed;
+      sidebar.classList.toggle('collapsed', sidebarCollapsed);
+      localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+    }
+
+    // Open sidebar (mobile)
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close sidebar (mobile)
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Update connection status (both header and sidebar)
+    function updateConnectionStatus(connected) {
+      const status = document.getElementById('connectionStatus');
+      const userStatus = document.getElementById('userStatus');
+      const connectionText = document.getElementById('connectionText');
+
+      if (connected) {
+        status.className = 'connection-status connected';
+        status.innerHTML = '<span class="connection-dot"></span><span>Connected</span>';
+        if (userStatus) userStatus.style.color = 'var(--success)';
+        if (connectionText) connectionText.textContent = 'Available';
+      } else {
+        status.className = 'connection-status disconnected';
+        status.innerHTML = '<span class="connection-dot"></span><span>Disconnected</span>';
+        if (userStatus) userStatus.style.color = 'var(--gray-400)';
+        if (connectionText) connectionText.textContent = 'Offline';
+      }
+    }
+
+    // ============ INCOMING CALL HANDLING ============
+
+    function playRingtone() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+        gainNode.gain.value = 0;
+
+        const osc1 = audioContext.createOscillator();
+        const osc2 = audioContext.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.value = 440;
+        osc2.frequency.value = 480;
+
+        const mixer = audioContext.createGain();
+        mixer.gain.value = 0.15;
+        osc1.connect(mixer);
+        osc2.connect(mixer);
+        mixer.connect(gainNode);
+        osc1.start();
+        osc2.start();
+
+        let isRinging = true;
+        gainNode.gain.value = 1;
+        let ringTimeout;
+        const scheduleRing = () => {
+          const duration = isRinging ? 1000 : 2000;
+          ringTimeout = setTimeout(() => {
+            isRinging = !isRinging;
+            gainNode.gain.setTargetAtTime(isRinging ? 1 : 0, audioContext.currentTime, 0.02);
+            scheduleRing();
+          }, duration);
+        };
+        scheduleRing();
+        ringtoneAudio = { osc1, osc2, gainNode, audioContext, ringTimeout };
+      } catch (e) {
+        console.log('Could not play ringtone:', e);
+      }
+    }
+
+    function stopRingtone() {
+      if (ringtoneAudio) {
+        try {
+          if (ringtoneAudio.ringTimeout) clearTimeout(ringtoneAudio.ringTimeout);
+          if (ringtoneAudio.osc1) ringtoneAudio.osc1.stop();
+          if (ringtoneAudio.osc2) ringtoneAudio.osc2.stop();
+          ringtoneAudio.audioContext.close();
+        } catch (e) {}
+        ringtoneAudio = null;
+      }
+    }
+
+    function showIncomingCallModal(phoneNumber) {
+      document.getElementById('incomingCallNumber').textContent = formatPhoneNumber(phoneNumber);
+      document.getElementById('incomingCallModal').classList.add('active');
+      playRingtone();
+    }
+
+    function hideIncomingCallModal() {
+      document.getElementById('incomingCallModal').classList.remove('active');
+      stopRingtone();
+    }
+
+    function answerIncomingCall() {
+      if (pendingIncomingCall) {
+        console.log('Answering incoming call...');
+        pendingIncomingCall.accept();
+        hideIncomingCallModal();
+        // Stay on current page - call is now active
+        showActiveCallIndicator();
+      }
+    }
+
+    // Show active call indicator
+    function showActiveCallIndicator() {
+      let indicator = document.getElementById('activeCallIndicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'activeCallIndicator';
+        indicator.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10001;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        indicator.innerHTML = '<span style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s infinite;"></span> Call Active <button onclick="endActiveCall()" style="margin-left:10px;background:#ef4444;border:none;color:white;padding:6px 12px;border-radius:4px;cursor:pointer;">End Call</button>';
+        document.body.appendChild(indicator);
+      }
+      indicator.style.display = 'flex';
+    }
+
+    // End active call
+    function endActiveCall() {
+      if (pendingIncomingCall) {
+        pendingIncomingCall.disconnect();
+        pendingIncomingCall = null;
+      }
+      const indicator = document.getElementById('activeCallIndicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
+
+    function declineIncomingCall() {
+      hideIncomingCallModal();
+      if (pendingIncomingCall) {
+        pendingIncomingCall.reject();
+        pendingIncomingCall = null;
+      }
+    }
+
+    function handleIncomingCall(call) {
+      console.log('Incoming call received on history:', call.parameters.From);
+      pendingIncomingCall = call;
+      const from = call.parameters.From || 'Unknown';
+
+      call.on('cancel', () => {
+        console.log('Call cancelled');
+        hideIncomingCallModal();
+        endActiveCall();
+      });
+
+      call.on('disconnect', () => {
+        console.log('Call disconnected');
+        hideIncomingCallModal();
+        endActiveCall();
+      });
+
+      showIncomingCallModal(from);
+    }
+
+    async function initTwilioDevice() {
+      try {
+        console.log('Initializing Twilio device for incoming calls...');
+        const response = await fetch(`/token?identity=${repIdentity}`);
+        const data = await response.json();
+
+        twilioDevice = new Twilio.Device(data.token, {
+          codecPreferences: ['opus', 'pcmu'],
+          logLevel: 1
+        });
+
+        twilioDevice.on('registered', () => {
+          console.log('Twilio device registered - ready for incoming calls');
+        });
+
+        twilioDevice.on('error', (error) => {
+          console.error('Twilio device error:', error.message || error);
+        });
+
+        twilioDevice.on('incoming', handleIncomingCall);
+
+        await twilioDevice.register();
+      } catch (error) {
+        console.error('Failed to initialize Twilio device:', error);
+      }
+    }
+
+    // Set up event listeners for incoming call buttons
+    document.getElementById('answerCallBtn')?.addEventListener('click', answerIncomingCall);
+    document.getElementById('declineCallBtn')?.addEventListener('click', declineIncomingCall);
+
+    // Initialize
+    function init() {
+      initSidebar();
+      connectWebSocket();
+      initTwilioDevice();
+      loadCalls();
+      checkUrlParams();
+
+      // Enter key to search
+      document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          applyFilters();
+        }
+      });
+
+      // Keyboard shortcuts for incoming calls
+      document.addEventListener('keydown', (e) => {
+        if (document.getElementById('incomingCallModal').classList.contains('active')) {
+          if (e.key === 'Enter') answerIncomingCall();
+          if (e.key === 'Escape') declineIncomingCall();
+        }
+      });
+    }
+
+    // WebSocket
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}/browser?role=rep&identity=${repIdentity}`);
+
+      ws.onopen = () => {
+        updateConnectionStatus(true);
+      };
+
+      ws.onclose = () => {
+        updateConnectionStatus(false);
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'call_ended' || data.type === 'calls_update') {
+          loadCalls();
+        }
+      };
+    }
+
+    // Load calls from API
+    async function loadCalls() {
+      const filters = getFilters();
+
+      try {
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: pageSize,
+          ...filters
+        });
+
+        const response = await fetch(`/api/calls?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          calls = data.calls || data;
+
+          // If no real calls, show demo data
+          if (calls.length === 0) {
+            console.log('No calls in database - showing demo data');
+            calls = generateDemoCalls();
+            totalPages = 1;
+          } else {
+            totalPages = data.totalPages || Math.ceil(calls.length / pageSize);
+          }
+
+          renderCalls();
+          renderPagination();
+        }
+      } catch (error) {
+        console.log('Using demo data - API not available');
+        // Demo data
+        calls = generateDemoCalls();
+        totalPages = 1;
+        renderCalls();
+        renderPagination();
+      }
+    }
+
+    // Demo data with realistic examples
+    const demoCallsData = [
+      {
+        callSid: 'CA_demo_001',
+        phoneNumber: '+15551234567',
+        status: 'connected',
+        startTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        duration: 272, // 4:32
+        outcome: 'booked',
+        notes: 'Customer booked move for Feb 15th. 3BR house, downtown to suburbs. Quote: $425.',
+        hasTranscript: true,
+        hasRecording: true,
+        callbackScheduled: null
+      },
+      {
+        callSid: 'CA_demo_002',
+        phoneNumber: '+15559876543',
+        status: 'connected',
+        startTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+        duration: 185, // 3:05
+        outcome: 'callback',
+        notes: 'Interested but needs to discuss with spouse. Very warm lead.',
+        hasTranscript: true,
+        hasRecording: true,
+        callbackScheduled: {
+          date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+          reason: 'Follow up after spouse discussion'
+        }
+      },
+      {
+        callSid: 'CA_demo_003',
+        phoneNumber: '+15552345678',
+        status: 'connected',
+        startTime: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+        duration: 95, // 1:35
+        outcome: 'not_interested',
+        notes: 'Already hired another company. Not interested at this time.',
+        hasTranscript: true,
+        hasRecording: true,
+        callbackScheduled: null
+      },
+      {
+        callSid: 'CA_demo_004',
+        phoneNumber: '+15553456789',
+        status: 'missed',
+        startTime: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        duration: 0,
+        outcome: null,
+        notes: null,
+        hasTranscript: false,
+        hasRecording: false,
+        callbackScheduled: null
+      },
+      {
+        callSid: 'CA_demo_005',
+        phoneNumber: '+15554567890',
+        status: 'no_answer',
+        startTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        duration: 0,
+        outcome: null,
+        notes: null,
+        hasTranscript: false,
+        hasRecording: false,
+        callbackScheduled: null
+      },
+      {
+        callSid: 'CA_demo_006',
+        phoneNumber: '+15555678901',
+        status: 'connected',
+        startTime: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+        duration: 340, // 5:40
+        outcome: 'booked',
+        notes: 'Large office move. 50+ desks, conference room furniture. Booked for March 1st.',
+        hasTranscript: true,
+        hasRecording: true,
+        callbackScheduled: null
+      },
+      {
+        callSid: 'CA_demo_007',
+        phoneNumber: '+15556789012',
+        status: 'connected',
+        startTime: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+        duration: 127, // 2:07
+        outcome: 'callback',
+        notes: 'Needs quote for piano and antiques. Requires special handling.',
+        hasTranscript: true,
+        hasRecording: true,
+        callbackScheduled: {
+          date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+          reason: 'Send detailed quote for specialty items'
+        }
+      },
+      {
+        callSid: 'CA_demo_008',
+        phoneNumber: '+15557890123',
+        status: 'missed',
+        startTime: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
+        duration: 0,
+        outcome: null,
+        notes: null,
+        hasTranscript: false,
+        hasRecording: false,
+        callbackScheduled: null
+      }
+    ];
+
+    // Demo transcript data for each call
+    const demoTranscripts = {
+      'CA_demo_001': {
+        summary: {
+          overview: 'Customer called inquiring about moving services for a 3-bedroom house from downtown Phoenix to Gilbert suburbs, approximately 20 miles. Rep provided quote of $425 for 2 movers and estimated 2-hour job. Customer was satisfied with pricing and booked the move for February 15th at 9 AM.',
+          sentiment: 'positive',
+          outcome: 'Booked Appointment',
+          actionItems: [
+            'Send confirmation email with move details',
+            'Schedule 2-person crew for Feb 15th 9 AM',
+            'Prepare moving supplies (boxes, tape, blankets)'
+          ]
+        },
+        transcript: [
+          { time: '0:00', speaker: 'rep', text: "Thank you for calling ABC Movers, this is Sarah. How can I help you today?" },
+          { time: '0:05', speaker: 'customer', text: "Hi Sarah, I'm looking to get a quote for a move next month." },
+          { time: '0:10', speaker: 'rep', text: "I'd be happy to help you with that! Can you tell me a little bit about your move? What type of home are you moving from?" },
+          { time: '0:18', speaker: 'customer', text: "It's a 3-bedroom house. Not too much stuff, mostly furniture and boxes. Maybe about 30 boxes worth?" },
+          { time: '0:28', speaker: 'rep', text: "Perfect, that gives me a good idea. And where are you moving from and to?" },
+          { time: '0:34', speaker: 'customer', text: "I'm moving from downtown Phoenix to Gilbert, so about 20 miles or so." },
+          { time: '0:42', speaker: 'rep', text: "Great! For a 3-bedroom with that amount of items and the distance, I'd estimate about 2 hours with a 2-person crew. Our rate would come to $425 total." },
+          { time: '0:55', speaker: 'customer', text: "Oh, that's actually better than I expected! Does that include everything?" },
+          { time: '1:02', speaker: 'rep', text: "Yes, that includes the truck, two professional movers, all equipment like dollies and blankets, and basic insurance coverage. We also include boxes and tape if you need them." },
+          { time: '1:15', speaker: 'customer', text: "That sounds really good. I was quoted $600 by another company." },
+          { time: '1:22', speaker: 'rep', text: "I'm glad we can offer you a better value! When were you thinking of making the move?" },
+          { time: '1:28', speaker: 'customer', text: "February 15th would be ideal. Is that available?" },
+          { time: '1:34', speaker: 'rep', text: "Let me check... Yes, February 15th is available! What time works best for you? We have morning slots starting at 8 or 9 AM." },
+          { time: '1:45', speaker: 'customer', text: "9 AM would be perfect." },
+          { time: '1:48', speaker: 'rep', text: "Excellent! I'll book you for February 15th at 9 AM. Can I get your full name and email for the confirmation?" },
+          { time: '1:58', speaker: 'customer', text: "Sure, it's John Martinez, and my email is john.martinez@email.com" },
+          { time: '2:10', speaker: 'rep', text: "Perfect, Mr. Martinez! You're all set for February 15th at 9 AM. I'll send a confirmation email right away with all the details. Is there anything else I can help you with?" },
+          { time: '2:25', speaker: 'customer', text: "No, that's everything. Thank you so much for your help, Sarah!" },
+          { time: '2:30', speaker: 'rep', text: "You're welcome! Thank you for choosing ABC Movers. Have a great day!" }
+        ]
+      },
+      'CA_demo_002': {
+        summary: {
+          overview: 'Customer inquired about moving services for an apartment relocation. Showed strong interest in our services and pricing but needs to discuss with their spouse before committing. Rep handled objection well and scheduled a follow-up call.',
+          sentiment: 'positive',
+          outcome: 'Callback Scheduled',
+          actionItems: [
+            'Call back in 2 days to follow up',
+            'Prepare detailed quote to email',
+            'Note: Decision maker is spouse'
+          ]
+        },
+        transcript: [
+          { time: '0:00', speaker: 'rep', text: "Good afternoon, ABC Movers, this is Mike speaking. How may I assist you?" },
+          { time: '0:06', speaker: 'customer', text: "Hi Mike, I'm calling to get some information about moving services." },
+          { time: '0:12', speaker: 'rep', text: "I can definitely help with that. Are you planning a local or long-distance move?" },
+          { time: '0:18', speaker: 'customer', text: "It's local, just across town. We're moving from a 2-bedroom apartment." },
+          { time: '0:25', speaker: 'rep', text: "Great! Local apartment moves are our specialty. Do you have a lot of furniture, or is it mostly boxes?" },
+          { time: '0:33', speaker: 'customer', text: "We have a couch, bed, dining set, and probably 20 boxes or so." },
+          { time: '0:42', speaker: 'rep', text: "That sounds like a typical 2-bedroom load. We could handle that in about 2-3 hours with our 2-person crew. Looking at around $350 to $400." },
+          { time: '0:55', speaker: 'customer', text: "That's reasonable. The thing is, I need to run this by my husband first before we book anything." },
+          { time: '1:05', speaker: 'rep', text: "Absolutely, I completely understand. It's always good to make these decisions together. When do you think you'll have a chance to discuss it?" },
+          { time: '1:15', speaker: 'customer', text: "Probably tonight when he gets home from work." },
+          { time: '1:20', speaker: 'rep', text: "Perfect. How about I give you a call back in a couple of days? That way you'll have had time to talk it over, and I can answer any questions that come up." },
+          { time: '1:32', speaker: 'customer', text: "That would be great, actually. Could you call me Thursday afternoon?" },
+          { time: '1:38', speaker: 'rep', text: "Thursday afternoon works perfectly. I'll call you around 2 PM. Does that time work?" },
+          { time: '1:45', speaker: 'customer', text: "Yes, that's perfect. Thank you for being so helpful!" },
+          { time: '1:50', speaker: 'rep', text: "My pleasure! I'll send you a quick email with the quote details so you have something to reference. Talk to you Thursday!" }
+        ]
+      },
+      'CA_demo_003': {
+        summary: {
+          overview: 'Customer had already hired a competitor for their upcoming move. They mentioned getting a lower quote elsewhere. Not a viable lead at this time but could be a future customer.',
+          sentiment: 'neutral',
+          outcome: 'Not Interested',
+          actionItems: [
+            'Add to re-contact list for 6 months out',
+            'Note competitor pricing for market research'
+          ]
+        },
+        transcript: [
+          { time: '0:00', speaker: 'rep', text: "ABC Movers, this is Sarah. How can I help you?" },
+          { time: '0:05', speaker: 'customer', text: "Hi, I actually just got a call back from you guys. I had requested a quote last week." },
+          { time: '0:12', speaker: 'rep', text: "Oh wonderful! Let me pull up your information. Did you have any questions about the quote?" },
+          { time: '0:20', speaker: 'customer', text: "Well, actually I wanted to let you know I already booked with another company." },
+          { time: '0:26', speaker: 'rep', text: "I appreciate you letting us know. May I ask what made you decide to go with them?" },
+          { time: '0:33', speaker: 'customer', text: "They came in a bit lower on price, about $50 less." },
+          { time: '0:40', speaker: 'rep', text: "I understand, price is definitely important. If anything changes or you need moving services in the future, please don't hesitate to reach out." },
+          { time: '0:52', speaker: 'customer', text: "Will do. Thanks for understanding." },
+          { time: '0:56', speaker: 'rep', text: "Of course! Good luck with your move, and we hope to serve you in the future." }
+        ]
+      },
+      'CA_demo_006': {
+        summary: {
+          overview: 'Commercial client called about relocating their office of 50+ employees. Large job including desks, conference room furniture, and IT equipment. Customer booked for March 1st weekend to minimize business disruption. High-value booking.',
+          sentiment: 'positive',
+          outcome: 'Booked - Commercial',
+          actionItems: [
+            'Coordinate with IT team for equipment handling',
+            'Schedule pre-move site visit',
+            'Assign commercial crew (6-person team)',
+            'Prepare commercial invoice for $3,200'
+          ]
+        },
+        transcript: [
+          { time: '0:00', speaker: 'rep', text: "ABC Movers commercial division, this is Mike. How can I help you today?" },
+          { time: '0:07', speaker: 'customer', text: "Hi Mike, I'm the office manager at TechStart Inc. We need to relocate our entire office." },
+          { time: '0:15', speaker: 'rep', text: "I'd be happy to help with your office relocation. Can you tell me about the size of your office?" },
+          { time: '0:22', speaker: 'customer', text: "We have about 50 employees, so around 50 desks, a large conference room, and our server room equipment." },
+          { time: '0:32', speaker: 'rep', text: "That's a substantial move. For that size, we'd recommend our commercial package with a 6-person crew. How far is the new location?" },
+          { time: '0:45', speaker: 'customer', text: "It's about 5 miles away, still in the same business park actually." },
+          { time: '0:52', speaker: 'rep', text: "That helps keep costs down. For a 50-person office move at that distance, we're looking at approximately $3,200. That includes everything - packing, moving, and setup." },
+          { time: '1:08', speaker: 'customer', text: "That's within our budget. We need to do this over a weekend to minimize disruption. Is March 1st available?" },
+          { time: '1:18', speaker: 'rep', text: "Let me check our commercial calendar... Yes, that weekend is open. We could start Saturday morning and have you operational by Sunday evening." },
+          { time: '1:32', speaker: 'customer', text: "Perfect. What about the IT equipment? We have servers that need special handling." },
+          { time: '1:40', speaker: 'rep', text: "We have IT equipment specialists who can coordinate with your tech team. They'll ensure everything is properly disconnected, transported, and reconnected." },
+          { time: '1:55', speaker: 'customer', text: "Excellent. Let's book it. I'll need to schedule a site visit for you to see exactly what we have." },
+          { time: '2:05', speaker: 'rep', text: "Absolutely. I can send our commercial coordinator out this week. How does Thursday afternoon look?" },
+          { time: '2:15', speaker: 'customer', text: "Thursday at 2 PM works. Can you send me the confirmation details?" },
+          { time: '2:22', speaker: 'rep', text: "I'll email everything right over, including the site visit confirmation and a preliminary invoice. Thank you for choosing ABC Movers!" }
+        ]
+      },
+      'CA_demo_007': {
+        summary: {
+          overview: 'Customer has specialty items including a grand piano and valuable antique furniture that require special handling. Needs detailed quote for insurance purposes. Very interested but needs formal documentation.',
+          sentiment: 'positive',
+          outcome: 'Quote Requested',
+          actionItems: [
+            'Send detailed quote with specialty handling fees',
+            'Include piano moving surcharge ($150)',
+            'Add antique furniture handling ($75)',
+            'Provide certificate of insurance'
+          ]
+        },
+        transcript: [
+          { time: '0:00', speaker: 'rep', text: "ABC Movers, how can I help you today?" },
+          { time: '0:04', speaker: 'customer', text: "Hi, I have a somewhat complicated move I need help with." },
+          { time: '0:10', speaker: 'rep', text: "No problem at all! What makes it complicated? We handle all types of moves." },
+          { time: '0:17', speaker: 'customer', text: "Well, I have a baby grand piano and several antique furniture pieces. Some of these are quite valuable." },
+          { time: '0:26', speaker: 'rep', text: "We absolutely can handle that. We have trained specialists for piano moving and white-glove service for antiques." },
+          { time: '0:36', speaker: 'customer', text: "That's great to hear. I'll need a detailed quote though, because my insurance company requires it." },
+          { time: '0:45', speaker: 'rep', text: "Of course. Can you tell me what antique pieces you have so I can give you an accurate quote?" },
+          { time: '0:52', speaker: 'customer', text: "There's a Victorian armoire, a mahogany dining set from the 1800s, and a few vintage mirrors." },
+          { time: '1:05', speaker: 'rep', text: "Beautiful pieces! For the piano, we charge an additional $150 for specialized handling. The antiques would be $75 extra for white-glove service." },
+          { time: '1:18', speaker: 'customer', text: "That sounds reasonable. Can you send me a formal quote with all the details and your insurance certificate?" },
+          { time: '1:28', speaker: 'rep', text: "Absolutely! I'll prepare a comprehensive quote with itemized specialty handling fees and include our certificate of insurance." },
+          { time: '1:40', speaker: 'customer', text: "Perfect. When can I expect that?" },
+          { time: '1:44', speaker: 'rep', text: "I'll have it in your inbox by tomorrow morning. Once you review it, give us a call and we can finalize the booking." }
+        ]
+      }
+    };
+
+    function generateDemoCalls() {
+      return demoCallsData;
+    }
+
+    function getFilters() {
+      return {
+        date: document.getElementById('dateFilter').value,
+        status: document.getElementById('statusFilter').value,
+        outcome: document.getElementById('outcomeFilter').value,
+        search: document.getElementById('searchInput').value,
+        sort: document.getElementById('sortBy').value
+      };
+    }
+
+    function applyFilters() {
+      currentPage = 1;
+      loadCalls();
+    }
+
+    function clearFilters() {
+      document.getElementById('dateFilter').value = 'all';
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('outcomeFilter').value = 'all';
+      document.getElementById('searchInput').value = '';
+      applyFilters();
+    }
+
+    // Render calls
+    function renderCalls() {
+      const container = document.getElementById('callsList');
+      document.getElementById('resultsCount').textContent = calls.length;
+
+      if (calls.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📞</div>
+            <div class="empty-state-title">No calls found</div>
+            <div class="empty-state-text">Try adjusting your filters</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = calls.map(call => `
+        <div class="call-card">
+          <div class="call-card-header">
+            <div>
+              <div class="call-card-phone">📞 ${formatPhoneNumber(call.phoneNumber)}</div>
+            </div>
+            <div class="call-card-date">${formatDateTime(call.startTime)}</div>
+          </div>
+
+          <div class="call-card-meta">
+            <span>
+              <span class="badge badge-${getStatusBadgeClass(call.status)}">${formatStatus(call.status)}</span>
+            </span>
+            ${call.duration ? `<span>⏱️ ${formatDuration(call.duration)}</span>` : ''}
+            ${call.outcome ? `<span>📋 ${formatOutcome(call.outcome)}</span>` : ''}
+          </div>
+
+          ${call.notes ? `
+            <div class="call-card-notes">
+              📝 ${call.notes}
+            </div>
+          ` : ''}
+
+          ${call.callbackScheduled ? `
+            <div class="call-card-callback">
+              📅 Callback scheduled: ${formatDateTime(call.callbackScheduled.date)}
+              ${call.callbackScheduled.reason ? ` - "${call.callbackScheduled.reason}"` : ''}
+            </div>
+          ` : ''}
+
+          <div class="call-card-actions">
+            ${call.hasTranscript ? `
+              <button class="btn btn-sm btn-secondary" onclick="viewTranscript('${call.callSid}')">
+                📄 View Transcript
+              </button>
+            ` : ''}
+            <button class="btn btn-sm btn-success" onclick="callNumber('${call.phoneNumber}')">
+              📞 Call Again
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="editNotes('${call.callSid}', '${escapeQuotes(call.notes || '')}')">
+              📝 Edit Notes
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render pagination
+    function renderPagination() {
+      const container = document.getElementById('pagination');
+
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+
+      // Previous button
+      html += `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>`;
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+          html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          html += `<span class="pagination-btn" style="border: none;">...</span>`;
+        }
+      }
+
+      // Next button
+      html += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>`;
+
+      container.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      loadCalls();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Transcript modal
+    async function viewTranscript(callSid) {
+      currentCallSid = callSid;
+      const call = calls.find(c => c.callSid === callSid);
+
+      document.getElementById('modalTitle').textContent = `Call Details: ${formatPhoneNumber(call?.phoneNumber || '')}`;
+      document.getElementById('modalSubtitle').textContent = `${formatDateTime(call?.startTime)} • Duration: ${formatDuration(call?.duration || 0)}`;
+
+      document.getElementById('transcriptModal').classList.add('active');
+
+      try {
+        const response = await fetch(`/api/call-transcript/${callSid}`);
+        if (response.ok) {
+          const data = await response.json();
+          renderTranscript(data, call);
+        } else {
+          renderDemoTranscript(callSid, call);
+        }
+      } catch (error) {
+        renderDemoTranscript(callSid, call);
+      }
+    }
+
+    function renderTranscript(data, call) {
+      // Handle recording section
+      const audioPlayer = document.getElementById('audioPlayer');
+      const noRecording = document.getElementById('noRecording');
+      const recordingDuration = document.getElementById('recordingDuration');
+
+      if (call && call.hasRecording && data.recordingUrl) {
+        audioPlayer.src = data.recordingUrl;
+        audioPlayer.style.display = 'block';
+        noRecording.style.display = 'none';
+        recordingDuration.textContent = formatDuration(call.duration);
+      } else if (call && call.hasRecording) {
+        // Demo mode - show player but note it's a demo
+        audioPlayer.style.display = 'block';
+        noRecording.style.display = 'none';
+        recordingDuration.textContent = formatDuration(call.duration);
+      } else {
+        audioPlayer.style.display = 'none';
+        noRecording.style.display = 'block';
+      }
+
+      // Handle AI Summary section
+      if (data.summary) {
+        document.getElementById('summaryOverview').textContent = data.summary.overview || data.summary;
+
+        // Sentiment
+        const sentimentEl = document.getElementById('summarySentiment');
+        const sentiment = data.summary.sentiment || 'neutral';
+        const sentimentText = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+        sentimentEl.innerHTML = `<span class="sentiment-${sentiment}">${sentimentText}</span>`;
+
+        // Outcome
+        document.getElementById('summaryOutcome').textContent = data.summary.outcome || 'Not determined';
+
+        // Action items
+        const actionItemsEl = document.getElementById('actionItems');
+        if (data.summary.actionItems && data.summary.actionItems.length > 0) {
+          actionItemsEl.innerHTML = data.summary.actionItems.map(item => `<li>${item}</li>`).join('');
+        } else {
+          actionItemsEl.innerHTML = '<li>No action items</li>';
+        }
+      } else {
+        document.getElementById('summaryOverview').textContent = 'No summary available for this call.';
+        document.getElementById('summarySentiment').innerHTML = '<span class="sentiment-neutral">Unknown</span>';
+        document.getElementById('summaryOutcome').textContent = 'Not determined';
+        document.getElementById('actionItems').innerHTML = '<li>No action items</li>';
+      }
+
+      // Full transcript
+      const container = document.getElementById('transcriptContent');
+      const countEl = document.getElementById('transcriptCount');
+
+      if (!data.transcript || data.transcript.length === 0) {
+        container.innerHTML = '<div class="text-muted" style="padding: 20px; text-align: center;">No transcript available for this call.</div>';
+        countEl.textContent = '0 messages';
+        return;
+      }
+
+      countEl.textContent = `${data.transcript.length} messages`;
+
+      container.innerHTML = data.transcript.map(entry => `
+        <div class="transcript-entry">
+          <div class="transcript-entry-time">${entry.time || formatTime(entry.timestamp)}</div>
+          <div class="transcript-entry-speaker ${entry.speaker}">${entry.speaker === 'rep' ? 'REP' : 'CUSTOMER'}</div>
+          <div class="transcript-entry-text">${entry.text}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderDemoTranscript(callSid, call) {
+      // Check if we have demo data for this call
+      const demoData = demoTranscripts[callSid];
+
+      if (demoData) {
+        renderTranscript(demoData, call);
+      } else {
+        // Fallback for calls without specific demo data
+        const fallbackData = {
+          summary: {
+            overview: 'Call transcript and summary are being processed. This may take a few moments.',
+            sentiment: 'neutral',
+            outcome: 'Pending Analysis',
+            actionItems: ['Review call when analysis is complete']
+          },
+          transcript: []
+        };
+        renderTranscript(fallbackData, call);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('transcriptModal').classList.remove('active');
+    }
+
+    function downloadTranscript() {
+      const content = document.getElementById('transcriptContent').innerText;
+      const summary = document.getElementById('summaryText').innerText;
+      const fullText = `Summary:\n${summary}\n\nTranscript:\n${content}`;
+
+      const blob = new Blob([fullText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcript-${currentCallSid}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyTranscript() {
+      const content = document.getElementById('transcriptContent').innerText;
+      navigator.clipboard.writeText(content).then(() => {
+        alert('Transcript copied to clipboard!');
+      });
+    }
+
+    // Notes modal
+    function editNotes(callSid, notes) {
+      currentCallSid = callSid;
+      document.getElementById('editNotesText').value = notes;
+      document.getElementById('notesModal').classList.add('active');
+    }
+
+    function closeNotesModal() {
+      document.getElementById('notesModal').classList.remove('active');
+    }
+
+    async function saveNotes() {
+      const notes = document.getElementById('editNotesText').value;
+
+      try {
+        await fetch(`/api/call/${currentCallSid}/notes`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes })
+        });
+      } catch (error) {
+        console.error('Failed to save notes');
+      }
+
+      // Update local state
+      const call = calls.find(c => c.callSid === currentCallSid);
+      if (call) call.notes = notes;
+      renderCalls();
+
+      closeNotesModal();
+    }
+
+    // Actions
+    function callNumber(number) {
+      window.location.href = `call.html?number=${encodeURIComponent(number)}`;
+    }
+
+    function exportHistory() {
+      const filters = getFilters();
+      const params = new URLSearchParams(filters);
+      window.open(`/api/calls/export?${params}`, '_blank');
+    }
+
+    // URL params
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const callSid = params.get('call');
+      if (callSid) {
+        // Auto-open transcript modal
+        setTimeout(() => viewTranscript(callSid), 500);
+      }
+    }
+
+    // Helper functions
+    function formatPhoneNumber(number) {
+      if (!number) return '';
+      const cleaned = number.replace(/\D/g, '');
+      if (cleaned.length === 11 && cleaned[0] === '1') {
+        return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      }
+      if (cleaned.length === 10) {
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      }
+      return number;
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function formatTime(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+    }
+
+    function formatDateTime(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+
+    function formatStatus(status) {
+      const statusMap = {
+        connected: 'Connected',
+        missed: 'Missed',
+        no_answer: 'No Answer'
+      };
+      return statusMap[status] || status;
+    }
+
+    function formatOutcome(outcome) {
+      const outcomeMap = {
+        booked: 'Booked',
+        callback: 'Callback',
+        not_interested: 'Not Interested'
+      };
+      return outcomeMap[outcome] || outcome;
+    }
+
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'connected': return 'success';
+        case 'missed': return 'danger';
+        case 'no_answer': return 'warning';
+        default: return 'info';
+      }
+    }
+
+    function escapeQuotes(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      }
+    });
+
+    // Initialize - only if Supabase integration not loaded
+    if (typeof initHistoryPage !== 'function') {
+      init();
+    }
+  </script>
+
+  <!-- Supabase Integration (overrides demo data with real data) -->
+  <script src="js/history.js"></script>
+</body>
+</html>

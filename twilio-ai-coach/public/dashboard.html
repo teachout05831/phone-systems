@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dashboard - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Twilio Voice SDK for incoming calls -->
+  <script src="js/twilio.min.js"></script>
+  <style>
+    /* Loading Spinner for Stats */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .stats-loading .stat-value {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stats-error {
+      background: var(--danger-light);
+      color: var(--danger);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    /* Incoming Call Modal */
+    .incoming-call-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .incoming-call-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .incoming-call-modal {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .incoming-call-overlay.active .incoming-call-modal {
+      transform: scale(1);
+    }
+    .incoming-call-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      animation: ring-pulse 1.5s ease-in-out infinite;
+    }
+    .incoming-call-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+      animation: ring-shake 0.5s ease-in-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+    }
+    @keyframes ring-shake {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
+    }
+    .incoming-call-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: var(--spacing-xs);
+    }
+    .incoming-call-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-lg);
+    }
+    .incoming-call-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+    .incoming-call-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .incoming-call-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    .incoming-call-btn.answer {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .incoming-call-btn.answer:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+    .incoming-call-btn.decline {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    .incoming-call-btn.decline:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+    .incoming-call-btn-label {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: var(--spacing-xs);
+    }
+    .incoming-call-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge" id="smsBadge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+            <span class="sidebar-nav-badge" id="callbackBadge">0</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Connecting...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Dashboard</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn desktop-only" title="Search">🔍</button>
+          <button class="header-action-btn" title="Notifications" id="notificationBtn">
+            🔔
+            <span class="badge-dot" id="notificationDot" style="display: none;"></span>
+          </button>
+          <div class="connection-status disconnected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="desktop-only">Disconnected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon calls">📞</div>
+            <div class="stat-value" id="totalCalls"><span class="loading-spinner"></span></div>
+            <div class="stat-label">Total Calls</div>
+            <div class="stat-trend up" id="callsTrend">
+              <span>Loading...</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon connected">✅</div>
+            <div class="stat-value" id="connectedCalls"><span class="loading-spinner"></span></div>
+            <div class="stat-label">Connected</div>
+            <div class="stat-trend" id="connectedRate">
+              <span>Loading...</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon missed">❌</div>
+            <div class="stat-value" id="missedCalls"><span class="loading-spinner"></span></div>
+            <div class="stat-label">Missed</div>
+            <div class="stat-trend down" id="missedTrend">
+              <span>Loading...</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon duration">⏱️</div>
+            <div class="stat-value" id="avgDuration"><span class="loading-spinner"></span></div>
+            <div class="stat-label">Avg Duration</div>
+            <div class="stat-trend" id="durationTrend">
+              <span>Loading...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid-2">
+          <!-- Left Column -->
+          <div>
+            <!-- Quick Dial Card -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h3 class="card-title">Quick Dial</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <input type="tel" class="input input-lg" id="phoneInput" placeholder="+1 (___) ___-____">
+                </div>
+                <button class="btn btn-success btn-lg" style="width: 100%;" id="callBtn">
+                  📞 Call
+                </button>
+
+                <!-- Recent Numbers -->
+                <div class="mt-4">
+                  <div class="text-xs text-muted mb-2">Recent:</div>
+                  <div id="recentNumbers">
+                    <div class="empty-state">
+                      <div class="text-sm">No recent calls</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Callbacks Due Today -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Callbacks Due Today</h3>
+                <a href="callbacks.html" class="btn btn-sm btn-secondary">View All</a>
+              </div>
+              <div class="card-body" id="callbacksList">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📅</div>
+                  <div class="empty-state-title">No callbacks scheduled</div>
+                  <div class="empty-state-text">Scheduled callbacks will appear here</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div>
+            <!-- Missed Calls Card -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h3 class="card-title">Missed Calls <span class="badge badge-danger" id="missedCount">0</span></h3>
+                <a href="callbacks.html" class="btn btn-sm btn-secondary">View All</a>
+              </div>
+              <div class="card-body">
+                <div class="call-list" id="missedCallsList">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <div class="empty-state-title">All caught up!</div>
+                    <div class="empty-state-text">No missed calls to return</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Calls Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recent Calls</h3>
+                <a href="history.html" class="btn btn-sm btn-secondary">View All</a>
+              </div>
+              <div class="card-body" style="padding: 0;">
+                <div class="call-list" id="recentCallsList">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">📞</div>
+                    <div class="empty-state-title">No calls yet</div>
+                    <div class="empty-state-text">Your call history will appear here</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <a href="history.html">View Full Call History →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="newsfeed.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📰</span>
+          <span>Feed</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="callbacks.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">🔔</span>
+          <span>Callbacks</span>
+          <span class="badge-dot" id="mobileCallbackDot" style="display: none;"></span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="window.location.href='call.html'">📞</button>
+  </div>
+
+  <!-- Mobile Dialer -->
+  <div class="mobile-dialer" id="mobileDialer">
+    <div class="mobile-dialer-header">
+      <button class="mobile-dialer-close" onclick="closeDialer()">✕</button>
+      <span class="mobile-dialer-title">New Call</span>
+      <div style="width: 40px;"></div>
+    </div>
+    <div class="mobile-dialer-body">
+      <div class="mobile-dialer-display">
+        <div class="mobile-dialer-number" id="dialerNumber"></div>
+        <div class="mobile-dialer-name" id="dialerName">Enter a number</div>
+      </div>
+      <div class="mobile-dial-pad">
+        <button class="mobile-dial-btn" onclick="dialDigit('1')">1<span class="sub"></span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('2')">2<span class="sub">ABC</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('3')">3<span class="sub">DEF</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('4')">4<span class="sub">GHI</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('5')">5<span class="sub">JKL</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('6')">6<span class="sub">MNO</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('7')">7<span class="sub">PQRS</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('8')">8<span class="sub">TUV</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('9')">9<span class="sub">WXYZ</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('*')">*</button>
+        <button class="mobile-dial-btn" onclick="dialDigit('0')">0<span class="sub">+</span></button>
+        <button class="mobile-dial-btn delete" onclick="dialDelete()">⌫</button>
+      </div>
+    </div>
+    <div class="mobile-dialer-actions">
+      <button class="mobile-dial-call-btn" onclick="startMobileCall()">📞</button>
+    </div>
+  </div>
+
+  <!-- Incoming Call Modal -->
+  <div class="incoming-call-overlay" id="incomingCallModal">
+    <div class="incoming-call-modal">
+      <div class="incoming-call-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+      <div class="incoming-call-label">Incoming Call</div>
+      <div class="incoming-call-number" id="incomingCallNumber">Unknown</div>
+      <div class="incoming-call-actions">
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn decline" id="declineCallBtn" title="Decline">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Decline</span>
+        </div>
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn answer" id="answerCallBtn" title="Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Answer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Twilio Device for incoming calls
+    let twilioDevice = null;
+    let pendingIncomingCall = null;
+    let ringtoneAudio = null;
+
+    // Sidebar State
+    let sidebarCollapsed = false;
+    let mobileDialerNumber = '';
+
+    // Toggle sidebar collapse (desktop)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarCollapsed = !sidebarCollapsed;
+      sidebar.classList.toggle('collapsed', sidebarCollapsed);
+      localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+    }
+
+    // Open sidebar (mobile)
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close sidebar (mobile)
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Mobile Dialer Functions
+    function openDialer() {
+      document.getElementById('mobileDialer').classList.add('active');
+      closeSidebar();
+    }
+
+    function closeDialer() {
+      document.getElementById('mobileDialer').classList.remove('active');
+      mobileDialerNumber = '';
+      updateDialerDisplay();
+    }
+
+    function dialDigit(digit) {
+      if (mobileDialerNumber.length < 15) {
+        mobileDialerNumber += digit;
+        updateDialerDisplay();
+      }
+    }
+
+    function dialDelete() {
+      mobileDialerNumber = mobileDialerNumber.slice(0, -1);
+      updateDialerDisplay();
+    }
+
+    function updateDialerDisplay() {
+      const display = document.getElementById('dialerNumber');
+      const name = document.getElementById('dialerName');
+
+      if (mobileDialerNumber.length === 0) {
+        display.textContent = '';
+        name.textContent = 'Enter a number';
+      } else {
+        display.textContent = formatPhoneNumber(mobileDialerNumber);
+        name.textContent = mobileDialerNumber.length >= 10 ? 'Ready to call' : '';
+      }
+    }
+
+    function startMobileCall() {
+      if (mobileDialerNumber.length >= 10) {
+        closeDialer();
+        callNumber('+1' + mobileDialerNumber);
+      }
+    }
+
+    // Dashboard State
+    const state = {
+      calls: [],
+      missedCalls: [],
+      callbacks: [],
+      stats: {
+        totalCalls: 0,
+        connectedCalls: 0,
+        missedCalls: 0,
+        avgDuration: 0
+      }
+    };
+
+    // WebSocket connection
+    let ws = null;
+    // Use fixed identity so incoming calls can reach any page
+    const repIdentity = 'sales-rep';
+
+    // Exponential backoff for WebSocket reconnection (ISSUE-204 fix)
+    let reconnectAttempts = 0;
+    const maxReconnectDelay = 30000; // 30 seconds max
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}/browser?role=rep&identity=${repIdentity}`);
+
+      ws.onopen = () => {
+        console.log('Dashboard connected to server');
+        updateConnectionStatus(true);
+        // Reset reconnect attempts on successful connection
+        reconnectAttempts = 0;
+      };
+
+      ws.onclose = () => {
+        console.log('Dashboard disconnected');
+        updateConnectionStatus(false);
+        // Exponential backoff: 3s, 6s, 12s, 24s, 30s (max)
+        const delay = Math.min(3000 * Math.pow(2, reconnectAttempts), maxReconnectDelay);
+        reconnectAttempts++;
+        console.log(`Reconnecting in ${delay / 1000}s (attempt ${reconnectAttempts})`);
+        setTimeout(connectWebSocket, delay);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      };
+    }
+
+    function updateConnectionStatus(connected) {
+      const statusEl = document.getElementById('connectionStatus');
+      const userStatusEl = document.getElementById('userStatus');
+      const connectionTextEl = document.getElementById('connectionText');
+
+      if (connected) {
+        statusEl.className = 'connection-status connected';
+        statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Connected</span>';
+        userStatusEl.style.color = 'var(--success)';
+        connectionTextEl.textContent = 'Available';
+      } else {
+        statusEl.className = 'connection-status disconnected';
+        statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Disconnected</span>';
+        userStatusEl.style.color = 'var(--gray-400)';
+        connectionTextEl.textContent = 'Offline';
+      }
+    }
+
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'stats_update':
+          updateStats(data.stats);
+          break;
+        case 'calls_update':
+          updateCalls(data.calls);
+          break;
+        case 'missed_calls_update':
+          updateMissedCalls(data.missedCalls);
+          break;
+        case 'callbacks_update':
+          updateCallbacks(data.callbacks);
+          break;
+        case 'incoming_call':
+          showIncomingCall(data);
+          break;
+      }
+    }
+
+    // UI Update Functions
+    function updateStats(stats) {
+      if (stats) {
+        document.getElementById('totalCalls').textContent = stats.totalCalls || 0;
+        document.getElementById('connectedCalls').textContent = stats.connectedCalls || 0;
+        document.getElementById('missedCalls').textContent = stats.missedCalls || 0;
+        document.getElementById('avgDuration').textContent = formatDuration(stats.avgDuration || 0);
+
+        // Update rate
+        if (stats.totalCalls > 0) {
+          const rate = Math.round((stats.connectedCalls / stats.totalCalls) * 100);
+          document.getElementById('connectedRate').innerHTML = `<span>${rate}% rate</span>`;
+        }
+      }
+    }
+
+    function updateCalls(calls) {
+      state.calls = calls || [];
+      renderRecentCalls();
+      renderRecentNumbers();
+    }
+
+    function updateMissedCalls(missedCalls) {
+      state.missedCalls = missedCalls || [];
+      renderMissedCalls();
+      const pendingCount = state.missedCalls.filter(c => c.callbackStatus === 'pending').length;
+      document.getElementById('missedCount').textContent = state.missedCalls.length;
+      document.getElementById('callbackBadge').textContent = pendingCount;
+
+      // Show/hide notification dots
+      const notificationDot = document.getElementById('notificationDot');
+      const mobileCallbackDot = document.getElementById('mobileCallbackDot');
+      if (pendingCount > 0) {
+        notificationDot.style.display = 'block';
+        mobileCallbackDot.style.display = 'block';
+      } else {
+        notificationDot.style.display = 'none';
+        mobileCallbackDot.style.display = 'none';
+      }
+    }
+
+    function updateCallbacks(callbacks) {
+      state.callbacks = callbacks || [];
+      renderCallbacks();
+    }
+
+    function renderRecentCalls() {
+      const container = document.getElementById('recentCallsList');
+
+      if (state.calls.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📞</div>
+            <div class="empty-state-title">No calls yet</div>
+            <div class="empty-state-text">Your call history will appear here</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.calls.slice(0, 5).map(call => `
+        <div class="call-item">
+          <div class="call-status-dot ${call.status}"></div>
+          <div class="call-info">
+            <div class="call-number">${formatPhoneNumber(call.phoneNumber)}</div>
+            <div class="call-meta">
+              <span>${formatTime(call.startTime)}</span>
+              <span>${call.duration ? formatDuration(call.duration) : '--'}</span>
+              <span class="badge badge-${getStatusBadgeClass(call.status)}">${call.status}</span>
+            </div>
+          </div>
+          <div class="call-actions">
+            ${call.transcript ? '<button class="btn btn-sm btn-secondary" onclick="viewTranscript(\'' + call.callSid + '\')">📄</button>' : ''}
+            <button class="btn btn-sm btn-success" onclick="callNumber('${call.phoneNumber}')">📞</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderRecentNumbers() {
+      const container = document.getElementById('recentNumbers');
+      const uniqueNumbers = [...new Set(state.calls.map(c => c.phoneNumber))].slice(0, 3);
+
+      if (uniqueNumbers.length === 0) {
+        container.innerHTML = '<div class="text-sm text-muted">No recent calls</div>';
+        return;
+      }
+
+      container.innerHTML = uniqueNumbers.map(number => {
+        const lastCall = state.calls.find(c => c.phoneNumber === number);
+        return `
+          <div class="quick-dial-number" onclick="callNumber('${number}')">
+            <span class="number">${formatPhoneNumber(number)}</span>
+            <span class="time">${formatRelativeTime(lastCall?.startTime)}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMissedCalls() {
+      const container = document.getElementById('missedCallsList');
+
+      if (state.missedCalls.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            <div class="empty-state-title">All caught up!</div>
+            <div class="empty-state-text">No missed calls to return</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.missedCalls.slice(0, 5).map(call => `
+        <div class="call-item">
+          <div class="call-status-dot missed"></div>
+          <div class="call-info">
+            <div class="call-number">${formatPhoneNumber(call.phoneNumber)}</div>
+            <div class="call-meta">
+              <span>${formatRelativeTime(call.missedAt)}</span>
+              ${call.callbackAttempts ? `<span>${call.callbackAttempts} attempts</span>` : ''}
+            </div>
+          </div>
+          <div class="call-actions">
+            <button class="btn btn-sm btn-success" onclick="callNumber('${call.phoneNumber}')">Call Back</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCallbacks() {
+      const container = document.getElementById('callbacksList');
+      const todayCallbacks = state.callbacks.filter(cb => isToday(cb.scheduledTime) && cb.status === 'pending');
+
+      if (todayCallbacks.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <div class="empty-state-title">No callbacks scheduled</div>
+            <div class="empty-state-text">Scheduled callbacks will appear here</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = todayCallbacks.map(cb => `
+        <div class="callback-item">
+          <div class="callback-time">${formatTime(cb.scheduledTime)}</div>
+          <div class="callback-info">
+            <div class="callback-name">${cb.customerName || 'Customer'}</div>
+            <div class="callback-number">${formatPhoneNumber(cb.phoneNumber)}</div>
+            ${cb.reason ? `<div class="callback-note">"${cb.reason}"</div>` : ''}
+          </div>
+          <div class="callback-actions">
+            <button class="btn btn-sm btn-success" onclick="callNumber('${cb.phoneNumber}')">Call Now</button>
+            <button class="btn btn-sm btn-secondary" onclick="rescheduleCallback('${cb.callbackId}')">Reschedule</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Helper Functions
+    function formatPhoneNumber(number) {
+      if (!number) return '';
+      const cleaned = number.replace(/\D/g, '');
+      if (cleaned.length === 11 && cleaned[0] === '1') {
+        return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      }
+      if (cleaned.length === 10) {
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      }
+      return number;
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function formatTime(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    function formatRelativeTime(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return `${diffMins} min ago`;
+      if (diffHours < 24) return `${diffHours} hr ago`;
+      return date.toLocaleDateString();
+    }
+
+    function isToday(dateStr) {
+      if (!dateStr) return false;
+      const date = new Date(dateStr);
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    }
+
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'completed': return 'success';  // ISSUE-201 fix: Twilio uses 'completed'
+        case 'in-progress': return 'success';
+        case 'busy': return 'warning';
+        case 'no-answer': return 'warning';
+        case 'failed': return 'danger';
+        case 'canceled': return 'danger';
+        default: return 'info';
+      }
+    }
+
+    // Action Functions
+    function callNumber(number) {
+      window.location.href = `call.html?number=${encodeURIComponent(number)}`;
+    }
+
+    function viewTranscript(callSid) {
+      window.location.href = `history.html?call=${callSid}`;
+    }
+
+    function rescheduleCallback(callbackId) {
+      // TODO: Implement reschedule modal
+      console.log('Reschedule callback:', callbackId);
+    }
+
+    function showIncomingCall(data) {
+      // Show notification for incoming call
+      if (Notification.permission === 'granted') {
+        new Notification('Incoming Call', {
+          body: `From: ${formatPhoneNumber(data.from)}`,
+          icon: '/favicon.ico'
+        });
+      }
+
+      // Redirect to call page
+      if (confirm(`Incoming call from ${formatPhoneNumber(data.from)}. Answer?`)) {
+        window.location.href = `call.html?incoming=${data.callSid}`;
+      }
+    }
+
+    // Phone input formatting
+    document.getElementById('phoneInput').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 0) {
+        if (value.length <= 3) {
+          value = `(${value}`;
+        } else if (value.length <= 6) {
+          value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+        } else {
+          value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+        }
+      }
+      e.target.value = value;
+    });
+
+    // Call button click
+    document.getElementById('callBtn').addEventListener('click', function() {
+      const input = document.getElementById('phoneInput');
+      const number = input.value.replace(/\D/g, '');
+      if (number.length >= 10) {
+        callNumber('+1' + number);
+      } else {
+        alert('Please enter a valid phone number');
+      }
+    });
+
+    // Enter key to call
+    document.getElementById('phoneInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('callBtn').click();
+      }
+    });
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Show error message in stats area (ISSUE-203 fix)
+    function showDashboardError(message) {
+      const statsGrid = document.getElementById('statsGrid');
+      // Clear loading spinners and show zeros
+      document.getElementById('totalCalls').textContent = '--';
+      document.getElementById('connectedCalls').textContent = '--';
+      document.getElementById('missedCalls').textContent = '--';
+      document.getElementById('avgDuration').textContent = '--';
+      document.getElementById('callsTrend').innerHTML = '<span>--</span>';
+      document.getElementById('connectedRate').innerHTML = '<span>--</span>';
+      document.getElementById('missedTrend').innerHTML = '<span>--</span>';
+      document.getElementById('durationTrend').innerHTML = '<span>--</span>';
+
+      // Add error message above stats grid
+      const existingError = document.querySelector('.stats-error');
+      if (existingError) existingError.remove();
+
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'stats-error';
+      errorDiv.textContent = message;
+      statsGrid.parentNode.insertBefore(errorDiv, statsGrid);
+    }
+
+    // Load initial data from Supabase
+    // Direct port from: web/src/features/dashboard/queries/getDashboardStats.ts
+    async function loadDashboardData() {
+      try {
+        // ISSUE-205 fix: Proper error handling for getCompanyMembership
+        let companyId;
+        try {
+          const membershipResult = await getCompanyMembership();
+          if (membershipResult.error || !membershipResult.companyId) {
+            showDashboardError('Unable to load your company data. Please log in again.');
+            return;
+          }
+          companyId = membershipResult.companyId;
+        } catch (membershipErr) {
+          console.error('Error getting company membership:', membershipErr);
+          showDashboardError('Connection error. Please refresh the page.');
+          return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayIso = today.toISOString();
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayIso = yesterday.toISOString();
+
+        // Fetch all data in parallel from Supabase
+        const [callsResult, yesterdayResult, missedResult, callbacksResult] = await Promise.all([
+          // Today's calls
+          supabase
+            .from('calls')
+            .select('id, status, duration_seconds, phone_number, started_at, external_call_id')
+            .eq('company_id', companyId)
+            .gte('started_at', todayIso)
+            .order('started_at', { ascending: false })
+            .limit(100),
+
+          // Yesterday's call count for trend
+          supabase
+            .from('calls')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', companyId)
+            .gte('started_at', yesterdayIso)
+            .lt('started_at', todayIso),
+
+          // Missed calls (no-answer or missed status, not yet called back)
+          // ISSUE-201 fix: Using correct Twilio status values
+          supabase
+            .from('calls')
+            .select('id, phone_number, started_at, status')
+            .eq('company_id', companyId)
+            .in('status', ['busy', 'no-answer', 'failed', 'canceled'])
+            .is('callback_completed', null)
+            .order('started_at', { ascending: false })
+            .limit(20),
+
+          // Pending callbacks for today
+          supabase
+            .from('callbacks')
+            .select(`
+              id, scheduled_time, notes, phone_number,
+              contact:contacts(id, first_name, last_name, phone)
+            `)
+            .eq('company_id', companyId)
+            .eq('status', 'pending')
+            .gte('scheduled_time', todayIso)
+            .order('scheduled_time', { ascending: true })
+            .limit(10)
+        ]);
+
+        // Process calls data
+        const calls = callsResult.data || [];
+        const totalCalls = calls.length;
+        // ISSUE-201 fix: Twilio uses 'completed' for connected/answered calls
+        const connectedCalls = calls.filter(c => c.status === 'completed').length;
+        // ISSUE-201 fix: Use correct unsuccessful status values
+        const missedCalls = calls.filter(c =>
+          c.status === 'busy' ||
+          c.status === 'no-answer' ||
+          c.status === 'failed' ||
+          c.status === 'canceled'
+        ).length;
+
+        // Calculate average duration
+        const durations = calls.filter(c => c.duration_seconds && c.duration_seconds > 0).map(c => c.duration_seconds);
+        const avgDuration = durations.length > 0
+          ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+          : 0;
+
+        // Calculate trend
+        const callsTrend = totalCalls - (yesterdayResult.count || 0);
+
+        // Update UI with stats
+        updateStats({
+          totalCalls,
+          connectedCalls,
+          missedCalls,
+          avgDuration,
+          callsTrend
+        });
+
+        // Transform and update calls list
+        const transformedCalls = calls.map(c => ({
+          callSid: c.external_call_id || c.id,
+          phoneNumber: c.phone_number,
+          status: c.status,
+          duration: c.duration_seconds,
+          startTime: c.started_at,
+          transcript: null // Transcript stored in separate table
+        }));
+        updateCalls(transformedCalls);
+
+        // Transform and update missed calls
+        const transformedMissed = (missedResult.data || []).map(c => ({
+          phoneNumber: c.phone_number,
+          missedAt: c.started_at,
+          status: c.status
+        }));
+        updateMissedCalls(transformedMissed);
+
+        // Transform and update callbacks
+        const transformedCallbacks = (callbacksResult.data || []).map(cb => ({
+          callbackId: cb.id,
+          scheduledTime: cb.scheduled_time,
+          phoneNumber: cb.phone_number || cb.contact?.[0]?.phone,
+          customerName: cb.contact?.[0]
+            ? `${cb.contact[0].first_name || ''} ${cb.contact[0].last_name || ''}`.trim()
+            : null,
+          reason: cb.notes,
+          status: 'pending'
+        }));
+        updateCallbacks(transformedCallbacks);
+
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // ISSUE-203 fix: Show error message instead of demo data
+        showDashboardError('Unable to load data. Please try again.');
+      }
+    }
+
+    // ============ INCOMING CALL HANDLING ============
+
+    function playRingtone() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+        gainNode.gain.value = 0;
+
+        const osc1 = audioContext.createOscillator();
+        const osc2 = audioContext.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.value = 440;
+        osc2.frequency.value = 480;
+
+        const mixer = audioContext.createGain();
+        mixer.gain.value = 0.15;
+        osc1.connect(mixer);
+        osc2.connect(mixer);
+        mixer.connect(gainNode);
+        osc1.start();
+        osc2.start();
+
+        let isRinging = true;
+        gainNode.gain.value = 1;
+        let ringTimeout;
+        const scheduleRing = () => {
+          const duration = isRinging ? 1000 : 2000;
+          ringTimeout = setTimeout(() => {
+            isRinging = !isRinging;
+            gainNode.gain.setTargetAtTime(isRinging ? 1 : 0, audioContext.currentTime, 0.02);
+            scheduleRing();
+          }, duration);
+        };
+        scheduleRing();
+        ringtoneAudio = { osc1, osc2, gainNode, audioContext, ringTimeout };
+      } catch (e) {
+        console.log('Could not play ringtone:', e);
+      }
+    }
+
+    function stopRingtone() {
+      if (ringtoneAudio) {
+        try {
+          if (ringtoneAudio.ringTimeout) clearTimeout(ringtoneAudio.ringTimeout);
+          if (ringtoneAudio.osc1) ringtoneAudio.osc1.stop();
+          if (ringtoneAudio.osc2) ringtoneAudio.osc2.stop();
+          ringtoneAudio.audioContext.close();
+        } catch (e) {}
+        ringtoneAudio = null;
+      }
+    }
+
+    function showIncomingCallModal(phoneNumber) {
+      document.getElementById('incomingCallNumber').textContent = formatPhoneNumber(phoneNumber);
+      document.getElementById('incomingCallModal').classList.add('active');
+      playRingtone();
+    }
+
+    function hideIncomingCallModal() {
+      document.getElementById('incomingCallModal').classList.remove('active');
+      stopRingtone();
+    }
+
+    function answerIncomingCall() {
+      if (pendingIncomingCall) {
+        console.log('Answering incoming call...');
+        pendingIncomingCall.accept();
+        hideIncomingCallModal();
+        // Stay on current page - call is now active
+        showActiveCallIndicator();
+      }
+    }
+
+    // Show active call indicator
+    function showActiveCallIndicator() {
+      let indicator = document.getElementById('activeCallIndicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'activeCallIndicator';
+        indicator.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10001;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        indicator.innerHTML = '<span style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s infinite;"></span> Call Active <button onclick="endActiveCall()" style="margin-left:10px;background:#ef4444;border:none;color:white;padding:6px 12px;border-radius:4px;cursor:pointer;">End Call</button>';
+        document.body.appendChild(indicator);
+      }
+      indicator.style.display = 'flex';
+    }
+
+    // End active call
+    function endActiveCall() {
+      if (pendingIncomingCall) {
+        pendingIncomingCall.disconnect();
+        pendingIncomingCall = null;
+      }
+      const indicator = document.getElementById('activeCallIndicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
+
+    function declineIncomingCall() {
+      hideIncomingCallModal();
+      if (pendingIncomingCall) {
+        pendingIncomingCall.reject();
+        pendingIncomingCall = null;
+      }
+    }
+
+    function handleIncomingCall(call) {
+      console.log('Incoming call received on dashboard:', call.parameters.From);
+      pendingIncomingCall = call;
+      const from = call.parameters.From || 'Unknown';
+
+      call.on('cancel', () => {
+        console.log('Call cancelled');
+        hideIncomingCallModal();
+        endActiveCall();
+      });
+
+      call.on('disconnect', () => {
+        console.log('Call disconnected');
+        hideIncomingCallModal();
+        endActiveCall();
+      });
+
+      showIncomingCallModal(from);
+    }
+
+    async function initTwilioDevice() {
+      try {
+        console.log('Initializing Twilio device for incoming calls...');
+        const response = await fetch(`/token?identity=${repIdentity}`);
+        const data = await response.json();
+
+        twilioDevice = new Twilio.Device(data.token, {
+          codecPreferences: ['opus', 'pcmu'],
+          logLevel: 1
+        });
+
+        twilioDevice.on('registered', () => {
+          console.log('Twilio device registered - ready for incoming calls');
+        });
+
+        twilioDevice.on('error', (error) => {
+          console.error('Twilio device error:', error.message || error);
+        });
+
+        twilioDevice.on('incoming', handleIncomingCall);
+
+        await twilioDevice.register();
+        console.log('Twilio device registration complete');
+      } catch (error) {
+        console.error('Failed to initialize Twilio device:', error);
+      }
+    }
+
+    // Set up event listeners for incoming call buttons
+    document.getElementById('answerCallBtn')?.addEventListener('click', answerIncomingCall);
+    document.getElementById('declineCallBtn')?.addEventListener('click', declineIncomingCall);
+
+    // Keyboard shortcuts for incoming calls
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('incomingCallModal').classList.contains('active')) {
+        if (e.key === 'Enter') answerIncomingCall();
+        if (e.key === 'Escape') declineIncomingCall();
+      }
+    });
+
+    // Initialize
+    function init() {
+      // Restore sidebar state
+      const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (savedCollapsed && window.innerWidth > 1024) {
+        sidebarCollapsed = true;
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+
+      // Initialize with auth check using shared supabase-config.js
+      initPage({
+        requireAuth: true,
+        onReady: async (user) => {
+          // Update user display in sidebar
+          if (user) {
+            const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+          }
+
+          // Connect WebSocket for real-time updates
+          connectWebSocket();
+
+          // Initialize Twilio device for incoming calls
+          initTwilioDevice();
+
+          // Load data from Supabase
+          await loadDashboardData();
+        },
+        onError: (error) => {
+          console.error('Dashboard init error:', error);
+        }
+      });
+    }
+
+    // Run init when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

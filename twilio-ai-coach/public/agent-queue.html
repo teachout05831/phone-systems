@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Agent Queue - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* AI Agent Queue Styles */
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    /* Stats Cards */
+    .queue-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .queue-stat-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .queue-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .queue-stat-icon.pending { background: var(--gray-100); }
+    .queue-stat-icon.active { background: var(--primary-light); }
+    .queue-stat-icon.completed { background: var(--success-light); }
+    .queue-stat-icon.cost { background: var(--warning-light); }
+
+    .queue-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .queue-stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      padding-left: 40px;
+      width: 100%;
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Queue Table */
+    .queue-table-container {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .queue-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .queue-table th {
+      background: var(--gray-50);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .queue-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+    }
+
+    .queue-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .queue-table .checkbox-cell {
+      width: 40px;
+    }
+
+    /* Queue Item Styles */
+    .queue-contact-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .queue-contact-phone {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      font-family: monospace;
+    }
+
+    .queue-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .queue-status.pending { background: var(--gray-100); color: var(--gray-600); }
+    .queue-status.in_progress { background: var(--primary-light); color: var(--primary); }
+    .queue-status.completed { background: var(--success-light); color: var(--success); }
+    .queue-status.failed { background: var(--danger-light); color: var(--danger); }
+    .queue-status.retry_scheduled { background: var(--warning-light); color: var(--warning); }
+
+    .queue-status .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .queue-status.in_progress .dot {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .queue-priority {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+    }
+
+    .queue-priority.high { color: var(--danger); }
+    .queue-priority.normal { color: var(--gray-500); }
+
+    .queue-priority .priority-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .queue-priority.high .priority-dot { background: var(--danger); }
+    .queue-priority.normal .priority-dot { background: var(--gray-300); }
+
+    .queue-outcome {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .queue-outcome.booked { background: var(--success-light); color: var(--success); }
+    .queue-outcome.callback { background: var(--warning-light); color: var(--warning); }
+    .queue-outcome.not_interested { background: var(--gray-100); color: var(--gray-600); }
+    .queue-outcome.no_answer { background: var(--danger-light); color: var(--danger); }
+
+    .queue-actions-cell {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions-bar {
+      display: none;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .bulk-actions-bar.active {
+      display: flex;
+    }
+
+    .bulk-actions-bar .selected-count {
+      font-weight: 500;
+    }
+
+    .bulk-actions-bar .bulk-btn {
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .bulk-actions-bar .bulk-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .pagination-info {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .pagination-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--gray-50);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Add to Queue Modal */
+    .contact-select-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+    }
+
+    .contact-select-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+    }
+
+    .contact-select-item:hover {
+      background: var(--gray-50);
+    }
+
+    .contact-select-item:last-child {
+      border-bottom: none;
+    }
+
+    .contact-select-item.selected {
+      background: var(--primary-light);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .filter-bar {
+        flex-direction: column;
+      }
+
+      .search-box {
+        width: 100%;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .filter-group select {
+        width: 100%;
+      }
+
+      .queue-table th:nth-child(5),
+      .queue-table td:nth-child(5),
+      .queue-table th:nth-child(6),
+      .queue-table td:nth-child(6) {
+        display: none;
+      }
+
+      .queue-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .queue-actions {
+        justify-content: stretch;
+      }
+
+      .queue-actions .btn {
+        flex: 1;
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span></span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">AI Agent Queue</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn" title="Notifications" id="notificationBtn">
+            🔔
+            <span class="badge-dot" id="notificationDot" style="display: none;"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <!-- Page Header -->
+        <div class="queue-header">
+          <div>
+            <h2 style="margin: 0; color: var(--gray-800);">Call Queue</h2>
+            <p style="margin: 4px 0 0; color: var(--gray-500); font-size: 0.875rem;">Manage contacts for AI agent calling</p>
+          </div>
+          <div class="queue-actions">
+            <button class="btn btn-secondary" onclick="openSettingsModal()">⚙️ Settings</button>
+            <button class="btn btn-primary" onclick="openAddToQueueModal()">+ Add Contacts</button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="queue-stats">
+          <div class="queue-stat-card">
+            <div class="queue-stat-icon pending">⏳</div>
+            <div>
+              <div class="queue-stat-value" id="statPending">12</div>
+              <div class="queue-stat-label">Pending</div>
+            </div>
+          </div>
+          <div class="queue-stat-card">
+            <div class="queue-stat-icon active">📞</div>
+            <div>
+              <div class="queue-stat-value" id="statActive">2</div>
+              <div class="queue-stat-label">In Progress</div>
+            </div>
+          </div>
+          <div class="queue-stat-card">
+            <div class="queue-stat-icon completed">✅</div>
+            <div>
+              <div class="queue-stat-value" id="statCompleted">45</div>
+              <div class="queue-stat-label">Completed Today</div>
+            </div>
+          </div>
+          <div class="queue-stat-card">
+            <div class="queue-stat-icon cost">💰</div>
+            <div>
+              <div class="queue-stat-value" id="statCost">$12.60</div>
+              <div class="queue-stat-label">Cost Today</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="input" id="searchInput" placeholder="Search by name or phone...">
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="input" id="filterStatus">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+              <option value="retry_scheduled">Retry Scheduled</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Priority</label>
+            <select class="input" id="filterPriority">
+              <option value="">All Priorities</option>
+              <option value="1">High</option>
+              <option value="2">Normal</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Outcome</label>
+            <select class="input" id="filterOutcome">
+              <option value="">All Outcomes</option>
+              <option value="booked">Booked</option>
+              <option value="callback">Callback</option>
+              <option value="not_interested">Not Interested</option>
+              <option value="no_answer">No Answer</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div class="bulk-actions-bar" id="bulkActionsBar">
+          <span class="selected-count"><span id="selectedCount">0</span> selected</span>
+          <button class="bulk-btn" onclick="bulkDispatch()">🚀 Dispatch Now</button>
+          <button class="bulk-btn" onclick="bulkPrioritize()">⬆️ Prioritize</button>
+          <button class="bulk-btn" onclick="bulkCancel()">❌ Cancel</button>
+          <button class="bulk-btn" onclick="bulkRemove()">🗑️ Remove</button>
+          <button class="bulk-btn" onclick="clearSelection()" style="margin-left: auto;">✕ Clear</button>
+        </div>
+
+        <!-- Queue Table -->
+        <div class="queue-table-container" id="tableView">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th class="checkbox-cell">
+                  <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                </th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Attempts</th>
+                <th>Outcome</th>
+                <th>Added</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="queueTableBody">
+              <!-- Demo data rows -->
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <div class="pagination-info">
+              Showing <strong>1-10</strong> of <strong id="totalQueue">15</strong> items
+            </div>
+            <div class="pagination-controls">
+              <button class="pagination-btn" disabled>← Prev</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn">2</button>
+              <button class="pagination-btn">Next →</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="contacts.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Contacts</span>
+        </a>
+        <a href="agent-queue.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">📋</span>
+          <span>Queue</span>
+        </a>
+        <a href="agent-monitor.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">🤖</span>
+          <span>Monitor</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="window.location.href='call.html'">📞</button>
+  </div>
+
+  <!-- Add to Queue Modal -->
+  <div class="modal-overlay" id="addToQueueModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Contacts to Queue</h3>
+        <button class="modal-close" onclick="closeAddToQueueModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Search Contacts</label>
+          <input type="text" class="input" id="contactSearchInput" placeholder="Search by name or phone...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Select Contacts</label>
+          <div class="contact-select-list" id="contactSelectList">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="input" id="addPriority">
+            <option value="2">Normal</option>
+            <option value="1">High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Schedule (Optional)</label>
+          <input type="datetime-local" class="input" id="addSchedule">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea class="input" id="addNotes" rows="2" placeholder="Add notes for the AI agent..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddToQueueModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="addSelectedToQueue()">Add to Queue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue Item Details Modal -->
+  <div class="modal-overlay" id="queueItemModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Queue Item Details</h3>
+        <button class="modal-close" onclick="closeQueueItemModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <dl style="display: grid; grid-template-columns: 120px 1fr; gap: var(--spacing-sm); font-size: 0.875rem;">
+          <dt style="color: var(--gray-500);">Contact</dt>
+          <dd id="modalContactName" style="margin: 0; color: var(--gray-800);">John Doe</dd>
+          <dt style="color: var(--gray-500);">Phone</dt>
+          <dd id="modalPhone" style="margin: 0; color: var(--gray-800);">+1 (555) 123-4567</dd>
+          <dt style="color: var(--gray-500);">Status</dt>
+          <dd id="modalStatus" style="margin: 0;"></dd>
+          <dt style="color: var(--gray-500);">Priority</dt>
+          <dd id="modalPriority" style="margin: 0; color: var(--gray-800);">Normal</dd>
+          <dt style="color: var(--gray-500);">Attempts</dt>
+          <dd id="modalAttempts" style="margin: 0; color: var(--gray-800);">0</dd>
+          <dt style="color: var(--gray-500);">Added</dt>
+          <dd id="modalAdded" style="margin: 0; color: var(--gray-800);">Jan 15, 2025</dd>
+          <dt style="color: var(--gray-500);">Outcome</dt>
+          <dd id="modalOutcome" style="margin: 0;"></dd>
+          <dt style="color: var(--gray-500);">Notes</dt>
+          <dd id="modalNotes" style="margin: 0; color: var(--gray-800);">-</dd>
+        </dl>
+        <div id="modalTranscriptSection" style="margin-top: var(--spacing-lg); display: none;">
+          <h4 style="margin-bottom: var(--spacing-sm); color: var(--gray-700);">AI Summary</h4>
+          <div id="modalAiSummary" style="background: var(--gray-50); padding: var(--spacing-md); border-radius: var(--radius-md); font-size: 0.875rem;">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeQueueItemModal()">Close</button>
+        <button class="btn btn-primary" id="modalDispatchBtn" onclick="dispatchFromModal()">🚀 Dispatch Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/agent-queue.js"></script>
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+</body>
+</html>

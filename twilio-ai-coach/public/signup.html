@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Sales Coach - Sign Up</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .signup-container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .signup-header h1 {
+      font-size: 1.75rem;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+    }
+
+    .signup-header p {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .signup-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group input::placeholder {
+      color: #64748b;
+    }
+
+    .form-group input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .form-group input.error {
+      border-color: #ef4444;
+    }
+
+    .field-error {
+      color: #fca5a5;
+      font-size: 0.75rem;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-primary:disabled {
+      background: #334155;
+      cursor: not-allowed;
+    }
+
+    .form-message {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .form-message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .form-message.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #86efac;
+    }
+
+    .form-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #94a3b8;
+    }
+
+    .form-footer a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .form-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .password-requirements {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <div class="signup-header">
+      <h1>AI Sales Coach</h1>
+      <p>Create your account to get started</p>
+    </div>
+
+    <div class="signup-card">
+      <form id="signup-form">
+        <div id="signup-message" class="form-message"></div>
+
+        <div class="form-group">
+          <label for="signup-name">Full Name</label>
+          <input
+            type="text"
+            id="signup-name"
+            name="name"
+            placeholder="John Smith"
+            autocomplete="name"
+            required
+          >
+          <div id="name-error" class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-email">Email</label>
+          <input
+            type="email"
+            id="signup-email"
+            name="email"
+            placeholder="you@company.com"
+            autocomplete="email"
+            required
+          >
+          <div id="email-error" class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input
+            type="password"
+            id="signup-password"
+            name="password"
+            placeholder="Create a password"
+            autocomplete="new-password"
+            required
+          >
+          <div class="password-requirements">Minimum 6 characters</div>
+          <div id="password-error" class="field-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-confirm-password">Confirm Password</label>
+          <input
+            type="password"
+            id="signup-confirm-password"
+            name="confirm-password"
+            placeholder="Confirm your password"
+            autocomplete="new-password"
+            required
+          >
+          <div id="confirm-password-error" class="field-error"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submit-btn">Create Account</button>
+
+        <div class="form-footer">
+          Already have an account? <a href="index.html">Sign in</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+
+  <!-- Shared config and helpers -->
+  <script src="js/supabase-config.js"></script>
+
+  <!-- Signup page functionality -->
+  <script src="js/signup.js"></script>
+
+  <!-- Inline override for ISSUE-003: Create company on signup -->
+  <script>
+    // Override handleSignup to create company after successful signup with session
+    // This ensures users have a company immediately, not just after re-login
+    (function() {
+      // Store reference to original functions we need
+      const originalSetFormLoading = typeof setFormLoading === 'function' ? setFormLoading : function(form, btn, loading, text) {
+        const inputs = form.querySelectorAll('input, button')
+        inputs.forEach(input => input.disabled = loading)
+        if (btn) btn.textContent = text
+      }
+
+      const originalShowMessage = typeof showMessage === 'function' ? showMessage : function(msg, type) {
+        const el = document.getElementById('signup-message')
+        if (el) {
+          el.textContent = msg
+          el.className = 'form-message ' + type
+          el.style.display = 'block'
+        }
+      }
+
+      const originalValidateForm = typeof validateForm === 'function' ? validateForm : function() { return true }
+
+      const originalGetAuthErrorMessage = typeof getAuthErrorMessage === 'function' ? getAuthErrorMessage : function(error) {
+        return error.message || 'An error occurred. Please try again.'
+      }
+
+      // Override the handleSignup function
+      window.handleSignup = async function(e) {
+        e.preventDefault()
+
+        const form = e.target
+        const submitBtn = document.getElementById('submit-btn')
+        const fullName = document.getElementById('signup-name').value.trim()
+        const email = document.getElementById('signup-email').value.trim()
+        const password = document.getElementById('signup-password').value
+
+        // Clear previous messages
+        const messageEl = document.getElementById('signup-message')
+        if (messageEl) {
+          messageEl.textContent = ''
+          messageEl.style.display = 'none'
+        }
+
+        // Validate all fields
+        if (!originalValidateForm()) {
+          return
+        }
+
+        // Disable form during submission
+        originalSetFormLoading(form, submitBtn, true, 'Creating account...')
+
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName
+              }
+            }
+          })
+
+          if (error) {
+            originalShowMessage(originalGetAuthErrorMessage(error), 'error')
+            originalSetFormLoading(form, submitBtn, false, 'Create Account')
+            return
+          }
+
+          // Check if email confirmation is required
+          if (data.user && !data.session) {
+            // Email confirmation required
+            originalShowMessage('Account created! Please check your email to confirm your account.', 'success')
+            originalSetFormLoading(form, submitBtn, false, 'Create Account')
+          } else if (data.user && data.session) {
+            // Direct signup (no confirmation needed) - create company for new user
+            // FIX FOR ISSUE-003: Create company immediately on signup
+            if (typeof createCompanyForUser === 'function') {
+              try {
+                await createCompanyForUser(data.user)
+              } catch (companyError) {
+                console.error('Error creating company:', companyError)
+                // Continue anyway - user can set up company later
+              }
+            }
+
+            originalShowMessage('Account created successfully! Redirecting...', 'success')
+            setTimeout(() => {
+              window.location.href = 'dashboard.html'
+            }, 1000)
+          }
+
+        } catch (err) {
+          console.error('Signup error:', err)
+          originalShowMessage('Error: ' + (err.message || err), 'error')
+          originalSetFormLoading(form, submitBtn, false, 'Create Account')
+        }
+      }
+
+      // Re-attach the submit handler
+      document.addEventListener('DOMContentLoaded', function() {
+        const signupForm = document.getElementById('signup-form')
+        if (signupForm) {
+          // Remove existing listeners by cloning
+          const newForm = signupForm.cloneNode(true)
+          signupForm.parentNode.replaceChild(newForm, signupForm)
+
+          newForm.addEventListener('submit', handleSignup)
+        }
+      })
+    })()
+  </script>
+</body>
+</html>

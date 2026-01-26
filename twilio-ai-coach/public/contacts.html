@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Contacts - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Twilio Voice SDK for incoming calls -->
+  <script src="js/twilio.min.js"></script>
+  <style>
+    /* Incoming Call Modal */
+    .incoming-call-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;visibility:hidden;transition:all 0.3s ease;}
+    .incoming-call-overlay.active{opacity:1;visibility:visible;}
+    .incoming-call-modal{background:white;border-radius:16px;padding:24px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);transform:scale(0.9);transition:transform 0.3s ease;}
+    .incoming-call-overlay.active .incoming-call-modal{transform:scale(1);}
+    .incoming-call-icon{width:80px;height:80px;background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:ring-pulse 1.5s ease-in-out infinite;}
+    .incoming-call-icon svg{width:40px;height:40px;color:white;animation:ring-shake 0.5s ease-in-out infinite;}
+    @keyframes ring-pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.4);}50%{box-shadow:0 0 0 20px rgba(16,185,129,0);}}
+    @keyframes ring-shake{0%,100%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}}
+    .incoming-call-label{font-size:0.875rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+    .incoming-call-number{font-size:1.5rem;font-weight:600;color:#111827;margin-bottom:16px;}
+    .incoming-call-actions{display:flex;gap:16px;justify-content:center;}
+    .incoming-call-btn{width:70px;height:70px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;}
+    .incoming-call-btn svg{width:28px;height:28px;color:white;}
+    .incoming-call-btn.answer{background:linear-gradient(135deg,#10b981 0%,#059669 100%);}
+    .incoming-call-btn.answer:hover{transform:scale(1.1);box-shadow:0 8px 20px rgba(16,185,129,0.4);}
+    .incoming-call-btn.decline{background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);}
+    .incoming-call-btn.decline:hover{transform:scale(1.1);box-shadow:0 8px 20px rgba(239,68,68,0.4);}
+    .incoming-call-btn-label{font-size:0.75rem;color:#4b5563;margin-top:4px;}
+    .incoming-call-btn-wrapper{display:flex;flex-direction:column;align-items:center;}
+
+    /* Contacts Page Styles */
+    .contacts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+
+    .contacts-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .search-filter-bar {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      padding-left: 40px;
+      width: 100%;
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 6px 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .filter-chip .remove {
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.7;
+    }
+
+    .filter-chip .remove:hover {
+      opacity: 1;
+    }
+
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      padding: 8px 12px;
+      background: white;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+
+    .view-toggle button.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .view-toggle button:hover:not(.active) {
+      background: var(--gray-50);
+    }
+
+    /* Contacts Table */
+    .contacts-table-container {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .contacts-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .contacts-table th {
+      background: var(--gray-50);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .contacts-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+    }
+
+    .contacts-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .contacts-table .checkbox-cell {
+      width: 40px;
+    }
+
+    .contact-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .contact-email {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .contact-phone {
+      font-family: monospace;
+      color: var(--gray-700);
+    }
+
+    .contact-source {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .contact-source.facebook { background: #e7f3ff; color: #1877f2; }
+    .contact-source.google { background: #fef7e0; color: #ea4335; }
+    .contact-source.website { background: #e8f5e9; color: #34a853; }
+    .contact-source.referral { background: #f3e5f5; color: #9c27b0; }
+    .contact-source.manual { background: var(--gray-100); color: var(--gray-600); }
+
+    .contact-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .contact-status.new { background: var(--primary-light); color: var(--primary); }
+    .contact-status.contacted { background: var(--warning-light); color: var(--warning); }
+    .contact-status.qualified { background: var(--success-light); color: var(--success); }
+    .contact-status.unqualified { background: var(--gray-100); color: var(--gray-500); }
+
+    .contact-status .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Queue status badges */
+    .queue-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .queue-badge.queue-pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .queue-badge.queue-in_progress {
+      background: #dbeafe;
+      color: #2563eb;
+      animation: pulse 2s infinite;
+    }
+
+    .queue-badge.queue-retry_scheduled {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .contact-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    /* Contacts Grid View */
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .contact-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .contact-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .contact-card-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+
+    .contact-card-info {
+      flex: 1;
+      margin-left: var(--spacing-sm);
+    }
+
+    .contact-card-name {
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .contact-card-company {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .contact-card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .contact-card-details span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .contact-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: var(--spacing-sm);
+      border-top: 1px solid var(--gray-100);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions-bar {
+      display: none;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .bulk-actions-bar.active {
+      display: flex;
+    }
+
+    .bulk-actions-bar .selected-count {
+      font-weight: 500;
+    }
+
+    .bulk-actions-bar .bulk-btn {
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .bulk-actions-bar .bulk-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .pagination-info {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .pagination-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--gray-50);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Contact Quick View Modal */
+    .contact-modal .modal {
+      max-width: 500px;
+    }
+
+    .contact-modal-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .contact-modal-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+
+    .contact-modal-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .contact-modal-details {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: var(--spacing-sm);
+      font-size: 0.875rem;
+    }
+
+    .contact-modal-details dt {
+      color: var(--gray-500);
+    }
+
+    .contact-modal-details dd {
+      color: var(--gray-800);
+      margin: 0;
+    }
+
+    .contact-modal-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .search-filter-bar {
+        flex-direction: column;
+      }
+
+      .search-box {
+        width: 100%;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .filter-group select {
+        width: 100%;
+      }
+
+      .contacts-table th:nth-child(4),
+      .contacts-table td:nth-child(4),
+      .contacts-table th:nth-child(5),
+      .contacts-table td:nth-child(5) {
+        display: none;
+      }
+
+      .contacts-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .contacts-actions {
+        justify-content: stretch;
+      }
+
+      .contacts-actions .btn {
+        flex: 1;
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Contacts</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn" title="Notifications" id="notificationBtn">
+            🔔
+            <span class="badge-dot" id="notificationDot" style="display: none;"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <!-- Page Header -->
+        <div class="contacts-header">
+          <div>
+            <h2 style="margin: 0; color: var(--gray-800);">All Contacts</h2>
+            <p style="margin: 4px 0 0; color: var(--gray-500); font-size: 0.875rem;">Manage and organize your contacts</p>
+          </div>
+          <div class="contacts-actions">
+            <a href="contacts-import.html" class="btn btn-secondary">📥 Import</a>
+            <button class="btn btn-primary" onclick="openAddContactModal()">+ Add Contact</button>
+          </div>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="search-filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="input" id="searchInput" placeholder="Search by name, phone, or email...">
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="input" id="filterStatus">
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="qualified">Qualified</option>
+              <option value="unqualified">Unqualified</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Source</label>
+            <select class="input" id="filterSource">
+              <option value="">All Sources</option>
+              <option value="facebook">Facebook</option>
+              <option value="google">Google</option>
+              <option value="website">Website</option>
+              <option value="referral">Referral</option>
+              <option value="manual">Manual</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Date Added</label>
+            <select class="input" id="filterDate">
+              <option value="">Any Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Tags</label>
+            <select class="input" id="filterTags">
+              <option value="">All Tags</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="view-toggle">
+            <button class="active" id="tableViewBtn" onclick="setView('table')" title="Table View">☰</button>
+            <button id="gridViewBtn" onclick="setView('grid')" title="Grid View">⊞</button>
+          </div>
+        </div>
+
+        <!-- Active Filters -->
+        <div class="filter-chips" id="activeFilters" style="display: none;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div class="bulk-actions-bar" id="bulkActionsBar">
+          <span class="selected-count"><span id="selectedCount">0</span> selected</span>
+          <button class="bulk-btn" onclick="addToAIQueue()">🤖 Add to Queue</button>
+          <button class="bulk-btn" onclick="addToAutoDialer()">☎️ Add to Dialer</button>
+          <button class="bulk-btn" onclick="bulkAddTag()">🏷️ Add Tag</button>
+          <button class="bulk-btn" onclick="bulkExport()">📤 Export</button>
+          <button class="bulk-btn danger" onclick="bulkDelete()">🗑️ Delete</button>
+          <button class="bulk-btn" onclick="clearSelection()" style="margin-left: auto;">✕ Clear</button>
+        </div>
+
+        <!-- Contacts Table View -->
+        <div class="contacts-table-container" id="tableView">
+          <table class="contacts-table">
+            <thead>
+              <tr>
+                <th class="checkbox-cell">
+                  <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                </th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Tags</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Added</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contactsTableBody">
+              <!-- Demo data rows -->
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <div class="pagination-info">
+              Showing <strong>1-10</strong> of <strong id="totalContacts">25</strong> contacts
+            </div>
+            <div class="pagination-controls">
+              <button class="pagination-btn" disabled>← Prev</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn">2</button>
+              <button class="pagination-btn">3</button>
+              <button class="pagination-btn">Next →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts Grid View -->
+        <div class="contacts-grid" id="gridView" style="display: none;">
+          <!-- Dynamically populated -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="contacts.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Contacts</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="pipeline.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📈</span>
+          <span>Pipeline</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="window.location.href='call.html'">📞</button>
+  </div>
+
+  <!-- Contact Quick View Modal -->
+  <div class="modal-overlay contact-modal" id="contactModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Contact Details</h3>
+        <button class="modal-close" onclick="closeContactModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="contact-modal-header">
+          <div class="contact-modal-avatar" id="modalAvatar">JD</div>
+          <div>
+            <div class="contact-modal-name" id="modalName">John Doe</div>
+            <div class="contact-status new" id="modalStatus">
+              <span class="dot"></span>
+              New
+            </div>
+          </div>
+        </div>
+        <dl class="contact-modal-details">
+          <dt>Phone</dt>
+          <dd id="modalPhone">+1 (555) 123-4567</dd>
+          <dt>Email</dt>
+          <dd id="modalEmail">john@example.com</dd>
+          <dt>Company</dt>
+          <dd id="modalCompany">Acme Corp</dd>
+          <dt>Source</dt>
+          <dd id="modalSource">Facebook</dd>
+          <dt>Added</dt>
+          <dd id="modalAdded">Jan 15, 2025</dd>
+          <dt>Last Contact</dt>
+          <dd id="modalLastContact">Never</dd>
+          <dt>Notes</dt>
+          <dd id="modalNotes">Interested in premium package</dd>
+        </dl>
+        <div class="contact-modal-actions">
+          <button class="btn btn-success" onclick="callContact()">📞 Call Now</button>
+          <button class="btn btn-primary" onclick="addToQueue(document.getElementById('contactModal').dataset.contactId)">+ Add to Queue</button>
+          <button class="btn btn-secondary" onclick="editContact()">✏️ Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Contact Modal -->
+  <div class="modal-overlay" id="addContactModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Contact</h3>
+        <button class="modal-close" onclick="closeAddContactModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="addContactForm">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" class="input" name="firstName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input type="text" class="input" name="lastName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone *</label>
+            <input type="tel" class="input" name="phone" placeholder="+1 (___) ___-____" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="input" name="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" class="input" name="company">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Source</label>
+            <select class="input" name="source">
+              <option value="manual">Manual Entry</option>
+              <option value="facebook">Facebook</option>
+              <option value="google">Google</option>
+              <option value="website">Website</option>
+              <option value="referral">Referral</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="input" name="notes" rows="3" placeholder="Add any notes about this contact..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddContactModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewContact()">Save Contact</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue Type Selection Modal -->
+  <div class="modal-overlay" id="queueTypeModal" style="display: none;">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Select Queue</h3>
+        <button class="modal-close" onclick="closeQueueTypeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="queueContactCount" style="text-align: center; color: var(--gray-600); margin-bottom: 16px;">Adding X contacts to:</p>
+        <div class="queue-type-options">
+          <button class="queue-type-btn" onclick="addToAIQueue()">
+            <span class="queue-icon">🤖</span>
+            <span class="queue-name">AI Agent Queue</span>
+            <span class="queue-desc">Automated calls with AI coach</span>
+          </button>
+          <button class="queue-type-btn" onclick="addToAutoDialer()">
+            <span class="queue-icon">☎️</span>
+            <span class="queue-name">Auto-Dialer Queue</span>
+            <span class="queue-desc">Manual call list for you to dial</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Tags Modal -->
+  <div class="modal-overlay" id="manageTagsModal" style="display: none;">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Manage Tags</h3>
+        <button class="modal-close" onclick="closeManageTagsModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tag-input-group">
+          <input type="text" class="input" id="newTagInput" placeholder="Enter tag name" onkeypress="if(event.key==='Enter'){addNewTag();event.preventDefault();}">
+          <button class="btn btn-primary" onclick="addNewTag()">Add</button>
+        </div>
+        <div id="currentTags" class="current-tags-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeManageTagsModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveContactTags()">Save Tags</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Styles -->
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 0.875rem;
+      z-index: 10001;
+      animation: toast-in 0.3s ease;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast-info { background: var(--gray-800); }
+    .toast-success { background: var(--success); }
+    .toast-error { background: var(--danger); }
+    .toast-warning { background: var(--warning); }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .btn.loading {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+    .btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      top: 50%;
+      left: 50%;
+      margin-left: -8px;
+      margin-top: -8px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Page-specific functionality (INLINE) -->
+  <script>
+/**
+ * Contacts Page JavaScript (Inline)
+ * Handles: List contacts, search/filter, CRUD operations
+ * Security: All queries filter by company_id, validate inputs, use limits
+ */
+
+// ===========================================
+// STATE
+// ===========================================
+let contacts = [];
+let selectedContacts = new Set();
+let currentPage = 1;
+let totalContacts = 0;
+const PAGE_SIZE = 50;
+let currentFilters = {
+  search: '',
+  status: '',
+  source: '',
+  dateRange: '',
+  tag: ''
+};
+
+// Tag management state
+let pendingTags = [];
+let editingContactId = null;
+let currentView = 'table';
+
+// ===========================================
+// TOAST NOTIFICATIONS (ISSUE-302 FIX)
+// ===========================================
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ===========================================
+// INITIALIZATION
+// ===========================================
+async function initContactsPage() {
+  initPage({
+    requireAuth: true,
+    onReady: async (user) => {
+      // Update user display
+      if (user) {
+        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+      }
+
+      // Load contacts and tags
+      await loadContacts();
+      await loadAllTags();
+
+      // Setup event listeners
+      setupEventListeners();
+    },
+    onError: (error) => {
+      console.error('Contacts page init error:', error);
+      showError('#contactsTableBody', 'Failed to initialize page');
+    }
+  });
+}
+
+// ===========================================
+// DATA LOADING
+// ===========================================
+async function loadContacts() {
+  showLoading('#contactsTableBody', 'Loading contacts...');
+
+  try {
+    // Get company membership
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    console.log('Company membership result:', { companyId, membershipError });
+    if (membershipError || !companyId) {
+      console.error('No company membership:', membershipError);
+      showError('#contactsTableBody', 'Unable to load contacts. Please try again.');
+      return;
+    }
+
+    // Build query with filters
+    let query = supabase
+      .from('contacts')
+      .select('id, first_name, last_name, phone, email, business_name, source, status, tags, created_at', { count: 'exact' })
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
+
+    // Apply filters
+    if (currentFilters.search) {
+      const searchTerm = `%${currentFilters.search}%`;
+      query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},phone.ilike.${searchTerm},email.ilike.${searchTerm}`);
+    }
+
+    if (currentFilters.status) {
+      query = query.eq('status', currentFilters.status);
+    }
+
+    if (currentFilters.source) {
+      query = query.eq('source', currentFilters.source);
+    }
+
+    if (currentFilters.dateRange) {
+      const now = new Date();
+      let startDate;
+
+      switch (currentFilters.dateRange) {
+        case 'today':
+          startDate = new Date(now.setHours(0, 0, 0, 0));
+          break;
+        case 'week':
+          startDate = new Date(now.setDate(now.getDate() - 7));
+          break;
+        case 'month':
+          startDate = new Date(now.setMonth(now.getMonth() - 1));
+          break;
+      }
+
+      if (startDate) {
+        query = query.gte('created_at', startDate.toISOString());
+      }
+    }
+
+    // Apply tag filter
+    if (currentFilters.tag) {
+      query = query.contains('tags', [currentFilters.tag]);
+    }
+
+    // Apply pagination
+    const from = (currentPage - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    console.log('Contacts query result:', { data, error, count });
+
+    if (error) {
+      console.error('Error loading contacts:', error);
+      showError('#contactsTableBody', 'Failed to load contacts');
+      return;
+    }
+
+    contacts = data || [];
+    totalContacts = count || 0;
+    console.log('Loaded contacts:', contacts.length, 'Total:', totalContacts);
+
+    // Fetch queue status for these contacts
+    if (contacts.length > 0) {
+      const contactIds = contacts.map(c => c.id);
+      const { data: queueData } = await supabase
+        .from('ai_queue')
+        .select('contact_id, status')
+        .eq('company_id', companyId)
+        .in('contact_id', contactIds)
+        .in('status', ['pending', 'in_progress', 'retry_scheduled']);
+
+      // Map queue status to contacts
+      const queueMap = {};
+      (queueData || []).forEach(q => {
+        queueMap[q.contact_id] = q.status;
+      });
+
+      contacts.forEach(contact => {
+        contact.queue_status = queueMap[contact.id] || null;
+      });
+    }
+
+    // Render the appropriate view
+    if (currentView === 'table') {
+      renderContactsTable();
+    } else {
+      renderContactsGrid();
+    }
+
+    // Update pagination
+    renderPagination();
+    const totalContactsEl = document.getElementById('totalContacts');
+    if (totalContactsEl) {
+      totalContactsEl.textContent = totalContacts;
+    }
+
+  } catch (error) {
+    console.error('Error loading contacts:', error);
+    showError('#contactsTableBody', 'Failed to load contacts');
+  }
+}
+
+// ===========================================
+// RENDERING
+// ===========================================
+function renderContactsTable() {
+  const tbody = document.getElementById('contactsTableBody');
+
+  if (contacts.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 40px;">
+          <div class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <div class="empty-state-title">No contacts found</div>
+            <div class="empty-state-text">Add contacts or adjust your filters</div>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = contacts.map(contact => {
+    const fullName = `${escapeHtml(contact.first_name || '')} ${escapeHtml(contact.last_name || '')}`.trim() || 'Unknown';
+    const initials = getInitials(contact.first_name, contact.last_name);
+
+    const tagsHtml = (contact.tags && contact.tags.length > 0)
+      ? contact.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
+      : '<span class="no-tags">-</span>';
+
+    // Queue status badge
+    let queueBadge = '';
+    if (contact.queue_status) {
+      const queueLabels = {
+        'pending': '🕐 In Queue',
+        'in_progress': '📞 Calling',
+        'retry_scheduled': '🔄 Retry'
+      };
+      const queueLabel = queueLabels[contact.queue_status] || contact.queue_status;
+      queueBadge = `<span class="queue-badge queue-${contact.queue_status}" title="In Call Queue">${queueLabel}</span>`;
+    }
+
+    return `
+      <tr data-id="${contact.id}" style="cursor: pointer;" onclick="goToProfile('${contact.id}', event)">
+        <td class="checkbox-cell" onclick="event.stopPropagation()">
+          <input type="checkbox" onchange="toggleSelect('${contact.id}')" ${selectedContacts.has(contact.id) ? 'checked' : ''}>
+        </td>
+        <td>
+          <div class="contact-name" style="color: var(--primary);">${fullName} ${queueBadge}</div>
+          <div class="contact-email">${escapeHtml(contact.email || '')}</div>
+        </td>
+        <td class="contact-phone">${formatPhone(contact.phone)}</td>
+        <td onclick="event.stopPropagation()">
+          <div class="contact-tags" onclick="openManageTagsModal('${contact.id}')" style="cursor: pointer;" title="Click to manage tags">
+            ${tagsHtml}
+          </div>
+        </td>
+        <td><span class="contact-source ${contact.source || 'manual'}">${capitalizeFirst(contact.source || 'manual')}</span></td>
+        <td>
+          <span class="contact-status ${contact.status || 'new'}">
+            <span class="dot"></span>
+            ${capitalizeFirst(contact.status || 'new')}
+          </span>
+        </td>
+        <td>${formatDate(contact.created_at)}</td>
+        <td onclick="event.stopPropagation()">
+          <div class="contact-actions">
+            <button class="btn btn-sm btn-secondary" onclick="viewContact('${contact.id}')" title="View">👁️</button>
+            <button class="btn btn-sm btn-success" onclick="callContact('${contact.id}')" title="Call">📞</button>
+            <button class="btn btn-sm btn-primary" onclick="addToQueue('${contact.id}')" title="Add to Queue" ${contact.queue_status ? 'disabled' : ''}>+</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderContactsGrid() {
+  const grid = document.getElementById('gridView');
+
+  if (contacts.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">👥</div>
+        <div class="empty-state-title">No contacts found</div>
+        <div class="empty-state-text">Add contacts or adjust your filters</div>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = contacts.map(contact => {
+    const fullName = `${escapeHtml(contact.first_name || '')} ${escapeHtml(contact.last_name || '')}`.trim() || 'Unknown';
+    const initials = getInitials(contact.first_name, contact.last_name);
+    const tagsHtml = (contact.tags && contact.tags.length > 0)
+      ? contact.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
+      : '';
+
+    // Queue status badge
+    let queueBadge = '';
+    if (contact.queue_status) {
+      const queueLabels = {
+        'pending': '🕐 In Queue',
+        'in_progress': '📞 Calling',
+        'retry_scheduled': '🔄 Retry'
+      };
+      const queueLabel = queueLabels[contact.queue_status] || contact.queue_status;
+      queueBadge = `<span class="queue-badge queue-${contact.queue_status}">${queueLabel}</span>`;
+    }
+
+    return `
+      <div class="contact-card" data-id="${contact.id}" style="cursor: pointer;" onclick="goToProfile('${contact.id}', event)">
+        <div class="contact-card-header">
+          <div class="contact-card-avatar">${initials}</div>
+          <div class="contact-card-info">
+            <div class="contact-card-name" style="color: var(--primary);">${fullName}</div>
+            <div class="contact-card-company">${escapeHtml(contact.business_name || '')}</div>
+          </div>
+          ${queueBadge || `<span class="contact-source ${contact.source || 'manual'}">${capitalizeFirst(contact.source || 'manual')}</span>`}
+        </div>
+        <div class="contact-card-details">
+          <span>📞 ${formatPhone(contact.phone)}</span>
+          <span>✉️ ${escapeHtml(contact.email || '')}</span>
+        </div>
+        ${tagsHtml ? `<div class="contact-tags" onclick="event.stopPropagation(); openManageTagsModal('${contact.id}')" style="cursor: pointer; margin-top: 8px;">${tagsHtml}</div>` : ''}
+        <div class="contact-card-footer">
+          <span class="contact-status ${contact.status || 'new'}">
+            <span class="dot"></span>
+            ${capitalizeFirst(contact.status || 'new')}
+          </span>
+          <div class="contact-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-sm btn-success" onclick="callContact('${contact.id}')">📞</button>
+            <button class="btn btn-sm btn-primary" onclick="addToQueue('${contact.id}')" ${contact.queue_status ? 'disabled' : ''}>+ Queue</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(totalContacts / PAGE_SIZE);
+  const paginationInfo = document.querySelector('.pagination-info');
+  const paginationControls = document.querySelector('.pagination-controls');
+
+  const from = Math.min((currentPage - 1) * PAGE_SIZE + 1, totalContacts);
+  const to = Math.min(currentPage * PAGE_SIZE, totalContacts);
+
+  paginationInfo.innerHTML = `Showing <strong>${from}-${to}</strong> of <strong>${totalContacts}</strong> contacts`;
+
+  let paginationHtml = `
+    <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>
+  `;
+
+  // Show up to 5 page buttons
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+
+  for (let i = startPage; i <= endPage; i++) {
+    paginationHtml += `
+      <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>
+    `;
+  }
+
+  paginationHtml += `
+    <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>
+  `;
+
+  paginationControls.innerHTML = paginationHtml;
+}
+
+// ===========================================
+// CONTACT CRUD OPERATIONS
+// ===========================================
+async function handleCreateContact(e) {
+  e.preventDefault();
+
+  const form = document.getElementById('addContactForm');
+  const formData = new FormData(form);
+  const saveBtn = document.querySelector('#addContactModal .btn-primary');
+
+  // Ralph Wiggum Validation - validate at every step
+  const firstName = formData.get('firstName')?.toString().trim();
+  const lastName = formData.get('lastName')?.toString().trim();
+  const phone = formData.get('phone')?.toString().trim();
+  const email = formData.get('email')?.toString().trim();
+  const company = formData.get('company')?.toString().trim();
+  const source = formData.get('source')?.toString().trim();
+  const notes = formData.get('notes')?.toString().trim();
+
+  // Validate required fields
+  if (!firstName || firstName.length < 1) {
+    showToast('First name is required', 'error');
+    return;
+  }
+  if (firstName.length > 100) {
+    showToast('First name must be less than 100 characters', 'error');
+    return;
+  }
+
+  if (!lastName || lastName.length < 1) {
+    showToast('Last name is required', 'error');
+    return;
+  }
+  if (lastName.length > 100) {
+    showToast('Last name must be less than 100 characters', 'error');
+    return;
+  }
+
+  if (!phone) {
+    showToast('Phone number is required', 'error');
+    return;
+  }
+
+  // Validate phone format (basic validation)
+  const cleanedPhone = phone.replace(/\D/g, '');
+  if (cleanedPhone.length < 10 || cleanedPhone.length > 15) {
+    showToast('Please enter a valid phone number', 'error');
+    return;
+  }
+
+  // Validate email if provided
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Please enter a valid email address', 'error');
+    return;
+  }
+
+  // ISSUE-303 FIX: Add loading state to save button
+  if (saveBtn) saveBtn.classList.add('loading');
+
+  try {
+    // Get company membership
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    console.log('Create contact - company membership:', { companyId, membershipError });
+    if (membershipError || !companyId) {
+      console.error('No company membership for create:', membershipError);
+      showToast('Unable to create contact. Please try again.', 'error');
+      return;
+    }
+
+    // Format phone number for storage
+    const formattedPhone = cleanedPhone.length === 10 ? `+1${cleanedPhone}` : `+${cleanedPhone}`;
+
+    console.log('Inserting contact:', { companyId, firstName, lastName, formattedPhone });
+    const { data, error } = await supabase
+      .from('contacts')
+      .insert({
+        company_id: companyId,
+        first_name: firstName,
+        last_name: lastName,
+        phone: formattedPhone,
+        email: email || null,
+        business_name: company || null,
+        source: source || 'manual',
+        notes: notes || null,
+        status: 'new'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating contact:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      showToast('Failed to create contact: ' + (error.message || 'Unknown error'), 'error');
+      return;
+    }
+
+    // Close modal and reload
+    closeAddContactModal();
+    await loadContacts();
+    showToast('Contact created successfully!', 'success');
+
+  } catch (error) {
+    console.error('Error creating contact:', error);
+    showToast('Failed to create contact. Please try again.', 'error');
+  } finally {
+    if (saveBtn) saveBtn.classList.remove('loading');
+  }
+}
+
+async function handleUpdateContact(contactId, updates) {
+  // Validate contactId
+  if (!contactId || typeof contactId !== 'string') {
+    showToast('Invalid contact ID', 'error');
+    return { error: 'Invalid contact ID' };
+  }
+
+  try {
+    // Get company membership for ownership verification
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      return { error: 'Not authorized' };
+    }
+
+    // Verify ownership before update
+    const { data: existing } = await supabase
+      .from('contacts')
+      .select('company_id')
+      .eq('id', contactId)
+      .single();
+
+    if (!existing) {
+      return { error: 'Contact not found' };
+    }
+
+    if (existing.company_id !== companyId) {
+      return { error: 'Not authorized to update this contact' };
+    }
+
+    // Perform update
+    const { data, error } = await supabase
+      .from('contacts')
+      .update(updates)
+      .eq('id', contactId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating contact:', error);
+      return { error: 'Failed to update contact' };
+    }
+
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    return { error: 'Failed to update contact' };
+  }
+}
+
+async function handleDeleteContact(contactId) {
+  if (!contactId) return;
+
+  if (!confirm('Are you sure you want to delete this contact? This action cannot be undone.')) {
+    return;
+  }
+
+  try {
+    // Get company membership for ownership verification
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      showToast('Not authorized', 'error');
+      return;
+    }
+
+    // Verify ownership before delete
+    const { data: existing } = await supabase
+      .from('contacts')
+      .select('company_id')
+      .eq('id', contactId)
+      .single();
+
+    if (!existing || existing.company_id !== companyId) {
+      showToast('Not authorized to delete this contact', 'error');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('contacts')
+      .delete()
+      .eq('id', contactId);
+
+    if (error) {
+      console.error('Error deleting contact:', error);
+      showToast('Failed to delete contact', 'error');
+      return;
+    }
+
+    await loadContacts();
+    showToast('Contact deleted successfully', 'success');
+
+  } catch (error) {
+    console.error('Error deleting contact:', error);
+    showToast('Failed to delete contact', 'error');
+  }
+}
+
+// ===========================================
+// BULK OPERATIONS
+// ===========================================
+
+// Show queue type selection modal
+function bulkAddToQueue() {
+  console.log('bulkAddToQueue called, selectedContacts.size:', selectedContacts.size);
+
+  if (selectedContacts.size === 0) {
+    showToast('Please select at least one contact first', 'warning');
+    return;
+  }
+  document.getElementById('queueContactCount').textContent =
+    `Adding ${selectedContacts.size} contact${selectedContacts.size > 1 ? 's' : ''} to:`;
+  document.getElementById('queueTypeModal').style.display = 'flex';
+}
+
+function closeQueueTypeModal() {
+  document.getElementById('queueTypeModal').style.display = 'none';
+}
+
+// Add selected contacts to AI Queue (Supabase ai_queue table)
+async function addToAIQueue() {
+  if (selectedContacts.size === 0) {
+    showToast('Please select at least one contact first', 'warning');
+    return;
+  }
+
+  showToast('Adding to AI queue...', 'info');
+
+  try {
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      showToast('Unable to add to queue', 'error');
+      return;
+    }
+
+    // Check which contacts are already in queue
+    const { data: existing } = await supabase
+      .from('ai_queue')
+      .select('contact_id')
+      .in('contact_id', Array.from(selectedContacts))
+      .in('status', ['pending', 'in_progress', 'retry_scheduled']);
+
+    const existingIds = new Set(existing?.map(e => e.contact_id) || []);
+    const newContactIds = Array.from(selectedContacts).filter(id => !existingIds.has(id));
+
+    if (newContactIds.length === 0) {
+      showToast('All selected contacts are already in the AI queue', 'warning');
+      return;
+    }
+
+    const queueItems = newContactIds.map(contactId => ({
+      company_id: companyId,
+      contact_id: contactId,
+      status: 'pending',
+      priority: 2  // 1 = high, 2 = normal (must be integer)
+    }));
+
+    const { error } = await supabase
+      .from('ai_queue')
+      .insert(queueItems);
+
+    if (error) {
+      console.error('Error adding to AI queue:', error);
+      showToast('Failed to add contacts to AI queue: ' + error.message, 'error');
+      return;
+    }
+
+    const skipped = selectedContacts.size - newContactIds.length;
+    if (skipped > 0) {
+      showToast(`Added ${newContactIds.length} contacts to AI queue (${skipped} already in queue)`, 'success');
+    } else {
+      showToast(`Added ${newContactIds.length} contacts to AI queue`, 'success');
+    }
+    clearSelection();
+
+  } catch (error) {
+    console.error('Error adding to AI queue:', error);
+    showToast('Failed to add contacts to AI queue', 'error');
+  }
+}
+
+// Add selected contacts to Auto-Dialer Queue (redirect to call.html with contacts)
+function addToAutoDialer() {
+  if (selectedContacts.size === 0) {
+    showToast('Please select at least one contact first', 'warning');
+    return;
+  }
+
+  showToast('Opening dialer...', 'info');
+
+  const contactIds = Array.from(selectedContacts);
+  const contactData = contactIds.map(id => {
+    const contact = contacts.find(c => c.id === id);
+    if (!contact) return null;
+    const name = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+    return `${contact.phone}|${name}`;
+  }).filter(Boolean);
+
+  if (contactData.length === 0) {
+    showToast('No valid contacts to add', 'error');
+    return;
+  }
+
+  // Navigate to call page with contacts as URL param
+  const encoded = encodeURIComponent(contactData.join(','));
+  window.location.href = `/call.html?import=${encoded}`;
+}
+
+// Bulk add tag to selected contacts
+async function bulkAddTag() {
+  if (selectedContacts.size === 0) {
+    showToast('No contacts selected', 'error');
+    return;
+  }
+
+  const tag = prompt('Enter tag to add to selected contacts:');
+  if (!tag || !tag.trim()) return;
+
+  const tagLower = tag.trim().toLowerCase();
+
+  try {
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      showToast('Unable to add tags', 'error');
+      return;
+    }
+
+    const contactIds = Array.from(selectedContacts);
+    let updated = 0;
+
+    for (const id of contactIds) {
+      const contact = contacts.find(c => c.id === id);
+      const currentTags = contact?.tags || [];
+
+      if (!currentTags.includes(tagLower)) {
+        const { error } = await supabase
+          .from('contacts')
+          .update({ tags: [...currentTags, tagLower] })
+          .eq('id', id)
+          .eq('company_id', companyId);
+
+        if (!error) {
+          updated++;
+          // Update local state
+          if (contact) contact.tags = [...currentTags, tagLower];
+        }
+      }
+    }
+
+    if (updated > 0) {
+      showToast(`Added tag "${tagLower}" to ${updated} contacts`, 'success');
+      // Re-render to show updated tags
+      if (currentView === 'table') {
+        renderContactsTable();
+      } else {
+        renderContactsGrid();
+      }
+      await loadAllTags(); // Refresh tag filter options
+    } else {
+      showToast('All selected contacts already have this tag', 'warning');
+    }
+
+    clearSelection();
+
+  } catch (error) {
+    console.error('Error adding tags:', error);
+    showToast('Failed to add tags', 'error');
+  }
+}
+
+async function bulkDelete() {
+  if (selectedContacts.size === 0) return;
+
+  if (!confirm(`Are you sure you want to delete ${selectedContacts.size} contacts? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      showToast('Not authorized', 'error');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('contacts')
+      .delete()
+      .eq('company_id', companyId)
+      .in('id', Array.from(selectedContacts));
+
+    if (error) {
+      console.error('Error deleting contacts:', error);
+      showToast('Failed to delete contacts', 'error');
+      return;
+    }
+
+    showToast(`Deleted ${selectedContacts.size} contacts`, 'success');
+    clearSelection();
+    await loadContacts();
+
+  } catch (error) {
+    console.error('Error deleting contacts:', error);
+    showToast('Failed to delete contacts', 'error');
+  }
+}
+
+function bulkExport() {
+  // Export selected contacts as CSV
+  const selectedData = contacts.filter(c => selectedContacts.has(c.id));
+
+  if (selectedData.length === 0) {
+    showToast('No contacts selected', 'error');
+    return;
+  }
+
+  const headers = ['First Name', 'Last Name', 'Phone', 'Email', 'Company', 'Source', 'Status'];
+  const rows = selectedData.map(c => [
+    c.first_name || '',
+    c.last_name || '',
+    c.phone || '',
+    c.email || '',
+    c.business_name || '',
+    c.source || '',
+    c.status || ''
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `contacts_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+  showToast(`Exported ${selectedData.length} contacts`, 'success');
+}
+
+// ===========================================
+// SELECTION
+// ===========================================
+function toggleSelect(id) {
+  if (selectedContacts.has(id)) {
+    selectedContacts.delete(id);
+  } else {
+    selectedContacts.add(id);
+  }
+  updateBulkActionsBar();
+}
+
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll.checked) {
+    contacts.forEach(c => selectedContacts.add(c.id));
+  } else {
+    selectedContacts.clear();
+  }
+
+  if (currentView === 'table') {
+    renderContactsTable();
+  }
+  updateBulkActionsBar();
+}
+
+function clearSelection() {
+  selectedContacts.clear();
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) selectAll.checked = false;
+
+  if (currentView === 'table') {
+    renderContactsTable();
+  }
+  updateBulkActionsBar();
+}
+
+function updateBulkActionsBar() {
+  const bar = document.getElementById('bulkActionsBar');
+  const count = document.getElementById('selectedCount');
+  count.textContent = selectedContacts.size;
+  bar.classList.toggle('active', selectedContacts.size > 0);
+}
+
+// ===========================================
+// VIEW & NAVIGATION
+// ===========================================
+function setView(view) {
+  currentView = view;
+  document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+  document.getElementById('gridView').style.display = view === 'grid' ? 'grid' : 'none';
+  document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+  document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+
+  if (view === 'table') {
+    renderContactsTable();
+  } else {
+    renderContactsGrid();
+  }
+}
+
+function goToPage(page) {
+  const totalPages = Math.ceil(totalContacts / PAGE_SIZE);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  loadContacts();
+}
+
+function goToProfile(contactId, event) {
+  if (event && (event.target.type === 'checkbox' || event.target.closest('.contact-actions'))) {
+    return;
+  }
+  window.location.href = `contact-profile.html?id=${contactId}`;
+}
+
+// ===========================================
+// CONTACT ACTIONS
+// ===========================================
+function viewContact(id) {
+  const contact = contacts.find(c => c.id === id);
+  if (!contact) return;
+
+  const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown';
+  const initials = getInitials(contact.first_name, contact.last_name);
+
+  document.getElementById('modalAvatar').textContent = initials;
+  document.getElementById('modalName').textContent = fullName;
+  document.getElementById('modalStatus').className = `contact-status ${contact.status || 'new'}`;
+  document.getElementById('modalStatus').innerHTML = `<span class="dot"></span> ${capitalizeFirst(contact.status || 'new')}`;
+  document.getElementById('modalPhone').textContent = formatPhone(contact.phone);
+  document.getElementById('modalEmail').textContent = contact.email || 'No email';
+  document.getElementById('modalCompany').textContent = contact.business_name || 'No company';
+  document.getElementById('modalSource').textContent = capitalizeFirst(contact.source || 'manual');
+  document.getElementById('modalAdded').textContent = formatDate(contact.created_at);
+  document.getElementById('modalLastContact').textContent = 'Never';
+  document.getElementById('modalNotes').textContent = contact.notes || 'No notes';
+
+  // Store contact ID for actions
+  document.getElementById('contactModal').dataset.contactId = id;
+  document.getElementById('contactModal').classList.add('active');
+}
+
+function closeContactModal() {
+  document.getElementById('contactModal').classList.remove('active');
+}
+
+function callContact(id) {
+  const contact = contacts.find(c => c.id === id);
+  if (contact && contact.phone) {
+    window.location.href = `call.html?number=${encodeURIComponent(contact.phone)}`;
+  }
+}
+
+async function addToQueue(id) {
+  console.log('addToQueue called with id:', id);
+
+  // Show loading feedback
+  showToast('Adding to queue...', 'info');
+
+  try {
+    console.log('Getting company membership...');
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    console.log('Company membership result:', { companyId, membershipError });
+
+    if (!companyId) {
+      console.error('No company ID found:', membershipError);
+      showToast('Unable to add to queue - please refresh and try again', 'error');
+      return;
+    }
+
+    // Check if already in queue
+    console.log('Checking if contact is already in queue...');
+    const { data: existing, error: checkError } = await supabase
+      .from('ai_queue')
+      .select('id, status')
+      .eq('contact_id', id)
+      .in('status', ['pending', 'in_progress', 'retry_scheduled'])
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking queue:', checkError);
+      showToast('Error checking queue status', 'error');
+      return;
+    }
+
+    if (existing) {
+      showToast('This contact is already in the queue', 'warning');
+      return;
+    }
+
+    console.log('Inserting to ai_queue...');
+    const { data: insertData, error: insertError } = await supabase
+      .from('ai_queue')
+      .insert({
+        company_id: companyId,
+        contact_id: id,
+        status: 'pending',
+        priority: 2  // 1 = high, 2 = normal
+      })
+      .select();
+
+    if (insertError) {
+      console.error('Error adding to queue:', insertError);
+      showToast('Failed to add to queue: ' + insertError.message, 'error');
+      return;
+    }
+
+    console.log('Successfully added to queue:', insertData);
+    const contact = contacts.find(c => c.id === id);
+    const name = contact ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : 'Contact';
+    showToast(`${name} added to call queue!`, 'success');
+
+  } catch (error) {
+    console.error('Exception in addToQueue:', error);
+    showToast('Failed to add to queue - check console for details', 'error');
+  }
+}
+
+// ===========================================
+// MODALS
+// ===========================================
+function openAddContactModal() {
+  document.getElementById('addContactModal').classList.add('active');
+}
+
+function closeAddContactModal() {
+  document.getElementById('addContactModal').classList.remove('active');
+  document.getElementById('addContactForm').reset();
+}
+
+function saveNewContact() {
+  const form = document.getElementById('addContactForm');
+  if (form.checkValidity()) {
+    handleCreateContact({ preventDefault: () => {}, target: form });
+  } else {
+    form.reportValidity();
+  }
+}
+
+function editContact() {
+  const contactId = document.getElementById('contactModal').dataset.contactId;
+  if (contactId) {
+    window.location.href = `contact-profile.html?id=${contactId}&edit=true`;
+  }
+  closeContactModal();
+}
+
+// ===========================================
+// TAG MANAGEMENT
+// ===========================================
+function openManageTagsModal(contactId) {
+  editingContactId = contactId;
+  const contact = contacts.find(c => c.id === contactId);
+  pendingTags = [...(contact?.tags || [])];
+  renderCurrentTags();
+  document.getElementById('newTagInput').value = '';
+  document.getElementById('manageTagsModal').style.display = 'flex';
+}
+
+function closeManageTagsModal() {
+  document.getElementById('manageTagsModal').style.display = 'none';
+  editingContactId = null;
+  pendingTags = [];
+}
+
+function addNewTag() {
+  const input = document.getElementById('newTagInput');
+  const tag = input.value.trim().toLowerCase();
+  if (tag && !pendingTags.includes(tag)) {
+    pendingTags.push(tag);
+    renderCurrentTags();
+  }
+  input.value = '';
+  input.focus();
+}
+
+function removeTagFromPending(tag) {
+  pendingTags = pendingTags.filter(t => t !== tag);
+  renderCurrentTags();
+}
+
+function renderCurrentTags() {
+  const container = document.getElementById('currentTags');
+  if (pendingTags.length === 0) {
+    container.innerHTML = '<span style="color: var(--gray-500);">No tags yet. Add one above.</span>';
+    return;
+  }
+  container.innerHTML = pendingTags.map(tag =>
+    `<span class="tag editable">${escapeHtml(tag)} <button onclick="removeTagFromPending('${escapeHtml(tag)}')">&times;</button></span>`
+  ).join('');
+}
+
+async function saveContactTags() {
+  if (!editingContactId) return;
+
+  const saveBtn = document.querySelector('#manageTagsModal .btn-primary');
+  if (saveBtn) saveBtn.classList.add('loading');
+
+  try {
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) {
+      showToast('Unable to save tags', 'error');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('contacts')
+      .update({ tags: pendingTags })
+      .eq('id', editingContactId)
+      .eq('company_id', companyId);
+
+    if (error) {
+      console.error('Error saving tags:', error);
+      showToast('Failed to save tags', 'error');
+      return;
+    }
+
+    // Update local state
+    const contact = contacts.find(c => c.id === editingContactId);
+    if (contact) contact.tags = [...pendingTags];
+
+    closeManageTagsModal();
+    showToast('Tags saved successfully', 'success');
+
+    // Re-render to show updated tags
+    if (currentView === 'table') {
+      renderContactsTable();
+    } else {
+      renderContactsGrid();
+    }
+
+    await loadAllTags(); // Refresh tag filter options
+
+  } catch (error) {
+    console.error('Error saving tags:', error);
+    showToast('Failed to save tags', 'error');
+  } finally {
+    if (saveBtn) saveBtn.classList.remove('loading');
+  }
+}
+
+// ISSUE-301 FIX: Load unique tags for filter dropdown with .limit(500)
+async function loadAllTags() {
+  try {
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    if (membershipError || !companyId) return;
+
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('tags')
+      .eq('company_id', companyId)
+      .limit(500); // ISSUE-301 FIX: Added limit
+
+    if (error) {
+      console.error('Error loading tags:', error);
+      return;
+    }
+
+    const allTags = new Set();
+    data?.forEach(c => c.tags?.forEach(t => allTags.add(t)));
+
+    const select = document.getElementById('filterTags');
+    if (select) {
+      select.innerHTML = '<option value="">All Tags</option>' +
+        Array.from(allTags).sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    }
+
+  } catch (error) {
+    console.error('Error loading tags:', error);
+  }
+}
+
+// ===========================================
+// SEARCH & FILTERS
+// ===========================================
+function setupEventListeners() {
+  // Search input
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce((e) => {
+      currentFilters.search = e.target.value;
+      currentPage = 1;
+      loadContacts();
+    }, 300));
+  }
+
+  // Filter selects
+  const filterStatus = document.getElementById('filterStatus');
+  if (filterStatus) {
+    filterStatus.addEventListener('change', (e) => {
+      currentFilters.status = e.target.value;
+      currentPage = 1;
+      loadContacts();
+      updateActiveFilters();
+    });
+  }
+
+  const filterSource = document.getElementById('filterSource');
+  if (filterSource) {
+    filterSource.addEventListener('change', (e) => {
+      currentFilters.source = e.target.value;
+      currentPage = 1;
+      loadContacts();
+      updateActiveFilters();
+    });
+  }
+
+  const filterDate = document.getElementById('filterDate');
+  if (filterDate) {
+    filterDate.addEventListener('change', (e) => {
+      currentFilters.dateRange = e.target.value;
+      currentPage = 1;
+      loadContacts();
+      updateActiveFilters();
+    });
+  }
+
+  const filterTags = document.getElementById('filterTags');
+  if (filterTags) {
+    filterTags.addEventListener('change', (e) => {
+      currentFilters.tag = e.target.value;
+      currentPage = 1;
+      loadContacts();
+      updateActiveFilters();
+    });
+  }
+
+  // Form submission
+  const addContactForm = document.getElementById('addContactForm');
+  if (addContactForm) {
+    addContactForm.addEventListener('submit', handleCreateContact);
+  }
+}
+
+function updateActiveFilters() {
+  const filters = [];
+
+  if (currentFilters.status) {
+    filters.push({ type: 'Status', value: currentFilters.status, label: capitalizeFirst(currentFilters.status) });
+  }
+  if (currentFilters.source) {
+    filters.push({ type: 'Source', value: currentFilters.source, label: capitalizeFirst(currentFilters.source) });
+  }
+  if (currentFilters.dateRange) {
+    filters.push({ type: 'Date', value: currentFilters.dateRange, label: capitalizeFirst(currentFilters.dateRange.replace('-', ' ')) });
+  }
+  if (currentFilters.tag) {
+    filters.push({ type: 'Tag', value: currentFilters.tag, label: `Tag: ${currentFilters.tag}` });
+  }
+
+  const container = document.getElementById('activeFilters');
+  if (filters.length > 0) {
+    container.style.display = 'flex';
+    container.innerHTML = filters.map(f => `
+      <div class="filter-chip">
+        ${escapeHtml(f.label)}
+        <span class="remove" onclick="clearFilter('${f.type}')">×</span>
+      </div>
+    `).join('') + `<button class="btn btn-sm btn-secondary" onclick="clearAllFilters()">Clear All</button>`;
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+function clearFilter(type) {
+  switch (type) {
+    case 'Status':
+      currentFilters.status = '';
+      document.getElementById('filterStatus').value = '';
+      break;
+    case 'Source':
+      currentFilters.source = '';
+      document.getElementById('filterSource').value = '';
+      break;
+    case 'Date':
+      currentFilters.dateRange = '';
+      document.getElementById('filterDate').value = '';
+      break;
+    case 'Tag':
+      currentFilters.tag = '';
+      document.getElementById('filterTags').value = '';
+      break;
+  }
+  currentPage = 1;
+  loadContacts();
+  updateActiveFilters();
+}
+
+function clearAllFilters() {
+  currentFilters = { search: '', status: '', source: '', dateRange: '', tag: '' };
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterSource').value = '';
+  document.getElementById('filterDate').value = '';
+  document.getElementById('filterTags').value = '';
+  document.getElementById('searchInput').value = '';
+  currentPage = 1;
+  loadContacts();
+  updateActiveFilters();
+}
+
+// ===========================================
+// UTILITIES
+// ===========================================
+function getInitials(firstName, lastName) {
+  const first = (firstName || '').charAt(0).toUpperCase();
+  const last = (lastName || '').charAt(0).toUpperCase();
+  return first + last || '??';
+}
+
+function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// ===========================================
+// SIDEBAR (from template)
+// ===========================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+  localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ===========================================
+// INITIALIZE
+// ===========================================
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    // Restore sidebar state
+    const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (savedCollapsed && window.innerWidth > 1024) {
+      document.getElementById('sidebar').classList.add('collapsed');
+    }
+    initContactsPage();
+  });
+} else {
+  const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  if (savedCollapsed && window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
+  initContactsPage();
+}
+  </script>
+
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+export { SettingsPage } from './SettingsPage'
+export { ProfileSection } from './ProfileSection'
+export { CompanySection } from './CompanySection'
+export { NotificationsSection } from './NotificationsSection'
+export { TeamSection } from './TeamSection'

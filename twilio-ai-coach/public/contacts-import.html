@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Import Contacts - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* Import Page Styles */
+    .import-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .import-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .import-header h2 {
+      margin: 0;
+      color: var(--gray-800);
+    }
+
+    .import-header p {
+      margin: 4px 0 0;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl) var(--spacing-lg);
+      text-align: center;
+      background: var(--gray-50);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .upload-zone:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .upload-zone.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      transform: scale(1.01);
+    }
+
+    .upload-zone.has-file {
+      border-color: var(--success);
+      background: var(--success-light);
+    }
+
+    .upload-zone-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .upload-zone-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .upload-zone-text {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .upload-zone-formats {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .format-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: white;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      border: 1px solid var(--gray-200);
+    }
+
+    .upload-zone input[type="file"] {
+      display: none;
+    }
+
+    /* File Info */
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .file-info.active {
+      display: flex;
+    }
+
+    .file-info-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--success-light);
+      color: var(--success);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .file-info-details {
+      flex: 1;
+    }
+
+    .file-info-name {
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .file-info-meta {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .file-info-remove {
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 1.25rem;
+    }
+
+    .file-info-remove:hover {
+      color: var(--danger);
+    }
+
+    /* Import Steps */
+    .import-steps {
+      display: flex;
+      justify-content: center;
+      margin-bottom: var(--spacing-xl);
+      padding: var(--spacing-md) 0;
+    }
+
+    .import-step {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .import-step:not(:last-child)::after {
+      content: '';
+      width: 60px;
+      height: 2px;
+      background: var(--gray-200);
+      margin: 0 var(--spacing-md);
+    }
+
+    .import-step.active:not(:last-child)::after {
+      background: var(--primary);
+    }
+
+    .import-step.completed:not(:last-child)::after {
+      background: var(--success);
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .import-step.active .step-number {
+      background: var(--primary);
+      color: white;
+    }
+
+    .import-step.completed .step-number {
+      background: var(--success);
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .import-step.active .step-label {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .import-step.completed .step-label {
+      color: var(--success);
+    }
+
+    /* Column Mapping */
+    .mapping-section {
+      display: none;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .mapping-section.active {
+      display: block;
+    }
+
+    .mapping-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .mapping-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .mapping-header p {
+      margin: 4px 0 0;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .mapping-body {
+      padding: var(--spacing-lg);
+    }
+
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: var(--spacing-md);
+      align-items: center;
+      padding: var(--spacing-sm) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .mapping-row:last-child {
+      border-bottom: none;
+    }
+
+    .mapping-row .csv-column {
+      font-family: monospace;
+      background: var(--gray-100);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+    }
+
+    .mapping-row .arrow {
+      color: var(--gray-400);
+    }
+
+    .mapping-row select {
+      width: 100%;
+    }
+
+    /* Preview Section */
+    .preview-section {
+      display: none;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+      overflow: hidden;
+    }
+
+    .preview-section.active {
+      display: block;
+    }
+
+    .preview-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .preview-count {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .preview-table-container {
+      overflow-x: auto;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .preview-table th {
+      background: var(--gray-50);
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--gray-600);
+      border-bottom: 1px solid var(--gray-200);
+      white-space: nowrap;
+    }
+
+    .preview-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .preview-table tr:nth-child(even) {
+      background: var(--gray-50);
+    }
+
+    .preview-table .error-row {
+      background: var(--danger-light);
+    }
+
+    .preview-table .error-cell {
+      color: var(--danger);
+    }
+
+    /* Import Progress */
+    .import-progress {
+      display: none;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-xl);
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .import-progress.active {
+      display: block;
+    }
+
+    .progress-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .progress-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .progress-text {
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .progress-bar-container {
+      background: var(--gray-200);
+      border-radius: var(--radius-full);
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: var(--radius-full);
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xl);
+      font-size: 0.875rem;
+    }
+
+    .progress-stat {
+      text-align: center;
+    }
+
+    .progress-stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .progress-stat-label {
+      color: var(--gray-500);
+    }
+
+    .progress-stat.success .progress-stat-value { color: var(--success); }
+    .progress-stat.error .progress-stat-value { color: var(--danger); }
+
+    /* Import Complete */
+    .import-complete {
+      display: none;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-xl);
+      text-align: center;
+    }
+
+    .import-complete.active {
+      display: block;
+    }
+
+    .complete-icon {
+      font-size: 4rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .complete-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .complete-text {
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .complete-actions {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-md);
+    }
+
+    /* Recent Imports */
+    .recent-imports {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .recent-imports-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .recent-imports-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .recent-imports-list {
+      padding: var(--spacing-md);
+    }
+
+    .recent-import-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+    }
+
+    .recent-import-item:hover {
+      background: var(--gray-50);
+    }
+
+    .recent-import-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .recent-import-info {
+      flex: 1;
+    }
+
+    .recent-import-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .recent-import-meta {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .recent-import-status {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .recent-import-status.success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .recent-import-status.partial {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    /* Template Download */
+    .template-section {
+      background: var(--primary-light);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .template-icon {
+      font-size: 2rem;
+    }
+
+    .template-info {
+      flex: 1;
+    }
+
+    .template-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .template-text {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Action Buttons */
+    .import-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-200);
+      margin-top: var(--spacing-lg);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .import-steps {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+      }
+
+      .import-step:not(:last-child)::after {
+        display: none;
+      }
+
+      .mapping-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+      }
+
+      .mapping-row .arrow {
+        transform: rotate(90deg);
+        justify-self: center;
+      }
+
+      .template-section {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .complete-actions {
+        flex-direction: column;
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+            <span class="sidebar-nav-badge" id="callbackBadge">0</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Import Contacts</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn" title="Notifications" id="notificationBtn">
+            🔔
+            <span class="badge-dot" id="notificationDot" style="display: none;"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <div class="import-container">
+          <!-- Header -->
+          <div class="import-header">
+            <h2>Import Contacts</h2>
+            <p>Upload a CSV or Excel file to import contacts into your system</p>
+          </div>
+
+          <!-- Import Steps -->
+          <div class="import-steps">
+            <div class="import-step active" id="step1">
+              <div class="step-number">1</div>
+              <span class="step-label">Upload File</span>
+            </div>
+            <div class="import-step" id="step2">
+              <div class="step-number">2</div>
+              <span class="step-label">Map Columns</span>
+            </div>
+            <div class="import-step" id="step3">
+              <div class="step-number">3</div>
+              <span class="step-label">Preview</span>
+            </div>
+            <div class="import-step" id="step4">
+              <div class="step-number">4</div>
+              <span class="step-label">Import</span>
+            </div>
+          </div>
+
+          <!-- Template Download -->
+          <div class="template-section">
+            <div class="template-icon">📄</div>
+            <div class="template-info">
+              <div class="template-title">Need a template?</div>
+              <div class="template-text">Download our CSV template with all the required columns pre-formatted</div>
+            </div>
+            <button class="btn btn-primary" onclick="downloadTemplate()">📥 Download Template</button>
+          </div>
+
+          <!-- Upload Zone (ISSUE-309 FIX: Removed Excel types since not implemented) -->
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(event)">
+            <div class="upload-zone-icon">📁</div>
+            <div class="upload-zone-title">Drop your file here or click to browse</div>
+            <div class="upload-zone-text">Supports CSV files up to 10MB</div>
+            <div class="upload-zone-formats">
+              <span class="format-badge">📊 .csv</span>
+            </div>
+          </div>
+
+          <!-- File Info -->
+          <div class="file-info" id="fileInfo">
+            <div class="file-info-icon">📄</div>
+            <div class="file-info-details">
+              <div class="file-info-name" id="fileName">contacts.csv</div>
+              <div class="file-info-meta" id="fileMeta">2.3 MB • 1,234 rows detected</div>
+            </div>
+            <button class="file-info-remove" onclick="removeFile()" title="Remove file">×</button>
+          </div>
+
+          <!-- Column Mapping Section -->
+          <div class="mapping-section" id="mappingSection">
+            <div class="mapping-header">
+              <h3>Map Your Columns</h3>
+              <p>Match your CSV columns to contact fields. Required fields are marked with *</p>
+            </div>
+            <div class="mapping-body">
+              <div class="mapping-row">
+                <div class="csv-column" id="csvCol1">Name</div>
+                <div class="arrow">→</div>
+                <select class="input" id="mapCol1">
+                  <option value="">-- Skip this column --</option>
+                  <option value="firstName" selected>First Name *</option>
+                  <option value="lastName">Last Name *</option>
+                  <option value="fullName">Full Name</option>
+                  <option value="phone">Phone *</option>
+                  <option value="email">Email</option>
+                  <option value="company">Company</option>
+                  <option value="source">Source</option>
+                  <option value="notes">Notes</option>
+                </select>
+              </div>
+              <div class="mapping-row">
+                <div class="csv-column" id="csvCol2">Phone Number</div>
+                <div class="arrow">→</div>
+                <select class="input" id="mapCol2">
+                  <option value="">-- Skip this column --</option>
+                  <option value="firstName">First Name *</option>
+                  <option value="lastName">Last Name *</option>
+                  <option value="fullName">Full Name</option>
+                  <option value="phone" selected>Phone *</option>
+                  <option value="email">Email</option>
+                  <option value="company">Company</option>
+                  <option value="source">Source</option>
+                  <option value="notes">Notes</option>
+                </select>
+              </div>
+              <div class="mapping-row">
+                <div class="csv-column" id="csvCol3">Email Address</div>
+                <div class="arrow">→</div>
+                <select class="input" id="mapCol3">
+                  <option value="">-- Skip this column --</option>
+                  <option value="firstName">First Name *</option>
+                  <option value="lastName">Last Name *</option>
+                  <option value="fullName">Full Name</option>
+                  <option value="phone">Phone *</option>
+                  <option value="email" selected>Email</option>
+                  <option value="company">Company</option>
+                  <option value="source">Source</option>
+                  <option value="notes">Notes</option>
+                </select>
+              </div>
+              <div class="mapping-row">
+                <div class="csv-column" id="csvCol4">Company</div>
+                <div class="arrow">→</div>
+                <select class="input" id="mapCol4">
+                  <option value="">-- Skip this column --</option>
+                  <option value="firstName">First Name *</option>
+                  <option value="lastName">Last Name *</option>
+                  <option value="fullName">Full Name</option>
+                  <option value="phone">Phone *</option>
+                  <option value="email">Email</option>
+                  <option value="company" selected>Company</option>
+                  <option value="source">Source</option>
+                  <option value="notes">Notes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Section -->
+          <div class="preview-section" id="previewSection">
+            <div class="preview-header">
+              <h3>Preview Import</h3>
+              <span class="preview-count">Showing first 10 of <strong id="previewTotal">1,234</strong> contacts</span>
+            </div>
+            <div class="preview-table-container">
+              <table class="preview-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTableBody">
+                  <tr>
+                    <td>1</td>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>+1 (555) 123-4567</td>
+                    <td>john@example.com</td>
+                    <td>Acme Corp</td>
+                    <td><span class="badge badge-success">Valid</span></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>Sarah</td>
+                    <td>Johnson</td>
+                    <td>+1 (555) 987-6543</td>
+                    <td>sarah@techco.com</td>
+                    <td>TechCo</td>
+                    <td><span class="badge badge-success">Valid</span></td>
+                  </tr>
+                  <tr class="error-row">
+                    <td>3</td>
+                    <td>Mike</td>
+                    <td>Williams</td>
+                    <td class="error-cell">invalid-phone</td>
+                    <td>mike@startup.io</td>
+                    <td>StartUp Inc</td>
+                    <td><span class="badge badge-danger">Invalid Phone</span></td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>Emily</td>
+                    <td>Brown</td>
+                    <td>+1 (555) 333-4444</td>
+                    <td>emily@corp.com</td>
+                    <td>Big Corp</td>
+                    <td><span class="badge badge-success">Valid</span></td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td>David</td>
+                    <td>Lee</td>
+                    <td>+1 (555) 222-3333</td>
+                    <td>david@company.com</td>
+                    <td>Company LLC</td>
+                    <td><span class="badge badge-success">Valid</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Import Progress (ISSUE-311 FIX: Added cancel button) -->
+          <div class="import-progress" id="importProgress">
+            <div class="progress-icon">⏳</div>
+            <div class="progress-title">Importing Contacts...</div>
+            <div class="progress-text">Please wait while we process your file</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-stats">
+              <div class="progress-stat">
+                <div class="progress-stat-value" id="progressTotal">0</div>
+                <div class="progress-stat-label">Total</div>
+              </div>
+              <div class="progress-stat success">
+                <div class="progress-stat-value" id="progressSuccess">0</div>
+                <div class="progress-stat-label">Imported</div>
+              </div>
+              <div class="progress-stat error">
+                <div class="progress-stat-value" id="progressErrors">0</div>
+                <div class="progress-stat-label">Errors</div>
+              </div>
+            </div>
+            <!-- ISSUE-311 FIX: Cancel button -->
+            <div style="margin-top: var(--spacing-lg); text-align: center;">
+              <button class="btn btn-secondary" id="cancelImportBtn" onclick="cancelImport()">Cancel Import</button>
+            </div>
+          </div>
+
+          <!-- Import Complete -->
+          <div class="import-complete" id="importComplete">
+            <div class="complete-icon">✅</div>
+            <div class="complete-title">Import Complete!</div>
+            <div class="complete-text" id="completeText">Successfully imported 1,231 contacts with 3 errors</div>
+            <div class="complete-actions">
+              <a href="contacts.html" class="btn btn-primary">View Contacts</a>
+              <button class="btn btn-secondary" onclick="resetImport()">Import Another File</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="import-actions" id="importActions">
+            <button class="btn btn-secondary" id="backBtn" onclick="previousStep()" style="display: none;">← Back</button>
+            <div></div>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextStep()" disabled>Continue →</button>
+          </div>
+
+          <!-- Recent Imports -->
+          <div class="recent-imports" style="margin-top: var(--spacing-xl);">
+            <div class="recent-imports-header">
+              <h3>Recent Imports</h3>
+            </div>
+            <div class="recent-imports-list">
+              <div class="recent-import-item">
+                <div class="recent-import-icon">📄</div>
+                <div class="recent-import-info">
+                  <div class="recent-import-name">facebook_leads_jan.csv</div>
+                  <div class="recent-import-meta">Jan 10, 2025 • 523 contacts</div>
+                </div>
+                <span class="recent-import-status success">Complete</span>
+              </div>
+              <div class="recent-import-item">
+                <div class="recent-import-icon">📄</div>
+                <div class="recent-import-info">
+                  <div class="recent-import-name">trade_show_contacts.xlsx</div>
+                  <div class="recent-import-meta">Jan 5, 2025 • 89 contacts</div>
+                </div>
+                <span class="recent-import-status success">Complete</span>
+              </div>
+              <div class="recent-import-item">
+                <div class="recent-import-icon">📄</div>
+                <div class="recent-import-info">
+                  <div class="recent-import-name">website_signups.csv</div>
+                  <div class="recent-import-meta">Dec 28, 2024 • 312 contacts</div>
+                </div>
+                <span class="recent-import-status partial">3 errors</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="contacts.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Contacts</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="pipeline.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📈</span>
+          <span>Pipeline</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="window.location.href='call.html'">📞</button>
+  </div>
+
+  <!-- Additional Styles for Toast -->
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 0.875rem;
+      z-index: 10001;
+      animation: toast-in 0.3s ease;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast-info { background: var(--gray-800); }
+    .toast-success { background: var(--success); }
+    .toast-error { background: var(--danger); }
+    .toast-warning { background: var(--warning); }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    /* Duplicate warning styles */
+    .duplicates-warning {
+      background: var(--warning-light);
+      border: 1px solid var(--warning);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .duplicates-warning-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-xs);
+    }
+    .duplicates-warning-text {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+  </style>
+
+  <!-- Page-specific functionality (INLINE) -->
+  <script>
+/**
+ * Contacts Import Page JavaScript (Inline)
+ * Handles: CSV upload, parsing, preview, column mapping, batch import
+ * Security: Validate all inputs, batch inserts with company_id, limit rows
+ */
+
+// ===========================================
+// STATE
+// ===========================================
+let currentStep = 1;
+let uploadedFile = null;
+let parsedData = [];
+let csvHeaders = [];
+let columnMapping = {};
+let validRows = [];
+let invalidRows = [];
+let importCancelled = false; // ISSUE-311 FIX: Cancellation flag
+let duplicatePhones = []; // ISSUE-310 FIX: Track duplicates
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_ROWS = 5000;
+const BATCH_SIZE = 100;
+
+// Field definitions
+const CONTACT_FIELDS = [
+  { value: '', label: '-- Skip this column --' },
+  { value: 'firstName', label: 'First Name *', required: true },
+  { value: 'lastName', label: 'Last Name *', required: true },
+  { value: 'fullName', label: 'Full Name' },
+  { value: 'phone', label: 'Phone *', required: true },
+  { value: 'email', label: 'Email' },
+  { value: 'company', label: 'Company' },
+  { value: 'source', label: 'Source' },
+  { value: 'notes', label: 'Notes' },
+  { value: 'tags', label: 'Tags' },
+  { value: 'custom', label: '+ Custom Field' }
+];
+
+// ===========================================
+// TOAST NOTIFICATIONS
+// ===========================================
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ===========================================
+// INITIALIZATION
+// ===========================================
+async function initContactsImportPage() {
+  initPage({
+    requireAuth: true,
+    onReady: async (user) => {
+      // Update user display
+      if (user) {
+        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+      }
+
+      // Setup drag and drop
+      setupDragAndDrop();
+
+      // Load recent imports
+      await loadRecentImports();
+    },
+    onError: (error) => {
+      console.error('Import page init error:', error);
+    }
+  });
+}
+
+// ===========================================
+// FILE HANDLING
+// ===========================================
+function setupDragAndDrop() {
+  const uploadZone = document.getElementById('uploadZone');
+  if (!uploadZone) return;
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+  });
+
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+  });
+
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFile(files[0]);
+    }
+  });
+}
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) {
+    handleFile(file);
+  }
+}
+
+async function handleFile(file) {
+  // ISSUE-309 FIX: Only accept CSV files
+  const validExtensions = ['.csv'];
+  const extension = '.' + file.name.split('.').pop().toLowerCase();
+
+  if (!validExtensions.includes(extension)) {
+    showToast('Please upload a CSV file', 'error');
+    return;
+  }
+
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    showToast('File size must be less than 10MB', 'error');
+    return;
+  }
+
+  uploadedFile = file;
+  document.getElementById('uploadZone').classList.add('has-file');
+  document.getElementById('fileInfo').classList.add('active');
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileMeta').textContent = `${formatFileSize(file.size)} • Analyzing...`;
+
+  try {
+    await parseCSV(file);
+    document.getElementById('fileMeta').textContent = `${formatFileSize(file.size)} • ${parsedData.length.toLocaleString()} rows detected`;
+    document.getElementById('nextBtn').disabled = false;
+
+  } catch (error) {
+    console.error('Error parsing file:', error);
+    showToast('Failed to parse file. Please check the format.', 'error');
+    removeFile();
+  }
+}
+
+async function parseCSV(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const content = e.target.result;
+        const lines = content.split(/\r?\n/).filter(line => line.trim());
+
+        if (lines.length < 2) {
+          reject(new Error('File must contain at least a header row and one data row'));
+          return;
+        }
+
+        // Parse header
+        csvHeaders = parseCSVLine(lines[0]);
+
+        // Parse data rows (limit to MAX_ROWS)
+        parsedData = [];
+        for (let i = 1; i < Math.min(lines.length, MAX_ROWS + 1); i++) {
+          const values = parseCSVLine(lines[i]);
+          if (values.some(v => v.trim())) {
+            const row = {};
+            csvHeaders.forEach((header, index) => {
+              row[header] = values[index] || '';
+            });
+            parsedData.push(row);
+          }
+        }
+
+        if (lines.length > MAX_ROWS + 1) {
+          showToast(`File contains more than ${MAX_ROWS} rows. Only the first ${MAX_ROWS} will be imported.`, 'warning');
+        }
+
+        // Auto-detect column mapping
+        autoDetectMapping();
+
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}
+
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
+function autoDetectMapping() {
+  columnMapping = {};
+
+  const mappings = {
+    firstName: ['first_name', 'firstname', 'first name', 'fname', 'given name'],
+    lastName: ['last_name', 'lastname', 'last name', 'lname', 'surname', 'family name'],
+    fullName: ['full_name', 'fullname', 'full name', 'name', 'contact name'],
+    phone: ['phone', 'phone_number', 'phonenumber', 'telephone', 'tel', 'mobile', 'cell', 'phone number'],
+    email: ['email', 'email_address', 'emailaddress', 'e-mail', 'email address'],
+    company: ['company', 'company_name', 'companyname', 'business', 'organization', 'org', 'business name', 'business_name'],
+    source: ['source', 'lead_source', 'leadsource', 'origin', 'lead source'],
+    notes: ['notes', 'note', 'comments', 'comment', 'description'],
+    tags: ['tags', 'tag', 'labels', 'label']
+  };
+
+  // Known custom field patterns - auto-map to custom fields
+  const customFieldPatterns = ['title', 'job_title', 'jobtitle', 'position', 'role', 'job title', 'linkedin', 'website', 'address', 'city', 'state', 'zip', 'country'];
+
+  csvHeaders.forEach((header, index) => {
+    const lowerHeader = header.toLowerCase().trim();
+
+    // First check standard mappings
+    let mapped = false;
+    for (const [field, aliases] of Object.entries(mappings)) {
+      if (aliases.includes(lowerHeader) && !Object.values(columnMapping).includes(field)) {
+        columnMapping[index] = field;
+        mapped = true;
+        break;
+      }
+    }
+
+    // If not mapped and matches custom field pattern, map as custom
+    if (!mapped && customFieldPatterns.some(p => lowerHeader.includes(p))) {
+      columnMapping[index] = 'custom';
+    }
+  });
+}
+
+function removeFile() {
+  uploadedFile = null;
+  parsedData = [];
+  csvHeaders = [];
+  columnMapping = {};
+
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('fileInfo').classList.remove('active');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('nextBtn').disabled = true;
+}
+
+// ===========================================
+// STEP NAVIGATION
+// ===========================================
+function nextStep() {
+  if (currentStep < 4) {
+    // Validate before proceeding
+    if (currentStep === 2 && !validateMapping()) {
+      return;
+    }
+
+    if (currentStep === 2) {
+      validateAndPreview();
+    }
+
+    setStep(currentStep + 1);
+  }
+}
+
+function previousStep() {
+  if (currentStep > 1) {
+    setStep(currentStep - 1);
+  }
+}
+
+function setStep(step) {
+  currentStep = step;
+
+  // Update step indicators
+  for (let i = 1; i <= 4; i++) {
+    const stepEl = document.getElementById('step' + i);
+    stepEl.classList.remove('active', 'completed');
+    if (i < step) {
+      stepEl.classList.add('completed');
+    } else if (i === step) {
+      stepEl.classList.add('active');
+    }
+  }
+
+  // Show/hide sections
+  document.getElementById('uploadZone').style.display = step === 1 ? 'block' : 'none';
+  document.getElementById('fileInfo').classList.toggle('active', step >= 1 && uploadedFile);
+  document.getElementById('mappingSection').classList.toggle('active', step === 2);
+  document.getElementById('previewSection').classList.toggle('active', step === 3);
+  document.getElementById('importProgress').classList.toggle('active', step === 4);
+  document.getElementById('importComplete').classList.remove('active');
+
+  // Show/hide buttons
+  document.getElementById('backBtn').style.display = step > 1 && step < 4 ? 'block' : 'none';
+  document.getElementById('nextBtn').style.display = step < 4 ? 'block' : 'none';
+  document.getElementById('importActions').style.display = step < 4 ? 'flex' : 'none';
+
+  // Update button text
+  if (step === 3) {
+    document.getElementById('nextBtn').textContent = 'Start Import';
+  } else {
+    document.getElementById('nextBtn').textContent = 'Continue →';
+  }
+
+  // Render step-specific content
+  if (step === 2) {
+    renderMappingUI();
+  } else if (step === 4) {
+    startImport();
+  }
+}
+
+// ===========================================
+// COLUMN MAPPING
+// ===========================================
+function renderMappingUI() {
+  const mappingBody = document.querySelector('.mapping-body');
+  if (!mappingBody) return;
+
+  mappingBody.innerHTML = csvHeaders.map((header, index) => {
+    const selectedValue = columnMapping[index] || '';
+
+    const options = CONTACT_FIELDS.map(field => {
+      const selected = field.value === selectedValue ? 'selected' : '';
+      return `<option value="${field.value}" ${selected}>${field.label}</option>`;
+    }).join('');
+
+    return `
+      <div class="mapping-row">
+        <div class="csv-column">${escapeHtml(header)}</div>
+        <div class="arrow">→</div>
+        <select class="input" data-column="${index}" onchange="updateMapping(${index}, this.value)">
+          ${options}
+        </select>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateMapping(columnIndex, fieldValue) {
+  if (fieldValue) {
+    columnMapping[columnIndex] = fieldValue;
+  } else {
+    delete columnMapping[columnIndex];
+  }
+}
+
+function validateMapping() {
+  const mappedFields = Object.values(columnMapping);
+
+  // Check for required fields
+  const hasFirstName = mappedFields.includes('firstName') || mappedFields.includes('fullName');
+  const hasPhone = mappedFields.includes('phone');
+
+  if (!hasFirstName) {
+    showToast('Please map a column to First Name or Full Name', 'error');
+    return false;
+  }
+
+  if (!hasPhone) {
+    showToast('Please map a column to Phone', 'error');
+    return false;
+  }
+
+  // Check for duplicate mappings
+  const nonEmptyMappings = mappedFields.filter(f => f);
+  const uniqueMappings = new Set(nonEmptyMappings);
+  if (nonEmptyMappings.length !== uniqueMappings.size) {
+    showToast('Each field can only be mapped once', 'error');
+    return false;
+  }
+
+  return true;
+}
+
+// ===========================================
+// PREVIEW (ISSUE-310 FIX: Check for duplicates)
+// ===========================================
+async function validateAndPreview() {
+  validRows = [];
+  invalidRows = [];
+  duplicatePhones = [];
+
+  // ISSUE-310 FIX: Check for duplicates in database
+  const phoneNumbers = parsedData.map(row => {
+    const contact = mapRowToContact(row);
+    return contact.phone.replace(/\D/g, '');
+  }).filter(Boolean);
+
+  try {
+    const { companyId } = await getCompanyMembership();
+    if (companyId && phoneNumbers.length > 0) {
+      // Query in batches of 100 to avoid query limits
+      const uniquePhones = [...new Set(phoneNumbers)];
+      for (let i = 0; i < uniquePhones.length; i += 100) {
+        const batch = uniquePhones.slice(i, i + 100);
+        const formattedPhones = batch.flatMap(p => [
+          p, `+${p}`, `+1${p}`
+        ]);
+
+        const { data: existing } = await supabase
+          .from('contacts')
+          .select('phone')
+          .eq('company_id', companyId)
+          .in('phone', formattedPhones)
+          .limit(100);
+
+        if (existing) {
+          existing.forEach(e => {
+            const cleaned = e.phone.replace(/\D/g, '').slice(-10);
+            if (!duplicatePhones.includes(cleaned)) {
+              duplicatePhones.push(cleaned);
+            }
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for duplicates:', error);
+  }
+
+  parsedData.forEach((row, index) => {
+    const contact = mapRowToContact(row);
+    const validation = validateContact(contact);
+    const cleanedPhone = contact.phone.replace(/\D/g, '').slice(-10);
+    const isDuplicate = duplicatePhones.includes(cleanedPhone);
+
+    if (validation.valid && !isDuplicate) {
+      validRows.push({ index: index + 1, data: contact });
+    } else {
+      const errors = [...validation.errors];
+      if (isDuplicate) {
+        errors.push('Duplicate phone');
+      }
+      invalidRows.push({ index: index + 1, data: contact, errors, isDuplicate });
+    }
+  });
+
+  renderPreview();
+}
+
+function mapRowToContact(row) {
+  const contact = {
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    company: '',
+    source: 'import',
+    notes: '',
+    tags: [],
+    customFields: {}
+  };
+
+  for (const [columnIndex, fieldName] of Object.entries(columnMapping)) {
+    const header = csvHeaders[columnIndex];
+    const value = row[header] || '';
+
+    if (fieldName === 'fullName' && value) {
+      // Split full name into first and last
+      const parts = value.trim().split(/\s+/);
+      contact.firstName = parts[0] || '';
+      contact.lastName = parts.slice(1).join(' ') || '';
+    } else if (fieldName === 'tags' && value) {
+      // Split tags by comma
+      contact.tags = value.split(',').map(t => t.trim()).filter(t => t);
+    } else if (fieldName === 'custom' && value) {
+      // Store as custom field using the CSV header as the key
+      const customKey = header.toLowerCase().replace(/\s+/g, '_');
+      contact.customFields[customKey] = value.trim();
+    } else if (fieldName in contact) {
+      contact[fieldName] = value.trim();
+    }
+  }
+
+  return contact;
+}
+
+function validateContact(contact) {
+  const errors = [];
+
+  if (!contact.firstName && !contact.lastName) {
+    errors.push('Name is required');
+  }
+
+  if (!contact.phone) {
+    errors.push('Phone is required');
+  } else {
+    const cleanedPhone = contact.phone.replace(/\D/g, '');
+    if (cleanedPhone.length < 10 || cleanedPhone.length > 15) {
+      errors.push('Invalid phone number');
+    }
+  }
+
+  if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+    errors.push('Invalid email format');
+  }
+
+  if (contact.firstName && contact.firstName.length > 100) {
+    errors.push('First name too long');
+  }
+
+  if (contact.lastName && contact.lastName.length > 100) {
+    errors.push('Last name too long');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+function renderPreview() {
+  const previewTotal = document.getElementById('previewTotal');
+  const previewTableBody = document.getElementById('previewTableBody');
+  const previewHeader = document.querySelector('.preview-header');
+
+  if (previewTotal) {
+    previewTotal.textContent = parsedData.length.toLocaleString();
+  }
+
+  // ISSUE-310 FIX: Show duplicates warning
+  let duplicatesWarningHtml = '';
+  if (duplicatePhones.length > 0) {
+    const duplicateRows = invalidRows.filter(r => r.isDuplicate);
+    duplicatesWarningHtml = `
+      <div class="duplicates-warning">
+        <div class="duplicates-warning-title">⚠️ ${duplicateRows.length} duplicate contact(s) found</div>
+        <div class="duplicates-warning-text">These contacts already exist in your database and will be skipped during import.</div>
+      </div>
+    `;
+  }
+
+  // Insert warning before table
+  const existingWarning = document.querySelector('.duplicates-warning');
+  if (existingWarning) existingWarning.remove();
+  if (duplicatesWarningHtml) {
+    previewHeader.insertAdjacentHTML('afterend', duplicatesWarningHtml);
+  }
+
+  // Show first 10 rows (mix of valid and invalid for demonstration)
+  const previewRows = [
+    ...validRows.slice(0, 8),
+    ...invalidRows.slice(0, 2)
+  ].sort((a, b) => a.index - b.index).slice(0, 10);
+
+  previewTableBody.innerHTML = previewRows.map(row => {
+    const isValid = !row.errors;
+    const statusBadge = isValid
+      ? '<span class="badge badge-success">Valid</span>'
+      : `<span class="badge badge-danger">${escapeHtml(row.errors[0])}</span>`;
+
+    return `
+      <tr class="${isValid ? '' : 'error-row'}">
+        <td>${row.index}</td>
+        <td class="${!row.data.firstName ? 'error-cell' : ''}">${escapeHtml(row.data.firstName || '')}</td>
+        <td>${escapeHtml(row.data.lastName || '')}</td>
+        <td class="${row.errors?.some(e => e.includes('phone')) ? 'error-cell' : ''}">${formatPhone(row.data.phone)}</td>
+        <td class="${row.errors?.some(e => e.includes('email')) ? 'error-cell' : ''}">${escapeHtml(row.data.email || '')}</td>
+        <td>${escapeHtml(row.data.company || '')}</td>
+        <td>${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Update preview count
+  const validCount = validRows.length;
+  const invalidCount = invalidRows.length;
+  const previewCount = document.querySelector('.preview-header .preview-count');
+  if (previewCount) {
+    previewCount.innerHTML = `
+      <span class="badge badge-success" style="margin-right: 8px;">${validCount} valid</span>
+      ${invalidCount > 0 ? `<span class="badge badge-danger">${invalidCount} errors/duplicates</span>` : ''}
+    `;
+  }
+}
+
+// ===========================================
+// IMPORT PROCESS (ISSUE-311 FIX: Cancellation support)
+// ===========================================
+
+// ISSUE-311 FIX: Cancel import function
+function cancelImport() {
+  if (confirm('Are you sure you want to cancel the import?')) {
+    importCancelled = true;
+    showToast('Import cancelled', 'warning');
+  }
+}
+
+async function startImport() {
+  importCancelled = false; // ISSUE-311 FIX: Reset cancellation flag
+  const progressBar = document.getElementById('progressBar');
+  const progressTotal = document.getElementById('progressTotal');
+  const progressSuccess = document.getElementById('progressSuccess');
+  const progressErrors = document.getElementById('progressErrors');
+  const cancelBtn = document.getElementById('cancelImportBtn');
+
+  const total = validRows.length;
+  let imported = 0;
+  let errors = invalidRows.length;
+
+  progressTotal.textContent = parsedData.length.toLocaleString();
+  progressErrors.textContent = errors;
+
+  if (total === 0) {
+    completeImport(0, errors);
+    return;
+  }
+
+  try {
+    // Get company membership
+    const { companyId, error: membershipError } = await getCompanyMembership();
+    console.log('[Import] Company ID:', companyId, 'Error:', membershipError);
+
+    if (membershipError || !companyId) {
+      showToast('Unable to import. Please try again.', 'error');
+      resetImport();
+      return;
+    }
+
+    // Import in batches
+    for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+      // ISSUE-311 FIX: Check cancellation flag
+      if (importCancelled) {
+        showToast('Import cancelled by user', 'warning');
+        completeImport(imported, errors, true);
+        return;
+      }
+
+      const batch = validRows.slice(i, i + BATCH_SIZE);
+
+      const contacts = batch.map(row => {
+        const cleanedPhone = row.data.phone.replace(/\D/g, '');
+        const formattedPhone = cleanedPhone.length === 10 ? `+1${cleanedPhone}` : `+${cleanedPhone}`;
+
+        return {
+          company_id: companyId,
+          first_name: row.data.firstName || null,
+          last_name: row.data.lastName || null,
+          phone: formattedPhone,
+          email: row.data.email || null,
+          business_name: row.data.company || null,
+          source: row.data.source || 'import',
+          notes: row.data.notes || null,
+          tags: row.data.tags.length > 0 ? row.data.tags : null,
+          custom_fields: Object.keys(row.data.customFields).length > 0 ? row.data.customFields : null,
+          status: 'new'
+        };
+      });
+
+      console.log('[Import] Inserting batch of', contacts.length, 'contacts with company_id:', companyId);
+      console.log('[Import] First contact sample:', contacts[0]);
+
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(contacts)
+        .select('id');
+
+      console.log('[Import] Insert result - data:', data, 'error:', error);
+
+      if (error) {
+        console.error('Batch import error:', error);
+        errors += batch.length;
+      } else if (!data || data.length === 0) {
+        // RLS might have blocked the insert silently
+        console.error('[Import] Insert returned empty data - possible RLS issue');
+        errors += batch.length;
+      } else {
+        imported += data.length;
+      }
+
+      // Update progress
+      const progress = Math.min(((i + BATCH_SIZE) / validRows.length) * 100, 100);
+      progressBar.style.width = progress + '%';
+      progressSuccess.textContent = imported.toLocaleString();
+      progressErrors.textContent = errors;
+
+      // Small delay to prevent overwhelming the database
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Log import activity
+    await logImportActivity(imported, errors);
+
+    completeImport(imported, errors);
+
+  } catch (error) {
+    console.error('Import error:', error);
+    showToast('Import failed. Please try again.', 'error');
+    resetImport();
+  }
+}
+
+async function logImportActivity(successCount, errorCount) {
+  try {
+    const { companyId } = await getCompanyMembership();
+    const { user } = await getCurrentUser();
+
+    if (companyId && user) {
+      await supabase.from('import_history').insert({
+        company_id: companyId,
+        user_id: user.id,
+        file_name: uploadedFile?.name || 'unknown',
+        total_rows: parsedData.length,
+        imported_count: successCount,
+        error_count: errorCount,
+        status: errorCount === 0 ? 'complete' : 'partial'
+      });
+    }
+  } catch (error) {
+    console.error('Error logging import:', error);
+  }
+}
+
+function completeImport(success, errors, cancelled = false) {
+  document.getElementById('importProgress').classList.remove('active');
+  document.getElementById('importComplete').classList.add('active');
+
+  let successText = success > 0
+    ? `Successfully imported ${success.toLocaleString()} contacts`
+    : 'No contacts were imported';
+  const errorText = errors > 0 ? ` with ${errors} errors/duplicates` : '';
+  const cancelledText = cancelled ? ' (cancelled by user)' : '';
+
+  document.getElementById('completeText').textContent = successText + errorText + cancelledText;
+
+  // Mark step 4 as completed
+  document.getElementById('step4').classList.remove('active');
+  document.getElementById('step4').classList.add('completed');
+}
+
+function resetImport() {
+  currentStep = 1;
+  uploadedFile = null;
+  parsedData = [];
+  csvHeaders = [];
+  columnMapping = {};
+  validRows = [];
+  invalidRows = [];
+  importCancelled = false;
+  duplicatePhones = [];
+
+  // Reset UI
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('fileInfo').classList.remove('active');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('importComplete').classList.remove('active');
+  document.getElementById('progressBar').style.width = '0%';
+
+  // Remove duplicates warning if exists
+  const dupWarning = document.querySelector('.duplicates-warning');
+  if (dupWarning) dupWarning.remove();
+
+  // Reset steps
+  for (let i = 1; i <= 4; i++) {
+    const stepEl = document.getElementById('step' + i);
+    stepEl.classList.remove('active', 'completed');
+  }
+  document.getElementById('step1').classList.add('active');
+
+  setStep(1);
+}
+
+// ===========================================
+// RECENT IMPORTS (ISSUE-312 FIX: Select specific fields)
+// ===========================================
+async function loadRecentImports() {
+  try {
+    const { companyId } = await getCompanyMembership();
+    if (!companyId) return;
+
+    // ISSUE-312 FIX: Select specific fields instead of '*'
+    const { data, error } = await supabase
+      .from('import_history')
+      .select('id, file_name, imported_count, error_count, status, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error('Error loading recent imports:', error);
+      return;
+    }
+
+    renderRecentImports(data || []);
+
+  } catch (error) {
+    console.error('Error loading recent imports:', error);
+  }
+}
+
+function renderRecentImports(imports) {
+  const container = document.querySelector('.recent-imports-list');
+  if (!container) return;
+
+  if (imports.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding: 20px; text-align: center;">
+        <div class="empty-state-text">No recent imports</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = imports.map(imp => {
+    const statusClass = imp.status === 'complete' ? 'success' : 'partial';
+    const statusText = imp.status === 'complete' ? 'Complete' : `${imp.error_count} errors`;
+
+    return `
+      <div class="recent-import-item">
+        <div class="recent-import-icon">📄</div>
+        <div class="recent-import-info">
+          <div class="recent-import-name">${escapeHtml(imp.file_name)}</div>
+          <div class="recent-import-meta">${formatDate(imp.created_at)} • ${imp.imported_count} contacts</div>
+        </div>
+        <span class="recent-import-status ${statusClass}">${statusText}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===========================================
+// TEMPLATE DOWNLOAD
+// ===========================================
+function downloadTemplate() {
+  const headers = ['First Name', 'Last Name', 'Phone', 'Email', 'Company', 'Job Title', 'Source', 'Notes', 'Tags'];
+  const sampleRow = ['John', 'Doe', '+15551234567', 'john@example.com', 'Acme Corp', 'Sales Manager', 'Website', 'Sample contact', 'hot,enterprise'];
+
+  const csvContent = [headers, sampleRow]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'contacts_import_template.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+// ===========================================
+// UTILITIES
+// ===========================================
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ===========================================
+// SIDEBAR (from template)
+// ===========================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+  localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ===========================================
+// INITIALIZE
+// ===========================================
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    // Restore sidebar state
+    const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (savedCollapsed && window.innerWidth > 1024) {
+      document.getElementById('sidebar').classList.add('collapsed');
+    }
+    initContactsImportPage();
+  });
+} else {
+  const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  if (savedCollapsed && window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
+  initContactsImportPage();
+}
+  </script>
+
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+</body>
+</html>

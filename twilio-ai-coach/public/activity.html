@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Activity - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Twilio Voice SDK for incoming calls -->
+  <script src="js/twilio.min.js"></script>
+  <style>
+    /* Incoming Call Modal */
+    .incoming-call-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .incoming-call-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .incoming-call-modal {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .incoming-call-overlay.active .incoming-call-modal {
+      transform: scale(1);
+    }
+    .incoming-call-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      animation: ring-pulse 1.5s ease-in-out infinite;
+    }
+    .incoming-call-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+      animation: ring-shake 0.5s ease-in-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+    }
+    @keyframes ring-shake {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
+    }
+    .incoming-call-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: var(--spacing-xs);
+    }
+    .incoming-call-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-lg);
+    }
+    .incoming-call-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+    .incoming-call-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .incoming-call-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    .incoming-call-btn.answer {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .incoming-call-btn.answer:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+    .incoming-call-btn.decline {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    .incoming-call-btn.decline:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+    .incoming-call-btn-label {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: var(--spacing-xs);
+    }
+    .incoming-call-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Activity Page Styles */
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+
+    .activity-header h2 {
+      margin: 0;
+      color: var(--gray-800);
+    }
+
+    .activity-header p {
+      margin: 4px 0 0;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Filter Bar */
+    .activity-filters {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-chip:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .filter-chip .chip-icon {
+      font-size: 0.875rem;
+    }
+
+    .filter-chip .chip-count {
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.1);
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+    }
+
+    .filter-chip.active .chip-count {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Date Filter */
+    .date-filter {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .date-filter select {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      background: white;
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+      position: relative;
+    }
+
+    .activity-day {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .activity-day-header {
+      position: sticky;
+      top: 0;
+      background: var(--gray-50);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: var(--spacing-md);
+      z-index: 10;
+    }
+
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    /* Activity Item */
+    .activity-item {
+      display: flex;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .activity-item:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.125rem;
+    }
+
+    .activity-icon.call { background: #d1fae5; }
+    .activity-icon.sms { background: #ede9fe; }
+    .activity-icon.status { background: #fef3c7; }
+    .activity-icon.note { background: #dbeafe; }
+    .activity-icon.callback { background: #fee2e2; }
+    .activity-icon.pipeline { background: #cffafe; }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      margin-bottom: 4px;
+    }
+
+    .activity-title {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .activity-title .contact-name {
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .activity-title .contact-name:hover {
+      text-decoration: underline;
+    }
+
+    .activity-time {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+
+    .activity-description {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .activity-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .activity-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Outcome Badge */
+    .outcome-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.6875rem;
+      font-weight: 500;
+    }
+
+    .outcome-badge.positive { background: var(--success-light); color: var(--success); }
+    .outcome-badge.neutral { background: var(--gray-100); color: var(--gray-600); }
+    .outcome-badge.negative { background: var(--danger-light); color: var(--danger); }
+    .outcome-badge.scheduled { background: var(--warning-light); color: var(--warning); }
+
+    /* Preview Text */
+    .activity-preview {
+      background: var(--gray-50);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      margin-top: var(--spacing-xs);
+      border-left: 3px solid var(--gray-200);
+    }
+
+    .activity-preview.sms-preview {
+      border-left-color: #8b5cf6;
+    }
+
+    /* Load More */
+    .load-more {
+      text-align: center;
+      padding: var(--spacing-lg);
+    }
+
+    .load-more-btn {
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: white;
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+
+    .load-more-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-xl) * 2;
+      color: var(--gray-500);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .activity-filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .date-filter {
+        margin-left: 0;
+      }
+
+      .activity-main {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .activity-meta {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>&#9664;</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+            <span class="sidebar-nav-badge" id="callbackBadge">0</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot online"></span>
+            <span>Available</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="main-wrapper">
+        <!-- Top Header -->
+        <header class="top-header">
+          <div class="top-header-left">
+            <button class="mobile-menu-btn" onclick="openSidebar()">&#9776;</button>
+            <h1 class="top-header-title">Activity Feed</h1>
+          </div>
+          <div class="top-header-right">
+            <div class="live-indicator" id="liveIndicator" style="display: none;">
+              <span class="live-dot"></span>
+              <span>Live</span>
+            </div>
+            <div class="refresh-indicator" id="refreshIndicator">
+              <span id="lastUpdatedText">Last updated: --</span>
+              <button class="btn btn-sm btn-secondary" onclick="refreshActivity()" style="margin-left: 8px;">Refresh</button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content-area">
+          <!-- Header -->
+          <div class="activity-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>All calls, messages, and updates in one place</p>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="activity-filters">
+            <div class="filter-chips">
+              <button class="filter-chip active" data-filter="all">
+                <span class="chip-icon">📋</span>
+                <span>All</span>
+                <span class="chip-count" id="countAll">0</span>
+              </button>
+              <button class="filter-chip" data-filter="calls">
+                <span class="chip-icon">📞</span>
+                <span>Calls</span>
+                <span class="chip-count" id="countCalls">0</span>
+              </button>
+              <button class="filter-chip" data-filter="sms">
+                <span class="chip-icon">💬</span>
+                <span>SMS</span>
+                <span class="chip-count" id="countSms">0</span>
+              </button>
+              <button class="filter-chip" data-filter="status">
+                <span class="chip-icon">🔄</span>
+                <span>Status Changes</span>
+                <span class="chip-count" id="countStatus">0</span>
+              </button>
+            </div>
+
+            <div class="date-filter">
+              <select id="dateRange">
+                <option value="today">Today</option>
+                <option value="week" selected>This Week</option>
+                <option value="month">This Month</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Timeline - populated by activity.js -->
+          <div class="activity-timeline" id="activityTimeline">
+            <div class="loading-spinner">Loading activity...</div>
+          </div>
+
+          <!-- Load More -->
+          <div class="load-more">
+            <button class="load-more-btn" onclick="loadMore()">Load More Activity</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Incoming Call Modal -->
+  <div class="incoming-call-overlay" id="incomingCallModal">
+    <div class="incoming-call-modal">
+      <div class="incoming-call-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+      <div class="incoming-call-label">Incoming Call</div>
+      <div class="incoming-call-number" id="incomingCallNumber">Unknown</div>
+      <div class="incoming-call-actions">
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn decline" id="declineCallBtn" title="Decline">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Decline</span>
+        </div>
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn answer" id="answerCallBtn" title="Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Answer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All functionality inline per CODING_STANDARDS.md -->
+  <script>
+    /**
+     * Activity Page JavaScript (Inlined from activity.js)
+     *
+     * ISSUE-206 FIX: Auth check added with initPage({ requireAuth: true })
+     * ISSUE-207 FIX: Dynamic filter counts updated after data load
+     * ISSUE-208 FIX: All logic migrated inline
+     * ISSUE-209 FIX: Replaced "Live" indicator with "Last updated" + refresh button
+     *
+     * Security patterns from CODING_STANDARDS.md:
+     * - Auth check first
+     * - Filter by company_id
+     * - Only select needed fields
+     * - Use .limit() for lists
+     * - escapeHtml() for XSS prevention
+     */
+
+    // ===========================================
+    // STATE
+    // ===========================================
+    let activities = []
+    let currentFilter = 'all'
+    let currentDateRange = 'week'
+    let currentOffset = 0
+    const PAGE_SIZE = 50
+    let isLoading = false
+    let hasMore = true
+    let lastUpdated = null
+
+    // Filter counts
+    let filterCounts = {
+      all: 0,
+      calls: 0,
+      sms: 0,
+      status: 0
+    }
+
+    // Twilio Device for incoming calls
+    let twilioDevice = null;
+    let pendingIncomingCall = null;
+    let ringtoneAudio = null;
+    const repIdentity = 'sales-rep';
+
+    // ===========================================
+    // INITIALIZATION (ISSUE-206 FIX: Auth check)
+    // ===========================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage({
+        requireAuth: true,
+        onReady: async (user) => {
+          // Update user display
+          if (user) {
+            const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+            const userNameEl = document.getElementById('userName')
+            const userAvatarEl = document.getElementById('userAvatar')
+            if (userNameEl) userNameEl.textContent = name
+            if (userAvatarEl) userAvatarEl.textContent = name.charAt(0).toUpperCase()
+          }
+
+          // Load initial data
+          await loadActivity()
+
+          // Set up event listeners
+          setupEventListeners()
+
+          // Initialize Twilio for incoming calls
+          initTwilioDevice()
+        },
+        onError: (error) => {
+          console.error('Activity page init error:', error)
+          showError('#activityTimeline', 'Failed to load activity feed')
+        }
+      })
+    })
+
+    // ===========================================
+    // DATA LOADING
+    // ===========================================
+
+    async function loadActivity(append = false) {
+      if (isLoading) return
+      isLoading = true
+
+      try {
+        const { companyId, error: membershipError } = await getCompanyMembership()
+        if (membershipError || !companyId) {
+          showError('#activityTimeline', 'Unable to load activity. Please try again.')
+          return
+        }
+
+        const dateFilter = getDateRangeFilter(currentDateRange)
+        const allActivities = []
+
+        // Load calls if filter includes calls or all
+        if (currentFilter === 'all' || currentFilter === 'calls') {
+          const callsData = await loadCallsAsActivities(companyId, dateFilter)
+          allActivities.push(...callsData)
+        }
+
+        // Load SMS if filter includes sms or all
+        if (currentFilter === 'all' || currentFilter === 'sms') {
+          const smsData = await loadSmsAsActivities(companyId, dateFilter)
+          allActivities.push(...smsData)
+        }
+
+        // Load status changes if filter includes status or all
+        if (currentFilter === 'all' || currentFilter === 'status') {
+          const statusData = await loadStatusActivities(companyId, dateFilter)
+          allActivities.push(...statusData)
+        }
+
+        // Sort all activities by created_at descending
+        allActivities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+        // Apply pagination
+        const startIndex = append ? currentOffset : 0
+        const endIndex = startIndex + PAGE_SIZE
+        const paginatedActivities = allActivities.slice(startIndex, endIndex)
+        hasMore = allActivities.length > endIndex
+
+        if (append) {
+          activities = [...activities, ...paginatedActivities]
+        } else {
+          activities = paginatedActivities
+          currentOffset = 0
+        }
+
+        renderActivityFeed()
+
+        // ISSUE-207 FIX: Update filter counts dynamically
+        if (!append) {
+          await updateFilterCountsFromData(companyId, dateFilter)
+        }
+
+        // ISSUE-209 FIX: Update last updated time
+        updateLastUpdatedTime()
+
+      } catch (error) {
+        console.error('Activity load error:', error)
+        showError('#activityTimeline', 'Failed to load activity feed')
+      } finally {
+        isLoading = false
+      }
+    }
+
+    // ISSUE-209 FIX: Update last updated timestamp
+    function updateLastUpdatedTime() {
+      lastUpdated = new Date()
+      const el = document.getElementById('lastUpdatedText')
+      if (el) {
+        el.textContent = `Last updated: ${lastUpdated.toLocaleTimeString()}`
+      }
+    }
+
+    // ISSUE-209 FIX: Refresh button handler
+    function refreshActivity() {
+      currentOffset = 0
+      loadActivity()
+    }
+    window.refreshActivity = refreshActivity
+
+    async function loadCallsAsActivities(companyId, dateFilter) {
+      try {
+        let query = supabase
+          .from('calls')
+          .select(`
+            id, direction, status, outcome, duration_seconds, notes, ai_summary,
+            phone_number, started_at, contact_id
+          `)
+          .eq('company_id', companyId)
+          .order('started_at', { ascending: false })
+          .limit(100)
+
+        if (dateFilter) {
+          query = query.gte('started_at', dateFilter)
+        }
+
+        let { data, error } = await query
+
+        if (error && error.message && error.message.includes('notes')) {
+          query = supabase
+            .from('calls')
+            .select(`
+              id, direction, status, outcome, duration_seconds, ai_summary,
+              phone_number, started_at, contact_id
+            `)
+            .eq('company_id', companyId)
+            .order('started_at', { ascending: false })
+            .limit(100)
+
+          if (dateFilter) {
+            query = query.gte('started_at', dateFilter)
+          }
+
+          const result = await query
+          data = result.data
+          error = result.error
+        }
+
+        if (error) {
+          console.error('Error loading calls for activity:', error)
+          return []
+        }
+
+        // Load contacts for calls
+        const contactIds = [...new Set((data || []).filter(c => c.contact_id).map(c => c.contact_id))]
+        let contactsMap = {}
+
+        if (contactIds.length > 0) {
+          const { data: contacts } = await supabase
+            .from('contacts')
+            .select('id, first_name, last_name, business_name, phone')
+            .in('id', contactIds)
+
+          if (contacts) {
+            contactsMap = contacts.reduce((acc, c) => { acc[c.id] = c; return acc }, {})
+          }
+        }
+
+        return (data || []).map(call => {
+          let action = 'call_made'
+          if (call.direction === 'inbound') {
+            const missedStatuses = ['missed', 'no-answer', 'no_answer', 'initiated', 'ringing']
+            action = missedStatuses.includes(call.status) ? 'call_missed' : 'call_received'
+          } else {
+            action = call.status === 'missed' || call.status === 'no-answer' ? 'call_missed' : 'call_made'
+          }
+
+          return {
+            id: call.id,
+            action: action,
+            entity_type: 'call',
+            entity_id: call.id,
+            created_at: call.started_at || new Date().toISOString(),
+            contact: call.contact_id ? contactsMap[call.contact_id] : null,
+            metadata: {
+              duration: call.duration_seconds,
+              outcome: call.outcome,
+              notes: call.notes || null,
+              summary: call.ai_summary,
+              phone_number: call.phone_number,
+              status: call.status
+            }
+          }
+        })
+      } catch (err) {
+        console.error('Exception loading calls for activity:', err)
+        return []
+      }
+    }
+
+    async function loadSmsAsActivities(companyId, dateFilter) {
+      try {
+        let query = supabase
+          .from('sms_messages')
+          .select(`
+            id, direction, body, status, created_at, contact_id, from_number, to_number,
+            contact:contacts(id, first_name, last_name, business_name, phone)
+          `)
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        if (dateFilter) {
+          query = query.gte('created_at', dateFilter)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+          console.log('SMS messages not available:', error.message)
+          return []
+        }
+
+        return (data || []).map(sms => ({
+          id: sms.id,
+          action: sms.direction === 'outbound' ? 'sms_sent' : 'sms_received',
+          entity_type: 'sms',
+          entity_id: sms.id,
+          created_at: sms.created_at,
+          contact: sms.contact || null,
+          metadata: {
+            message: sms.body,
+            status: sms.status,
+            phone_number: sms.direction === 'outbound' ? sms.to_number : sms.from_number
+          }
+        }))
+      } catch (err) {
+        console.log('Error loading SMS activities:', err)
+        return []
+      }
+    }
+
+    async function loadStatusActivities(companyId, dateFilter) {
+      try {
+        let query = supabase
+          .from('activity_log')
+          .select('id, action, entity_type, entity_id, contact_id, metadata, created_at')
+          .eq('company_id', companyId)
+          .in('action', ['status_changed', 'pipeline_moved', 'deal_won', 'deal_lost', 'note_added', 'callback_scheduled'])
+          .order('created_at', { ascending: false })
+          .limit(50)
+
+        if (dateFilter) {
+          query = query.gte('created_at', dateFilter)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+          console.log('Activity log query failed:', error.message)
+          return []
+        }
+
+        const contactIds = [...new Set((data || []).filter(a => a.contact_id).map(a => a.contact_id))]
+        let contactsMap = {}
+
+        if (contactIds.length > 0) {
+          const { data: contacts } = await supabase
+            .from('contacts')
+            .select('id, first_name, last_name, business_name, phone')
+            .in('id', contactIds)
+
+          if (contacts) {
+            contactsMap = contacts.reduce((acc, c) => { acc[c.id] = c; return acc }, {})
+          }
+        }
+
+        return (data || []).map(item => ({
+          ...item,
+          contact: item.contact_id ? contactsMap[item.contact_id] : null
+        }))
+      } catch (err) {
+        console.log('Error loading status activities:', err)
+        return []
+      }
+    }
+
+    // ISSUE-207 FIX: Update filter counts from actual data
+    async function updateFilterCountsFromData(companyId, dateFilter) {
+      try {
+        // Count calls
+        let callsQuery = supabase
+          .from('calls')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+
+        if (dateFilter) {
+          callsQuery = callsQuery.gte('started_at', dateFilter)
+        }
+
+        const { count: callsCount } = await callsQuery
+
+        // Count SMS
+        let smsCount = 0
+        try {
+          let smsQuery = supabase
+            .from('sms_messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', companyId)
+
+          if (dateFilter) {
+            smsQuery = smsQuery.gte('created_at', dateFilter)
+          }
+
+          const { count } = await smsQuery
+          smsCount = count || 0
+        } catch (e) {
+          console.log('SMS table may not exist')
+        }
+
+        // Count status activities
+        let statusCount = 0
+        try {
+          let statusQuery = supabase
+            .from('activity_log')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', companyId)
+
+          if (dateFilter) {
+            statusQuery = statusQuery.gte('created_at', dateFilter)
+          }
+
+          const { count } = await statusQuery
+          statusCount = count || 0
+        } catch (e) {
+          console.log('Activity log table may not exist')
+        }
+
+        filterCounts = {
+          all: (callsCount || 0) + smsCount + statusCount,
+          calls: callsCount || 0,
+          sms: smsCount,
+          status: statusCount
+        }
+
+        updateFilterChipCounts()
+
+      } catch (error) {
+        console.error('Error updating filter counts:', error)
+      }
+    }
+
+    function getDateRangeFilter(range) {
+      const now = new Date()
+      let filterDate = new Date()
+
+      switch (range) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0)
+          break
+        case 'week':
+          filterDate.setDate(now.getDate() - 7)
+          break
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1)
+          break
+        case 'all':
+          return null
+        default:
+          filterDate.setDate(now.getDate() - 7)
+      }
+
+      return filterDate.toISOString()
+    }
+
+    // ISSUE-207 FIX: Update filter chip counts dynamically
+    function updateFilterChipCounts() {
+      const countAll = document.getElementById('countAll')
+      const countCalls = document.getElementById('countCalls')
+      const countSms = document.getElementById('countSms')
+      const countStatus = document.getElementById('countStatus')
+
+      if (countAll) countAll.textContent = filterCounts.all
+      if (countCalls) countCalls.textContent = filterCounts.calls
+      if (countSms) countSms.textContent = filterCounts.sms
+      if (countStatus) countStatus.textContent = filterCounts.status
+    }
+
+    // ===========================================
+    // RENDERING
+    // ===========================================
+
+    function renderActivityFeed() {
+      const container = document.getElementById('activityTimeline')
+
+      if (!activities || activities.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚡</div>
+            <div class="empty-state-title">No activity yet</div>
+            <div class="empty-state-text">Activity will appear here as you make calls, send messages, and update contacts.</div>
+          </div>
+        `
+        updateLoadMoreButton()
+        return
+      }
+
+      const groupedActivities = groupByDay(activities)
+
+      let html = ''
+      for (const [dateKey, dayActivities] of Object.entries(groupedActivities)) {
+        html += `
+          <div class="activity-day">
+            <div class="activity-day-header">${formatDayHeader(dateKey)}</div>
+            <div class="activity-list">
+              ${dayActivities.map(activity => renderActivityItem(activity)).join('')}
+            </div>
+          </div>
+        `
+      }
+
+      container.innerHTML = html
+      updateLoadMoreButton()
+    }
+
+    function getUserTimezone() {
+      return localStorage.getItem('userTimezone') || Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+
+    function groupByDay(activityList) {
+      const groups = {}
+      const timezone = getUserTimezone()
+
+      activityList.forEach(activity => {
+        const date = new Date(activity.created_at)
+        const dateKey = date.toLocaleDateString('en-CA', { timeZone: timezone })
+
+        if (!groups[dateKey]) {
+          groups[dateKey] = []
+        }
+        groups[dateKey].push(activity)
+      })
+
+      return groups
+    }
+
+    function formatDayHeader(dateKey) {
+      const timezone = getUserTimezone()
+      const [year, month, day] = dateKey.split('-').map(Number)
+      const date = new Date(year, month - 1, day, 12, 0, 0)
+
+      const now = new Date()
+      const todayKey = now.toLocaleDateString('en-CA', { timeZone: timezone })
+      const yesterday = new Date(now)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayKey = yesterday.toLocaleDateString('en-CA', { timeZone: timezone })
+
+      const formattedDate = date.toLocaleDateString('en-US', {
+        timeZone: timezone,
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      })
+
+      if (dateKey === todayKey) {
+        return `Today - ${formattedDate}`
+      } else if (dateKey === yesterdayKey) {
+        return `Yesterday - ${formattedDate}`
+      } else {
+        return date.toLocaleDateString('en-US', {
+          timeZone: timezone,
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      }
+    }
+
+    function renderActivityItem(activity) {
+      const { icon, iconClass, title, description, meta } = getActivityDisplay(activity)
+      const time = formatActivityTime(activity.created_at)
+
+      return `
+        <div class="activity-item" data-type="${getActivityType(activity.action)}" data-id="${escapeHtml(activity.id)}">
+          <div class="activity-icon ${iconClass}">${icon}</div>
+          <div class="activity-content">
+            <div class="activity-main">
+              <div class="activity-title">${title}</div>
+              <span class="activity-time">${escapeHtml(time)}</span>
+            </div>
+            ${description ? `<div class="activity-description">${escapeHtml(description)}</div>` : ''}
+            ${meta ? `<div class="activity-meta">${meta}</div>` : ''}
+            ${renderActivityPreview(activity)}
+          </div>
+        </div>
+      `
+    }
+
+    function getActivityDisplay(activity) {
+      const contactName = getContactName(activity.contact)
+      const contactId = activity.contact?.id || activity.entity_id
+      const metadata = activity.metadata || {}
+
+      const contactLink = contactId
+        ? `<span class="contact-name" onclick="goToContact('${escapeHtml(String(contactId))}')">${escapeHtml(contactName)}</span>`
+        : escapeHtml(contactName)
+
+      switch (activity.action) {
+        case 'call_made':
+          return {
+            icon: '📞', iconClass: 'call',
+            title: `Outbound call to ${contactLink}`,
+            description: metadata.summary || metadata.notes || null,
+            meta: buildCallMeta(metadata)
+          }
+        case 'call_received':
+          return {
+            icon: '📞', iconClass: 'call',
+            title: `Inbound call from ${contactLink}`,
+            description: metadata.summary || metadata.notes || null,
+            meta: buildCallMeta(metadata)
+          }
+        case 'call_missed':
+          return {
+            icon: '📞', iconClass: 'callback',
+            title: `Missed call from ${contactLink}`,
+            description: metadata.voicemail ? 'Voicemail left' : null,
+            meta: `<span class="outcome-badge negative">Missed</span>`
+          }
+        case 'sms_sent':
+          return {
+            icon: '💬', iconClass: 'sms',
+            title: `SMS sent to ${contactLink}`,
+            description: null,
+            meta: `<span>✓ ${metadata.status === 'delivered' ? 'Delivered' : 'Sent'}</span>`
+          }
+        case 'sms_received':
+          return {
+            icon: '💬', iconClass: 'sms',
+            title: `SMS from ${contactLink}`,
+            description: null, meta: null
+          }
+        case 'status_changed':
+          return {
+            icon: '🔄', iconClass: 'status',
+            title: `${contactLink} status changed`,
+            description: metadata.from && metadata.to ? `${escapeHtml(metadata.from)} → ${escapeHtml(metadata.to)}` : null,
+            meta: null
+          }
+        case 'pipeline_moved':
+          return {
+            icon: '📈', iconClass: 'pipeline',
+            title: `${contactLink} moved to ${escapeHtml(metadata.stage || 'new stage')}`,
+            description: null, meta: null
+          }
+        case 'note_added':
+          return {
+            icon: '📝', iconClass: 'note',
+            title: `Note added to ${contactLink}`,
+            description: metadata.preview || null, meta: null
+          }
+        default:
+          return {
+            icon: '⚡', iconClass: 'status',
+            title: `Activity for ${contactLink}`,
+            description: metadata.description || null, meta: null
+          }
+      }
+    }
+
+    function buildCallMeta(metadata) {
+      const parts = []
+      if (metadata.duration) {
+        parts.push(`<span>⏱️ ${formatDuration(metadata.duration)}</span>`)
+      }
+      if (metadata.outcome) {
+        const outcomeClass = getOutcomeClass(metadata.outcome)
+        parts.push(`<span class="outcome-badge ${outcomeClass}">${escapeHtml(metadata.outcome)}</span>`)
+      }
+      return parts.join('')
+    }
+
+    function getOutcomeClass(outcome) {
+      const lowerOutcome = (outcome || '').toLowerCase()
+      if (['interested', 'booked', 'won', 'qualified'].includes(lowerOutcome)) return 'positive'
+      if (['not interested', 'lost', 'missed'].includes(lowerOutcome)) return 'negative'
+      if (['scheduled', 'callback', 'follow-up'].includes(lowerOutcome)) return 'scheduled'
+      return 'neutral'
+    }
+
+    function renderActivityPreview(activity) {
+      const metadata = activity.metadata || {}
+      if ((activity.action === 'sms_sent' || activity.action === 'sms_received') && metadata.message) {
+        return `<div class="activity-preview sms-preview">"${escapeHtml(truncateText(metadata.message, 150))}"</div>`
+      }
+      return ''
+    }
+
+    function getContactName(contact) {
+      if (!contact) return 'Unknown Contact'
+      if (Array.isArray(contact) && contact.length > 0) contact = contact[0]
+      const firstName = contact.first_name || ''
+      const lastName = contact.last_name || ''
+      const fullName = `${firstName} ${lastName}`.trim()
+      return fullName || contact.business_name || 'Unknown Contact'
+    }
+
+    function getActivityType(action) {
+      const typeMap = {
+        call_made: 'calls', call_received: 'calls', call_missed: 'calls', callback_scheduled: 'calls',
+        sms_sent: 'sms', sms_received: 'sms',
+        status_changed: 'status', pipeline_moved: 'status', deal_won: 'status', deal_lost: 'status', note_added: 'status'
+      }
+      return typeMap[action] || 'status'
+    }
+
+    function formatActivityTime(dateStr) {
+      if (!dateStr) return ''
+      const date = new Date(dateStr)
+      const timezone = getUserTimezone()
+      return date.toLocaleTimeString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '0:00'
+      const mins = Math.floor(seconds / 60)
+      const secs = Math.floor(seconds % 60)
+      return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    function truncateText(text, maxLength) {
+      if (!text || text.length <= maxLength) return text
+      return text.substring(0, maxLength) + '...'
+    }
+
+    function updateLoadMoreButton() {
+      const loadMoreContainer = document.querySelector('.load-more')
+      if (loadMoreContainer) {
+        const btn = loadMoreContainer.querySelector('.load-more-btn')
+        if (btn) {
+          btn.style.display = hasMore ? 'inline-block' : 'none'
+          btn.disabled = isLoading
+          btn.textContent = isLoading ? 'Loading...' : 'Load More Activity'
+        }
+      }
+    }
+
+    // ===========================================
+    // EVENT HANDLERS
+    // ===========================================
+
+    function setupEventListeners() {
+      const filterChips = document.querySelectorAll('.filter-chip')
+      filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          filterChips.forEach(c => c.classList.remove('active'))
+          chip.classList.add('active')
+          currentFilter = chip.dataset.filter
+          currentOffset = 0
+          loadActivity()
+        })
+      })
+
+      const dateRangeSelect = document.getElementById('dateRange')
+      if (dateRangeSelect) {
+        dateRangeSelect.addEventListener('change', (e) => {
+          currentDateRange = e.target.value
+          currentOffset = 0
+          loadActivity()
+        })
+      }
+
+      setupInfiniteScroll()
+    }
+
+    function goToContact(contactId) {
+      if (!contactId || typeof contactId !== 'string') return
+      const sanitizedId = contactId.replace(/[^a-zA-Z0-9-]/g, '')
+      if (sanitizedId !== contactId) return
+      window.location.href = `contact-profile.html?id=${encodeURIComponent(sanitizedId)}`
+    }
+    window.goToContact = goToContact
+
+    function loadMore() {
+      if (isLoading || !hasMore) return
+      currentOffset += PAGE_SIZE
+      loadActivity(true)
+    }
+    window.loadMore = loadMore
+
+    function setupInfiniteScroll() {
+      let scrollTimeout
+      window.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout)
+        scrollTimeout = setTimeout(() => {
+          const scrollPosition = window.innerHeight + window.scrollY
+          const pageHeight = document.documentElement.scrollHeight
+          if (scrollPosition >= pageHeight - 200 && hasMore && !isLoading) {
+            loadMore()
+          }
+        }, 100)
+      })
+    }
+
+    // ===========================================
+    // SIDEBAR FUNCTIONS
+    // ===========================================
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Initialize sidebar state
+    if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 1024) {
+      document.getElementById('sidebar').classList.add('collapsed');
+    }
+
+    // ===========================================
+    // INCOMING CALL HANDLING
+    // ===========================================
+
+    function playRingtone() {
+      if (ringtoneAudio) return;
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 440;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        oscillator.start();
+        let ringOn = true;
+        const ringInterval = setInterval(() => { gainNode.gain.value = ringOn ? 0.3 : 0; ringOn = !ringOn; }, 500);
+        ringtoneAudio = { oscillator, gainNode, audioContext, ringInterval };
+      } catch (e) { console.error('Error playing ringtone:', e); }
+    }
+
+    function stopRingtone() {
+      if (ringtoneAudio) {
+        try { clearInterval(ringtoneAudio.ringInterval); ringtoneAudio.oscillator.stop(); ringtoneAudio.audioContext.close(); } catch (e) {}
+        ringtoneAudio = null;
+      }
+    }
+
+    function showIncomingCallModal(from) {
+      const modal = document.getElementById('incomingCallModal');
+      const callerDisplay = document.getElementById('incomingCallNumber');
+      if (modal && callerDisplay) { callerDisplay.textContent = from || 'Unknown Caller'; modal.classList.add('active'); playRingtone(); }
+    }
+
+    function hideIncomingCallModal() { document.getElementById('incomingCallModal').classList.remove('active'); stopRingtone(); }
+
+    function answerIncomingCall() {
+      if (pendingIncomingCall) {
+        console.log('Answering incoming call...');
+        pendingIncomingCall.accept();
+        hideIncomingCallModal();
+        showActiveCallIndicator();
+      }
+    }
+
+    function showActiveCallIndicator() {
+      let indicator = document.getElementById('activeCallIndicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'activeCallIndicator';
+        indicator.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10001;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        indicator.innerHTML = '<span style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s infinite;"></span> Call Active <button onclick="endActiveCall()" style="margin-left:10px;background:#ef4444;border:none;color:white;padding:6px 12px;border-radius:4px;cursor:pointer;">End Call</button>';
+        document.body.appendChild(indicator);
+      }
+      indicator.style.display = 'flex';
+    }
+
+    function endActiveCall() {
+      if (pendingIncomingCall) { pendingIncomingCall.disconnect(); pendingIncomingCall = null; }
+      const indicator = document.getElementById('activeCallIndicator');
+      if (indicator) indicator.style.display = 'none';
+    }
+
+    function declineIncomingCall() {
+      if (pendingIncomingCall) { pendingIncomingCall.reject(); pendingIncomingCall = null; hideIncomingCallModal(); }
+    }
+
+    function handleIncomingCall(call) {
+      console.log('Incoming call received on activity:', call.parameters.From);
+      pendingIncomingCall = call;
+      call.on('cancel', () => { hideIncomingCallModal(); endActiveCall(); });
+      call.on('disconnect', () => { hideIncomingCallModal(); endActiveCall(); });
+      showIncomingCallModal(call.parameters.From);
+    }
+
+    async function initTwilioDevice() {
+      try {
+        console.log('Initializing Twilio device for incoming calls...');
+        const response = await fetch(`/token?identity=${repIdentity}`);
+        const data = await response.json();
+        if (!data.token) { console.error('No token received'); return; }
+        twilioDevice = new Twilio.Device(data.token, { codecPreferences: ['opus', 'pcmu'], logLevel: 1 });
+        twilioDevice.on('registered', () => { console.log('Twilio Device registered for incoming calls (activity page)'); });
+        twilioDevice.on('error', (error) => { console.error('Twilio Device error:', error.message || error); });
+        twilioDevice.on('incoming', handleIncomingCall);
+        await twilioDevice.register();
+        console.log('Twilio Device registration complete on activity page');
+      } catch (error) { console.error('Error initializing Twilio Device:', error); }
+    }
+
+    document.getElementById('answerCallBtn')?.addEventListener('click', answerIncomingCall);
+    document.getElementById('declineCallBtn')?.addEventListener('click', declineIncomingCall);
+  </script>
+</body>
+</html>

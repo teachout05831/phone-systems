@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Agent Monitor - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* AI Agent Monitor Styles - Based on supervisor.html */
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: var(--spacing-lg);
+      height: calc(100vh - 140px);
+    }
+
+    .monitor-panel {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      padding: var(--spacing-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .monitor-panel h2 {
+      font-size: 1rem;
+      margin-bottom: var(--spacing-md);
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .monitor-panel h2 .count {
+      background: var(--primary);
+      color: white;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+    }
+
+    /* Active AI Calls List */
+    .calls-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .ai-call-card {
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .ai-call-card:hover {
+      border-color: var(--primary);
+    }
+
+    .ai-call-card.selected {
+      border-color: var(--success);
+      background: var(--primary-light);
+    }
+
+    .ai-call-card .contact-name {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .ai-call-card .contact-name .ai-badge {
+      background: var(--primary);
+      color: white;
+      font-size: 0.625rem;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .ai-call-card .phone-number {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ai-call-card .call-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ai-call-card .duration {
+      font-size: 0.875rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .ai-call-card .call-status-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .ai-call-card .call-status-badge.ringing {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .ai-call-card .call-status-badge.connected {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .ai-call-card .call-status-badge.ended {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .empty-calls {
+      text-align: center;
+      padding: var(--spacing-xl);
+      color: var(--gray-500);
+    }
+
+    .empty-calls .icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+      opacity: 0.5;
+    }
+
+    /* History Link */
+    .history-link {
+      margin-top: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .history-link a {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .history-link a:hover {
+      text-decoration: underline;
+    }
+
+    /* Call Details Panel */
+    .call-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .call-details-info h3 {
+      font-size: 1.125rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .call-details-info p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      margin: 2px 0;
+    }
+
+    .call-details-info .cost-estimate {
+      color: var(--warning);
+      font-weight: 500;
+    }
+
+    .monitor-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .action-btn.listen {
+      background: var(--success);
+      color: white;
+    }
+
+    .action-btn.listen:hover {
+      background: #059669;
+    }
+
+    .action-btn.listen.active {
+      background: var(--danger);
+    }
+
+    .action-btn.end-call {
+      background: var(--danger);
+      color: white;
+    }
+
+    .action-btn.end-call:hover {
+      background: #dc2626;
+    }
+
+    .action-btn.view-contact {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .action-btn.view-contact:hover {
+      background: var(--gray-200);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Transcript Area */
+    .transcript-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .transcript-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .transcript-header h4 {
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .transcript-box {
+      flex: 1;
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      overflow-y: auto;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .transcript-line {
+      padding: var(--spacing-sm) var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      background: white;
+      border: 1px solid var(--gray-200);
+    }
+
+    .transcript-line.agent {
+      border-left: 3px solid var(--primary);
+    }
+
+    .transcript-line.customer {
+      border-left: 3px solid var(--success);
+    }
+
+    .transcript-line.interim {
+      opacity: 0.7;
+      font-style: italic;
+      background: var(--primary-light);
+    }
+
+    .transcript-line .speaker {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .transcript-line.agent .speaker { color: var(--primary); }
+    .transcript-line.customer .speaker { color: var(--success); }
+
+    .transcript-line .timestamp {
+      font-size: 0.7rem;
+      color: var(--gray-400);
+      float: right;
+    }
+
+    /* AI Analysis Section */
+    .ai-analysis {
+      margin-top: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      border-left: 4px solid #8b5cf6;
+    }
+
+    .ai-analysis h4 {
+      color: #8b5cf6;
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .ai-analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+    }
+
+    .ai-metric {
+      text-align: center;
+    }
+
+    .ai-metric .label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .ai-metric .value {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .ai-metric .value.positive { color: var(--success); }
+    .ai-metric .value.neutral { color: var(--gray-600); }
+    .ai-metric .value.negative { color: var(--danger); }
+
+    .ai-summary {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: white;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    /* No Call Selected State */
+    .no-call-selected {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .no-call-selected .icon {
+      font-size: 4rem;
+      margin-bottom: var(--spacing-lg);
+      opacity: 0.5;
+    }
+
+    .no-call-selected h3 {
+      margin-bottom: var(--spacing-sm);
+      color: var(--gray-700);
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--danger);
+      color: white;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .live-indicator .dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .monitor-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .monitor-panel {
+        min-height: 300px;
+      }
+    }
+
+    /* Sidebar toggle */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span></span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">12</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SV</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Supervisor</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">AI Agent Monitor</h1>
+        </div>
+        <div class="top-header-right">
+          <div class="connection-status connected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="desktop-only" id="statusText">Connected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area" style="padding: var(--spacing-lg);">
+        <div class="monitor-grid">
+          <!-- Active AI Calls Panel -->
+          <div class="monitor-panel">
+            <h2>
+              Active AI Calls
+              <span class="count" id="callCount">3</span>
+            </h2>
+            <div class="calls-list" id="callsList">
+              <!-- Populated by JavaScript -->
+            </div>
+            <div class="history-link">
+              <a href="agent-queue.html">📋 View Call Queue & History →</a>
+            </div>
+          </div>
+
+          <!-- Call Details Panel -->
+          <div class="monitor-panel call-details" id="callDetailsPanel">
+            <div class="no-call-selected" id="noCallSelected">
+              <div class="icon">🤖</div>
+              <h3>Select a Call to Monitor</h3>
+              <p>Click on an active AI call from the list to view the live transcript and AI analysis</p>
+            </div>
+
+            <div id="callDetailsContent" style="display: none; height: 100%; flex-direction: column;">
+              <div class="call-details-header">
+                <div class="call-details-info">
+                  <h3>
+                    <span id="selectedContactName">Contact Name</span>
+                    <span style="background: var(--primary); color: white; font-size: 0.625rem; padding: 2px 6px; border-radius: var(--radius-sm);">AI Agent</span>
+                  </h3>
+                  <p id="selectedPhoneNumber">Customer: +1 XXX-XXX-XXXX</p>
+                  <p id="selectedDuration">Duration: 0:00</p>
+                  <p class="cost-estimate" id="selectedCost">Est. Cost: $0.00</p>
+                </div>
+                <div class="monitor-actions">
+                  <button class="action-btn listen" id="listenBtn" onclick="toggleListening()">
+                    🎧 <span id="listenBtnText">Listen</span>
+                  </button>
+                  <button class="action-btn end-call" id="endCallBtn" onclick="endCall()">
+                    📵 End Call
+                  </button>
+                  <button class="action-btn view-contact" onclick="viewContact()">
+                    👤 View Contact
+                  </button>
+                </div>
+              </div>
+
+              <div class="transcript-section">
+                <div class="transcript-header">
+                  <h4>
+                    Live Transcript
+                    <span class="live-indicator" id="liveIndicator" style="display: none;">
+                      <span class="dot"></span>
+                      LIVE
+                    </span>
+                  </h4>
+                </div>
+                <div class="transcript-box" id="transcriptBox">
+                  <div class="empty-state" style="text-align: center; color: var(--gray-500); padding: var(--spacing-xl);">
+                    Click "Listen" to view live transcript
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-analysis" id="aiAnalysis">
+                <h4>🧠 AI Analysis</h4>
+                <div class="ai-analysis-grid">
+                  <div class="ai-metric">
+                    <div class="label">Sentiment</div>
+                    <div class="value positive" id="aiSentiment">Positive</div>
+                  </div>
+                  <div class="ai-metric">
+                    <div class="label">Intent</div>
+                    <div class="value" id="aiIntent">Interested</div>
+                  </div>
+                  <div class="ai-metric">
+                    <div class="label">Confidence</div>
+                    <div class="value" id="aiConfidence">85%</div>
+                  </div>
+                </div>
+                <div class="ai-summary" id="aiSummary">
+                  Customer is showing interest in the premium package. Discussing pricing options.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="contacts.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Contacts</span>
+        </a>
+        <a href="agent-queue.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>Queue</span>
+        </a>
+        <a href="agent-monitor.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">🤖</span>
+          <span>Monitor</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <script src="js/agent-monitor.js"></script>
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+</body>
+</html>

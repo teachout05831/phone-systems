@@ -1,0 +1,1 @@
+export { useNewsfeed } from './useNewsfeed'

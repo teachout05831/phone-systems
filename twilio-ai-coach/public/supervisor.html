@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Supervisor Dashboard - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* Supervisor-specific styles */
+    .supervisor-grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: var(--spacing-lg);
+      height: calc(100vh - 140px);
+    }
+
+    .supervisor-panel {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      padding: var(--spacing-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .supervisor-panel h2 {
+      font-size: 1rem;
+      margin-bottom: var(--spacing-md);
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .supervisor-panel h2 .count {
+      background: var(--primary);
+      color: white;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+    }
+
+    /* Active Calls List */
+    .calls-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .call-card {
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .call-card:hover {
+      border-color: var(--primary);
+    }
+
+    .call-card.selected {
+      border-color: var(--success);
+      background: var(--primary-light);
+    }
+
+    .call-card .rep-name {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .call-card .customer-number {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .call-card .call-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .call-card .duration {
+      font-size: 0.875rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .call-card .listen-badge {
+      font-size: 0.75rem;
+      background: var(--success);
+      color: white;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .empty-calls {
+      text-align: center;
+      padding: var(--spacing-xl);
+      color: var(--gray-500);
+    }
+
+    .empty-calls svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: var(--spacing-md);
+      opacity: 0.5;
+    }
+
+    /* Call Details Panel */
+    .call-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .call-details-info h3 {
+      font-size: 1.125rem;
+      margin-bottom: 4px;
+    }
+
+    .call-details-info p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .supervisor-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .action-btn.listen {
+      background: var(--success);
+      color: white;
+    }
+
+    .action-btn.listen:hover {
+      background: #059669;
+    }
+
+    .action-btn.listen.active {
+      background: var(--danger);
+    }
+
+    .action-btn.whisper {
+      background: var(--warning);
+      color: white;
+    }
+
+    .action-btn.whisper:hover {
+      background: #d97706;
+    }
+
+    .action-btn.barge {
+      background: var(--danger);
+      color: white;
+    }
+
+    .action-btn.barge:hover {
+      background: #dc2626;
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Transcript Area */
+    .transcript-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .transcript-box {
+      flex: 1;
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      overflow-y: auto;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .transcript-line {
+      padding: var(--spacing-sm) var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      background: white;
+      border: 1px solid var(--gray-200);
+    }
+
+    .transcript-line.interim {
+      opacity: 0.7;
+      font-style: italic;
+      background: var(--primary-light);
+      border-left: 3px solid var(--primary);
+    }
+
+    .transcript-line .timestamp {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    /* AI Coach Suggestions */
+    .ai-suggestions {
+      margin-top: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      border-left: 4px solid #8b5cf6;
+    }
+
+    .ai-suggestions h4 {
+      color: #8b5cf6;
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .suggestion-item {
+      background: white;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-sm);
+      font-size: 0.875rem;
+      border: 1px solid var(--gray-200);
+    }
+
+    .suggestion-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .suggestion-item .time {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* No Call Selected State */
+    .no-call-selected {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .no-call-selected svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: var(--spacing-lg);
+      opacity: 0.5;
+    }
+
+    .no-call-selected h3 {
+      margin-bottom: var(--spacing-sm);
+      color: var(--gray-700);
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--danger);
+      color: white;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .live-indicator .dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @media (max-width: 900px) {
+      .supervisor-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SV</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Supervisor</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Connecting...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Supervisor Dashboard</h1>
+        </div>
+        <div class="top-header-right">
+          <div class="connection-status disconnected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="desktop-only" id="statusText">Disconnected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area" style="padding: var(--spacing-lg);">
+        <div class="supervisor-grid">
+          <!-- Active Calls Panel -->
+          <div class="supervisor-panel">
+            <h2>
+              Active Calls
+          <span class="count" id="callCount">0</span>
+        </h2>
+        <div class="calls-list" id="callsList">
+          <!-- ISSUE-009 FIX: Show loading state initially -->
+          <div class="empty-calls" id="callsLoadingState">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <p>Loading active calls...</p>
+          </div>
+        </div>
+          </div>
+
+          <!-- Call Details Panel -->
+          <div class="supervisor-panel call-details" id="callDetailsPanel">
+        <div class="no-call-selected" id="noCallSelected">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <h3>Select a Call to Monitor</h3>
+          <p>Click on an active call from the list to view the live transcript and coaching suggestions</p>
+        </div>
+
+        <div id="callDetailsContent" style="display: none; height: 100%; display: none; flex-direction: column;">
+          <div class="call-details-header">
+            <div class="call-details-info">
+              <h3 id="selectedRepName">Rep Name</h3>
+              <p id="selectedCustomerNumber">Customer: +1 XXX-XXX-XXXX</p>
+              <p id="selectedDuration">Duration: 0:00</p>
+            </div>
+            <div class="supervisor-actions">
+              <button class="action-btn listen" id="listenBtn">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 3a5 5 0 0 0-5 5v1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a6 6 0 1 1 12 0v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1V8a5 5 0 0 0-5-5z"/>
+                </svg>
+                <span id="listenBtnText">Listen</span>
+              </button>
+              <button class="action-btn whisper" id="whisperBtn" disabled title="Coming soon">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0v5zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/>
+                </svg>
+                Whisper
+              </button>
+              <button class="action-btn barge" id="bargeBtn" disabled title="Coming soon">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+                </svg>
+                Barge
+              </button>
+            </div>
+          </div>
+
+          <div class="transcript-section">
+            <h4 style="color: #94a3b8; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+              Live Transcript
+              <span class="live-indicator" id="liveIndicator" style="display: none;">
+                <span class="dot"></span>
+                LIVE
+              </span>
+            </h4>
+            <div class="transcript-box" id="transcriptBox">
+              <div class="empty-state" style="text-align: center; color: #64748b; padding: 20px;">
+                Transcript will appear when listening to call
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-suggestions">
+            <h4>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </svg>
+              AI Coaching Suggestions
+            </h4>
+            <div id="aiSuggestions">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                AI suggestions will appear as the call progresses
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="newsfeed.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📰</span>
+          <span>Feed</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="callbacks.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">🔔</span>
+          <span>Callbacks</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Supervisor JS - All logic inline per CODING_STANDARDS -->
+  <script>
+    /**
+     * Supervisor Dashboard JavaScript
+     *
+     * Handles:
+     * - Real-time active calls monitoring
+     * - Live transcript viewing
+     * - AI coaching suggestions
+     * - Listen/Whisper/Barge functionality
+     *
+     * Security fixes applied:
+     * - ISSUE-007: Auth token passed to WebSocket
+     * - ISSUE-008: Debouncing on database updates
+     * - ISSUE-009: Loading state on initial load
+     * - ISSUE-010: WebSocket connects after role verification
+     */
+
+    // ===========================================
+    // STATE
+    // ===========================================
+    let activeCalls = new Map();
+    let selectedCallSid = null;
+    let isListening = false;
+    let durationInterval = null;
+    let callSubscription = null;
+    let ws = null;
+    let companyId = null;
+    let authToken = null;
+
+    // ISSUE-008 FIX: Debounce timer for database updates
+    let dbUpdateDebounceTimer = null;
+    const DB_UPDATE_DEBOUNCE_MS = 500;
+
+    // ===========================================
+    // INITIALIZATION
+    // ===========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage({
+        requireAuth: true,
+        onReady: async (user) => {
+          // Check supervisor role FIRST before anything else
+          const isAuthorized = await hasRole(['supervisor', 'manager', 'admin', 'owner']);
+          if (!isAuthorized) {
+            alert('You do not have permission to access this page');
+            window.location.href = 'dashboard.html';
+            return;
+          }
+
+          // Get auth token for WebSocket authentication
+          const { data: { session } } = await supabase.auth.getSession();
+          authToken = session?.access_token;
+
+          // Update sidebar user info
+          if (user) {
+            const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Supervisor';
+            const userNameEl = document.querySelector('.sidebar-user-name');
+            const userAvatarEl = document.getElementById('userAvatar');
+            if (userNameEl) userNameEl.textContent = name;
+            if (userAvatarEl) userAvatarEl.textContent = name.charAt(0).toUpperCase();
+          }
+
+          // Get company membership
+          const membership = await getCompanyMembership();
+          if (membership.error || !membership.companyId) {
+            console.log('No company membership found');
+            hideLoadingState();
+            return;
+          }
+          companyId = membership.companyId;
+
+          // ISSUE-010 FIX: Only connect WebSocket AFTER role verified
+          connectWebSocket();
+
+          // Load initial data
+          await loadActiveCalls();
+
+          // Subscribe to database changes
+          subscribeToCallUpdates();
+
+          // Update durations every second
+          setInterval(updateAllDurations, 1000);
+
+          // Set up event listeners
+          setupEventListeners();
+        },
+        onError: (error) => {
+          console.error('Supervisor init error:', error);
+          updateConnectionStatus(false);
+          hideLoadingState();
+        }
+      });
+    });
+
+    // ===========================================
+    // WEBSOCKET CONNECTION
+    // ===========================================
+
+    function connectWebSocket() {
+      // ISSUE-007 FIX: Pass auth token to WebSocket for server-side role verification
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsParams = new URLSearchParams({
+        role: 'supervisor',
+        identity: `supervisor-${Date.now()}`,
+        token: authToken || ''  // Pass auth token for server verification
+      });
+      ws = new WebSocket(`${protocol}//${window.location.host}/browser?${wsParams.toString()}`);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        updateConnectionStatus(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        updateConnectionStatus(false);
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    /**
+     * Handle incoming WebSocket messages
+     */
+    function handleWebSocketMessage(data) {
+      switch (data.type) {
+        case 'call_started':
+          activeCalls.set(data.callSid, {
+            callSid: data.callSid,
+            repIdentity: data.repIdentity || 'Unknown Rep',
+            customerNumber: data.customerNumber || 'Unknown',
+            startTime: data.startTime || Date.now(),
+            status: 'connected'
+          });
+          renderCallsList();
+          break;
+
+        case 'call_ended':
+          activeCalls.delete(data.callSid);
+          if (selectedCallSid === data.callSid) {
+            deselectCall();
+          }
+          renderCallsList();
+          break;
+
+        case 'transcript':
+          if (data.callSid === selectedCallSid && isListening) {
+            addTranscript(data);
+          }
+          // Update call's transcript cache
+          const call = activeCalls.get(data.callSid);
+          if (call) {
+            if (!call.transcript) call.transcript = [];
+            call.transcript.push(data);
+          }
+          break;
+
+        case 'full_transcript':
+          if (data.callSid === selectedCallSid) {
+            const transcriptBox = document.getElementById('transcriptBox');
+            transcriptBox.innerHTML = '';
+            data.transcript.forEach(t => addTranscript({ ...t, isFinal: true }));
+          }
+          break;
+
+        case 'ai_coaching':
+          if (data.callSid === selectedCallSid) {
+            addAISuggestion(data);
+          }
+          break;
+      }
+    }
+
+    // ===========================================
+    // DATA LOADING
+    // ===========================================
+
+    /**
+     * Hide loading state and show empty or content
+     */
+    function hideLoadingState() {
+      const loadingState = document.getElementById('callsLoadingState');
+      if (loadingState) {
+        loadingState.style.display = 'none';
+      }
+    }
+
+    /**
+     * Load active calls from Supabase
+     */
+    async function loadActiveCalls() {
+      try {
+        if (!companyId) {
+          hideLoadingState();
+          renderCallsList();
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('calls')
+          .select(`
+            id, call_sid, status, phone_number, started_at,
+            user_id, transcript,
+            user:users(id, full_name)
+          `)
+          .eq('company_id', companyId)
+          .eq('ai_agent', false)
+          .in('status', ['ringing', 'in-progress', 'connected'])
+          .order('started_at', { ascending: false })
+          .limit(20);
+
+        if (error) {
+          console.error('Error loading active calls:', error);
+          hideLoadingState();
+          return;
+        }
+
+        activeCalls.clear();
+        (data || []).forEach(call => {
+          activeCalls.set(call.call_sid, {
+            callSid: call.call_sid,
+            repIdentity: call.user?.full_name || 'Unknown Rep',
+            customerNumber: call.phone_number,
+            startTime: new Date(call.started_at).getTime(),
+            status: mapCallStatus(call.status),
+            transcript: parseTranscript(call.transcript)
+          });
+        });
+
+        hideLoadingState();
+        renderCallsList();
+
+      } catch (error) {
+        console.error('Error loading active calls:', error);
+        hideLoadingState();
+      }
+    }
+
+    /**
+     * Map database status to display status
+     */
+    function mapCallStatus(status) {
+      const statusMap = {
+        'ringing': 'ringing',
+        'in-progress': 'connected',
+        'connected': 'connected',
+        'completed': 'ended'
+      };
+      return statusMap[status] || status;
+    }
+
+    /**
+     * Parse transcript from JSON
+     */
+    function parseTranscript(transcript) {
+      if (!transcript) return [];
+      if (typeof transcript === 'string') {
+        try {
+          return JSON.parse(transcript);
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(transcript) ? transcript : [];
+    }
+
+    // ===========================================
+    // RENDERING
+    // ===========================================
+
+    /**
+     * Render the active calls list
+     */
+    function renderCallsList() {
+      const callCount = document.getElementById('callCount');
+      const callsList = document.getElementById('callsList');
+
+      if (callCount) callCount.textContent = activeCalls.size;
+
+      if (activeCalls.size === 0) {
+        callsList.innerHTML = `
+          <div class="empty-calls">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            <p>No active calls</p>
+            <p style="font-size: 0.85rem; margin-top: 5px;">Calls will appear here when reps start calling</p>
+          </div>
+        `;
+        return;
+      }
+
+      callsList.innerHTML = '';
+      activeCalls.forEach((call, callSid) => {
+        const duration = formatDuration(Math.floor((Date.now() - call.startTime) / 1000));
+        const isSelected = callSid === selectedCallSid;
+
+        const card = document.createElement('div');
+        card.className = `call-card ${isSelected ? 'selected' : ''}`;
+        card.onclick = () => selectCall(callSid);
+        card.innerHTML = `
+          <div class="rep-name">${escapeHtml(call.repIdentity)}</div>
+          <div class="customer-number">${escapeHtml(formatPhone(call.customerNumber))}</div>
+          <div class="call-meta">
+            <span class="duration">${duration}</span>
+            ${isSelected && isListening ? '<span class="listen-badge">Listening</span>' : ''}
+          </div>
+        `;
+        callsList.appendChild(card);
+      });
+    }
+
+    /**
+     * Select a call to monitor
+     */
+    function selectCall(callSid) {
+      selectedCallSid = callSid;
+      const call = activeCalls.get(callSid);
+
+      if (!call) return;
+
+      // Update UI
+      document.getElementById('noCallSelected').style.display = 'none';
+      document.getElementById('callDetailsContent').style.display = 'flex';
+
+      document.getElementById('selectedRepName').textContent = call.repIdentity;
+      document.getElementById('selectedCustomerNumber').textContent = `Customer: ${formatPhone(call.customerNumber)}`;
+
+      // Reset listening state
+      isListening = false;
+      const listenBtn = document.getElementById('listenBtn');
+      const listenBtnText = document.getElementById('listenBtnText');
+      const liveIndicator = document.getElementById('liveIndicator');
+      const transcriptBox = document.getElementById('transcriptBox');
+      const aiSuggestions = document.getElementById('aiSuggestions');
+
+      if (listenBtn) listenBtn.classList.remove('active');
+      if (listenBtnText) listenBtnText.textContent = 'Listen';
+      if (liveIndicator) liveIndicator.style.display = 'none';
+
+      transcriptBox.innerHTML = '<div class="empty-state" style="text-align: center; color: #64748b; padding: 20px;">Click "Listen" to view live transcript</div>';
+      aiSuggestions.innerHTML = '<div style="color: #64748b; font-size: 0.9rem;">AI suggestions will appear as the call progresses</div>';
+
+      // Update duration
+      if (durationInterval) clearInterval(durationInterval);
+      updateDuration(call.startTime);
+      durationInterval = setInterval(() => updateDuration(call.startTime), 1000);
+
+      renderCallsList();
+    }
+
+    /**
+     * Deselect current call
+     */
+    function deselectCall() {
+      selectedCallSid = null;
+      isListening = false;
+      document.getElementById('noCallSelected').style.display = 'flex';
+      document.getElementById('callDetailsContent').style.display = 'none';
+      if (durationInterval) clearInterval(durationInterval);
+      renderCallsList();
+    }
+
+    /**
+     * Update duration display
+     */
+    function updateDuration(startTime) {
+      const seconds = Math.floor((Date.now() - startTime) / 1000);
+      const selectedDuration = document.getElementById('selectedDuration');
+      if (selectedDuration) {
+        selectedDuration.textContent = `Duration: ${formatDuration(seconds)}`;
+      }
+    }
+
+    /**
+     * Update all durations
+     */
+    function updateAllDurations() {
+      renderCallsList();
+      if (selectedCallSid) {
+        const call = activeCalls.get(selectedCallSid);
+        if (call) updateDuration(call.startTime);
+      }
+    }
+
+    // ===========================================
+    // CALL ACTIONS
+    // ===========================================
+
+    /**
+     * Toggle listening to call
+     */
+    function toggleListening() {
+      if (!selectedCallSid) return;
+
+      isListening = !isListening;
+
+      const listenBtn = document.getElementById('listenBtn');
+      const listenBtnText = document.getElementById('listenBtnText');
+      const liveIndicator = document.getElementById('liveIndicator');
+      const transcriptBox = document.getElementById('transcriptBox');
+
+      if (isListening) {
+        // Start listening
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'listen_to_call',
+            callSid: selectedCallSid
+          }));
+        }
+        listenBtn.classList.add('active');
+        listenBtnText.textContent = 'Stop';
+        liveIndicator.style.display = 'inline-flex';
+
+        // Show existing transcript
+        const call = activeCalls.get(selectedCallSid);
+        if (call && call.transcript && call.transcript.length > 0) {
+          transcriptBox.innerHTML = '';
+          call.transcript.forEach(t => addTranscript({ ...t, isFinal: true }));
+        } else {
+          transcriptBox.innerHTML = '';
+        }
+
+      } else {
+        // Stop listening
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'stop_listening'
+          }));
+        }
+        listenBtn.classList.remove('active');
+        listenBtnText.textContent = 'Listen';
+        liveIndicator.style.display = 'none';
+      }
+
+      renderCallsList();
+    }
+
+    /**
+     * Add transcript line
+     */
+    function addTranscript(data) {
+      const transcriptBox = document.getElementById('transcriptBox');
+
+      // Remove empty state
+      const emptyState = transcriptBox.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      if (data.isFinal) {
+        const line = document.createElement('div');
+        line.className = 'transcript-line';
+        const time = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+        line.innerHTML = `
+          <div class="timestamp">${time}</div>
+          <div>${escapeHtml(data.text)}</div>
+        `;
+        transcriptBox.appendChild(line);
+      } else {
+        // Interim result - update or create
+        let interimLine = transcriptBox.querySelector('.transcript-line.interim');
+        if (!interimLine) {
+          interimLine = document.createElement('div');
+          interimLine.className = 'transcript-line interim';
+          transcriptBox.appendChild(interimLine);
+        }
+        const time = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+        interimLine.innerHTML = `
+          <div class="timestamp">${time}</div>
+          <div>${escapeHtml(data.text)}</div>
+        `;
+      }
+
+      transcriptBox.scrollTop = transcriptBox.scrollHeight;
+    }
+
+    /**
+     * Add AI suggestion
+     */
+    function addAISuggestion(data) {
+      const aiSuggestions = document.getElementById('aiSuggestions');
+
+      // Remove placeholder
+      const placeholder = aiSuggestions.querySelector('div[style*="color: #64748b"]');
+      if (placeholder) placeholder.remove();
+
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      const time = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+      item.innerHTML = `
+        ${escapeHtml(data.suggestion)}
+        <div class="time">${time}</div>
+      `;
+      aiSuggestions.insertBefore(item, aiSuggestions.firstChild);
+    }
+
+    // ===========================================
+    // REAL-TIME SUBSCRIPTIONS
+    // ===========================================
+
+    /**
+     * Subscribe to call updates from database
+     */
+    function subscribeToCallUpdates() {
+      if (!companyId) return;
+
+      callSubscription = supabase
+        .channel('supervisor-calls')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'calls',
+          filter: `company_id=eq.${companyId}`
+        }, (payload) => {
+          // ISSUE-008 FIX: Debounce database updates to prevent performance issues
+          handleCallDatabaseUpdateDebounced(payload);
+        })
+        .subscribe();
+    }
+
+    /**
+     * ISSUE-008 FIX: Debounced handler for database updates
+     */
+    function handleCallDatabaseUpdateDebounced(payload) {
+      if (dbUpdateDebounceTimer) {
+        clearTimeout(dbUpdateDebounceTimer);
+      }
+      dbUpdateDebounceTimer = setTimeout(() => {
+        handleCallDatabaseUpdate(payload);
+      }, DB_UPDATE_DEBOUNCE_MS);
+    }
+
+    /**
+     * Handle database call updates
+     */
+    function handleCallDatabaseUpdate(payload) {
+      const { eventType, new: newData, old: oldData } = payload;
+
+      // Skip AI agent calls (those are handled by agent-monitor)
+      if (newData && newData.ai_agent) return;
+
+      if (eventType === 'INSERT' || eventType === 'UPDATE') {
+        const status = mapCallStatus(newData.status);
+
+        if (['ringing', 'connected'].includes(status)) {
+          activeCalls.set(newData.call_sid, {
+            callSid: newData.call_sid,
+            repIdentity: 'Loading...',
+            customerNumber: newData.phone_number,
+            startTime: new Date(newData.started_at).getTime(),
+            status: status,
+            transcript: parseTranscript(newData.transcript)
+          });
+
+          // Load rep name
+          if (newData.user_id) {
+            loadRepName(newData.call_sid, newData.user_id);
+          }
+
+        } else if (status === 'ended' || newData.status === 'completed') {
+          activeCalls.delete(newData.call_sid);
+          if (selectedCallSid === newData.call_sid) {
+            deselectCall();
+          }
+        }
+
+        renderCallsList();
+      }
+
+      if (eventType === 'DELETE' && oldData) {
+        activeCalls.delete(oldData.call_sid);
+        if (selectedCallSid === oldData.call_sid) {
+          deselectCall();
+        }
+        renderCallsList();
+      }
+    }
+
+    /**
+     * Load rep name for a call
+     */
+    async function loadRepName(callSid, userId) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', userId)
+          .single();
+
+        if (!error && data) {
+          const call = activeCalls.get(callSid);
+          if (call) {
+            call.repIdentity = data.full_name || 'Unknown Rep';
+            renderCallsList();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading rep name:', error);
+      }
+    }
+
+    // ===========================================
+    // CONNECTION STATUS
+    // ===========================================
+
+    function updateConnectionStatus(connected) {
+      const statusEl = document.getElementById('connectionStatus');
+      const statusText = document.getElementById('statusText');
+      const connectionText = document.getElementById('connectionText');
+      const userStatus = document.getElementById('userStatus');
+
+      if (connected) {
+        if (statusEl) {
+          statusEl.className = 'connection-status connected';
+          statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Connected</span>';
+        }
+        if (statusText) statusText.textContent = 'Connected';
+        if (connectionText) connectionText.textContent = 'Online';
+        if (userStatus) userStatus.style.color = 'var(--success)';
+      } else {
+        if (statusEl) {
+          statusEl.className = 'connection-status disconnected';
+          statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Disconnected</span>';
+        }
+        if (statusText) statusText.textContent = 'Disconnected';
+        if (connectionText) connectionText.textContent = 'Offline';
+        if (userStatus) userStatus.style.color = 'var(--gray-400)';
+      }
+    }
+
+    // ===========================================
+    // EVENT LISTENERS
+    // ===========================================
+
+    function setupEventListeners() {
+      const listenBtn = document.getElementById('listenBtn');
+      if (listenBtn) {
+        listenBtn.addEventListener('click', toggleListening);
+      }
+
+      // Refresh active calls periodically
+      setInterval(() => {
+        if (ws && ws.readyState !== WebSocket.OPEN) {
+          loadActiveCalls();
+        }
+      }, 10000);
+    }
+
+    // ===========================================
+    // UTILITY FUNCTIONS
+    // ===========================================
+
+    function formatDuration(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function formatPhone(phone) {
+      if (!phone) return '';
+      const cleaned = phone.replace(/\D/g, '');
+      if (cleaned.length === 10) {
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      } else if (cleaned.length === 11 && cleaned[0] === '1') {
+        return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      }
+      return phone;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ===========================================
+    // SIDEBAR FUNCTIONS
+    // ===========================================
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Restore sidebar state
+    (function initSidebar() {
+      const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (savedCollapsed && window.innerWidth > 1024) {
+        document.getElementById('sidebar')?.classList.add('collapsed');
+      }
+    })();
+  </script>
+
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</body>
+</html>

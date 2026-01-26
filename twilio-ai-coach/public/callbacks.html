@@ -1,0 +1,2983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Callbacks - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Twilio Voice SDK for incoming calls -->
+  <script src="js/twilio.min.js"></script>
+  <style>
+    /* Incoming Call Modal */
+    .incoming-call-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .incoming-call-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .incoming-call-modal {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .incoming-call-overlay.active .incoming-call-modal {
+      transform: scale(1);
+    }
+    .incoming-call-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-lg);
+      animation: ring-pulse 1.5s ease-in-out infinite;
+    }
+    .incoming-call-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+      animation: ring-shake 0.5s ease-in-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+    }
+    @keyframes ring-shake {
+      0%, 100% { transform: rotate(-10deg); }
+      50% { transform: rotate(10deg); }
+    }
+    .incoming-call-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: var(--spacing-xs);
+    }
+    .incoming-call-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-lg);
+    }
+    .incoming-call-actions {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+    .incoming-call-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .incoming-call-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    .incoming-call-btn.answer {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .incoming-call-btn.answer:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+    .incoming-call-btn.decline {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    .incoming-call-btn.decline:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+    .incoming-call-btn-label {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: var(--spacing-xs);
+    }
+    .incoming-call-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .callback-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .callback-section-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    .callback-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .callback-section-count {
+      background: var(--gray-200);
+      color: var(--gray-600);
+      padding: 0.125rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Progress Indicator Styles */
+    .attempt-progress {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .attempt-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gray-300);
+    }
+
+    .attempt-dot.filled {
+      background: var(--primary);
+    }
+
+    .attempt-dot.connected {
+      background: var(--success);
+    }
+
+    .attempt-count {
+      margin-left: var(--spacing-xs);
+      color: var(--gray-600);
+      font-size: 0.75rem;
+    }
+
+    .attempt-status {
+      font-weight: 600;
+      margin-left: var(--spacing-sm);
+    }
+
+    .attempt-status.needs-more {
+      color: var(--warning);
+    }
+
+    .attempt-status.can-exhaust {
+      color: var(--success);
+    }
+
+    /* Missed Call Card Styles */
+    .missed-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      background: white;
+      transition: all var(--transition-fast);
+    }
+
+    .missed-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .missed-card.urgent {
+      border-left: 4px solid var(--danger);
+    }
+
+    .missed-card.warning {
+      border-left: 4px solid var(--warning);
+    }
+
+    .missed-card.normal {
+      border-left: 4px solid var(--gray-300);
+    }
+
+    .missed-card.in-progress {
+      border-left: 4px solid var(--primary);
+      background: linear-gradient(to right, rgba(37, 99, 235, 0.05), white);
+    }
+
+    .missed-card.exhausted-card {
+      border-left: 4px solid var(--gray-400);
+      background: var(--gray-50);
+    }
+
+    .missed-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .missed-phone {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .missed-phone-secondary {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .missed-time {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .missed-card-meta {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .callback-scheduled {
+      font-size: 0.875rem;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .callback-reason {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      font-style: italic;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .callback-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+    }
+
+    /* Attempt History Section */
+    .attempt-history {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      padding: var(--spacing-sm);
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-md);
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .attempt-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-xs) 0;
+      border-bottom: 1px dashed var(--gray-200);
+    }
+
+    .attempt-item:last-child {
+      border-bottom: none;
+    }
+
+    .attempt-icon {
+      font-size: 0.875rem;
+    }
+
+    .attempt-result {
+      font-weight: 500;
+    }
+
+    .attempt-result.no_answer { color: var(--warning); }
+    .attempt-result.voicemail { color: var(--info); }
+    .attempt-result.busy { color: var(--danger); }
+    .attempt-result.text_sent { color: var(--primary); }
+
+    .attempt-time {
+      margin-left: auto;
+      color: var(--gray-400);
+    }
+
+    .missed-card-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    /* Action Buttons */
+    .btn-call {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-call:hover {
+      background: #16a34a;
+    }
+
+    .btn-text {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-connected {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-exhausted {
+      background: var(--gray-500);
+      color: white;
+    }
+
+    .btn-exhausted:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Scheduled Card Styles */
+    .scheduled-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      background: white;
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: flex-start;
+    }
+
+    .scheduled-time-box {
+      background: var(--primary-light);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .scheduled-time-box .time {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .scheduled-time-box .date {
+      font-size: 0.625rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .scheduled-info {
+      flex: 1;
+    }
+
+    .scheduled-phone {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .scheduled-reason {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      font-style: italic;
+      margin-top: var(--spacing-xs);
+    }
+
+    .scheduled-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    /* Completed Card Styles */
+    .completed-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      background: var(--gray-50);
+    }
+
+    .completed-card.connected {
+      border-left: 4px solid var(--success);
+    }
+
+    .completed-card.exhausted {
+      border-left: 4px solid var(--gray-400);
+    }
+
+    .completed-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .completed-card-phone {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .completed-card-meta {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: var(--spacing-sm);
+    }
+
+    /* Day Group Styles */
+    .day-group {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .day-group-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .day-group-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    .overdue-badge {
+      background: var(--danger);
+      color: white;
+      padding: 0.125rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .settings-title {
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .settings-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      min-width: 200px;
+    }
+
+    .settings-input {
+      width: 80px;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .stat-card.pending .stat-value { color: var(--warning); }
+    .stat-card.connected .stat-value { color: var(--success); }
+    .stat-card.exhausted .stat-value { color: var(--gray-500); }
+    .stat-card.in-progress .stat-value { color: var(--primary); }
+
+    /* Log Attempt Modal */
+    .method-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .method-btn {
+      flex: 1;
+      padding: var(--spacing-md);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+
+    .method-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .method-btn.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .method-btn-icon {
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .method-btn-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .result-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-sm);
+    }
+
+    .result-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+
+    .result-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .result-btn.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Agent Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Agent</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+            <span class="sidebar-nav-badge" id="queueBadge">0</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Connecting...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Callbacks</h1>
+        </div>
+        <div class="top-header-right">
+          <div class="connection-status disconnected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="desktop-only">Disconnected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+      <h1 class="mb-4">Callback Follow-Up Tracker</h1>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-card pending">
+          <div class="stat-value" id="statPending">0</div>
+          <div class="stat-label">Pending Callbacks</div>
+        </div>
+        <div class="stat-card in-progress">
+          <div class="stat-value" id="statInProgress">0</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card connected">
+          <div class="stat-value" id="statConnected">0</div>
+          <div class="stat-label">Connected Today</div>
+        </div>
+        <div class="stat-card exhausted">
+          <div class="stat-value" id="statExhausted">0</div>
+          <div class="stat-label">Exhausted</div>
+        </div>
+      </div>
+
+      <!-- Settings Panel (Collapsible) -->
+      <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+          <span class="settings-title">Settings</span>
+          <button class="btn btn-sm btn-secondary" onclick="toggleSettings()">
+            <span id="settingsToggle">Hide</span>
+          </button>
+        </div>
+        <div id="settingsContent">
+          <div class="settings-row">
+            <label class="settings-label">Required callback attempts before marking exhausted:</label>
+            <input type="number" class="settings-input" id="requiredAttempts" min="1" max="10" value="3">
+            <button class="btn btn-sm btn-primary" onclick="saveSettings()">Save</button>
+          </div>
+          <div class="text-sm text-muted mt-2">
+            Reps must make at least this many attempts before they can mark a callback as "exhausted" (unable to reach).
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="needs-callback" onclick="switchTab('needs-callback')">
+          Today
+          <span class="tab-badge" id="needsCallbackCount">0</span>
+        </button>
+        <button class="tab" data-tab="scheduled" onclick="switchTab('scheduled')">
+          Upcoming
+          <span class="tab-badge" id="scheduledCount">0</span>
+        </button>
+        <button class="tab" data-tab="completed" onclick="switchTab('completed')">
+          Completed
+          <span class="tab-badge" id="completedCount">0</span>
+        </button>
+      </div>
+
+      <!-- Tab Content: Needs Callback -->
+      <div class="tab-content" id="needs-callback-content">
+        <div id="needsCallbackList">
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            <div class="empty-state-title">All caught up!</div>
+            <div class="empty-state-text">No missed calls need a callback</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Scheduled -->
+      <div class="tab-content hidden" id="scheduled-content">
+        <div id="scheduledList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <div class="empty-state-title">No callbacks scheduled</div>
+            <div class="empty-state-text">Schedule callbacks from the call screen or missed calls</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Completed -->
+      <div class="tab-content hidden" id="completed-content">
+        <div class="mb-3">
+          <select class="input select" id="completedFilter" onchange="loadCompleted()" style="width: 200px;">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+        <div id="completedList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">No completed callbacks</div>
+            <div class="empty-state-text">Completed callbacks will appear here</div>
+          </div>
+        </div>
+      </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="newsfeed.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📰</span>
+          <span>Feed</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="callbacks.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">🔔</span>
+          <span>Callbacks</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="window.location.href='call.html'">📞</button>
+  </div>
+
+  <!-- Schedule Callback Modal -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Schedule Callback</h3>
+        <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="text" class="input" id="schedulePhone" readonly>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="input" id="scheduleDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time</label>
+            <input type="time" class="input" id="scheduleTime">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Notes</label>
+          <input type="text" class="input" id="scheduleReason" placeholder="e.g., Follow up on quote">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeScheduleModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSchedule()">Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Attempt Modal -->
+  <div class="modal-overlay" id="logAttemptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Log Callback Attempt</h3>
+        <button class="modal-close" onclick="closeLogAttemptModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Contact Method</label>
+          <div class="method-buttons">
+            <div class="method-btn selected" data-method="call" onclick="selectMethod('call')">
+              <div class="method-btn-icon">📞</div>
+              <div class="method-btn-label">Phone Call</div>
+            </div>
+            <div class="method-btn" data-method="text" onclick="selectMethod('text')">
+              <div class="method-btn-icon">💬</div>
+              <div class="method-btn-label">Text Message</div>
+            </div>
+            <div class="method-btn" data-method="email" onclick="selectMethod('email')">
+              <div class="method-btn-icon">📧</div>
+              <div class="method-btn-label">Email</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Result</label>
+          <div class="result-buttons">
+            <button class="result-btn selected" data-result="no_answer" onclick="selectResult('no_answer')">
+              No Answer
+            </button>
+            <button class="result-btn" data-result="voicemail" onclick="selectResult('voicemail')">
+              Left Voicemail
+            </button>
+            <button class="result-btn" data-result="busy" onclick="selectResult('busy')">
+              Line Busy
+            </button>
+            <button class="result-btn" data-result="wrong_number" onclick="selectResult('wrong_number')">
+              Wrong Number
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <input type="text" class="input" id="attemptNotes" placeholder="Any additional details...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLogAttemptModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAttempt()">Log Attempt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark Connected Modal -->
+  <div class="modal-overlay" id="connectedModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Mark as Connected</h3>
+        <button class="modal-close" onclick="closeConnectedModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">How did you connect with this customer?</p>
+        <div class="method-buttons">
+          <div class="method-btn selected" data-method="call" onclick="selectConnectedMethod('call')">
+            <div class="method-btn-icon">📞</div>
+            <div class="method-btn-label">Phone Call</div>
+          </div>
+          <div class="method-btn" data-method="text" onclick="selectConnectedMethod('text')">
+            <div class="method-btn-icon">💬</div>
+            <div class="method-btn-label">Text</div>
+          </div>
+          <div class="method-btn" data-method="email" onclick="selectConnectedMethod('email')">
+            <div class="method-btn-icon">📧</div>
+            <div class="method-btn-label">Email</div>
+          </div>
+          <div class="method-btn" data-method="other" onclick="selectConnectedMethod('other')">
+            <div class="method-btn-icon">✅</div>
+            <div class="method-btn-label">Other</div>
+          </div>
+        </div>
+        <div class="form-group mt-3">
+          <label class="form-label">Notes (Optional)</label>
+          <input type="text" class="input" id="connectedNotes" placeholder="Brief note about the conversation...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeConnectedModal()">Cancel</button>
+        <button class="btn btn-connected" onclick="confirmConnected()">Confirm Connected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark Exhausted Modal -->
+  <div class="modal-overlay" id="exhaustedModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Mark as Exhausted</h3>
+        <button class="modal-close" onclick="closeExhaustedModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">You've made <strong id="exhaustedAttempts">0</strong> attempts to reach this customer.</p>
+        <div class="form-group">
+          <label class="form-label">Reason (Optional)</label>
+          <select class="input select" id="exhaustedReason">
+            <option value="">Select a reason...</option>
+            <option value="no_response">No response after multiple attempts</option>
+            <option value="wrong_number">Wrong number / Invalid number</option>
+            <option value="do_not_call">Customer requested no calls</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <input type="text" class="input" id="exhaustedNotes" placeholder="Any additional details...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeExhaustedModal()">Cancel</button>
+        <button class="btn btn-exhausted" onclick="confirmExhausted()">Mark as Exhausted</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reschedule Modal -->
+  <div class="modal-overlay" id="rescheduleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Reschedule Callback</h3>
+        <button class="modal-close" onclick="closeRescheduleModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="text" class="input" id="reschedulePhone" readonly>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">New Date</label>
+            <input type="date" class="input" id="rescheduleDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Time</label>
+            <input type="time" class="input" id="rescheduleTime">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Notes</label>
+          <input type="text" class="input" id="rescheduleReason">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveReschedule()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Call Modal -->
+  <div class="incoming-call-overlay" id="incomingCallModal">
+    <div class="incoming-call-modal">
+      <div class="incoming-call-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+      <div class="incoming-call-label">Incoming Call</div>
+      <div class="incoming-call-number" id="incomingCallNumber">Unknown</div>
+      <div class="incoming-call-actions">
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn decline" id="declineCallBtn" title="Decline">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Decline</span>
+        </div>
+        <div class="incoming-call-btn-wrapper">
+          <button class="incoming-call-btn answer" id="answerCallBtn" title="Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </button>
+          <span class="incoming-call-btn-label">Answer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Twilio Device for incoming calls
+    let twilioDevice = null;
+    let pendingIncomingCall = null;
+    let ringtoneAudio = null;
+
+    // WebSocket connection
+    let ws = null;
+    // Use fixed identity so incoming calls can reach any page
+    const repIdentity = 'sales-rep';
+
+    // Sidebar Functions
+    let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+    function initSidebar() {
+      if (sidebarCollapsed && window.innerWidth > 1024) {
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarCollapsed = !sidebarCollapsed;
+      sidebar.classList.toggle('collapsed', sidebarCollapsed);
+      localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Initialize sidebar on load
+    initSidebar();
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        // Also hide incoming call modal on Escape (decline call)
+        if (pendingIncomingCall) {
+          declineIncomingCall();
+        }
+      }
+    });
+
+    // ============ INCOMING CALL HANDLING ============
+
+    // Play ringtone using Web Audio API
+    function playRingtone() {
+      if (ringtoneAudio) return;
+
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 440;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+
+        oscillator.start();
+
+        // Create ring pattern
+        let ringOn = true;
+        const ringInterval = setInterval(() => {
+          gainNode.gain.value = ringOn ? 0.3 : 0;
+          ringOn = !ringOn;
+        }, 500);
+
+        ringtoneAudio = { oscillator, gainNode, audioContext, ringInterval };
+      } catch (e) {
+        console.error('Error playing ringtone:', e);
+      }
+    }
+
+    // Stop ringtone
+    function stopRingtone() {
+      if (ringtoneAudio) {
+        try {
+          clearInterval(ringtoneAudio.ringInterval);
+          ringtoneAudio.oscillator.stop();
+          ringtoneAudio.audioContext.close();
+        } catch (e) {
+          console.error('Error stopping ringtone:', e);
+        }
+        ringtoneAudio = null;
+      }
+    }
+
+    // Show incoming call modal
+    function showIncomingCallModal(from) {
+      const modal = document.getElementById('incomingCallModal');
+      const callerDisplay = document.getElementById('incomingCallNumber');
+      if (modal && callerDisplay) {
+        callerDisplay.textContent = from || 'Unknown Caller';
+        modal.classList.add('active');
+        playRingtone();
+      }
+    }
+
+    // Hide incoming call modal
+    function hideIncomingCallModal() {
+      const modal = document.getElementById('incomingCallModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+      stopRingtone();
+    }
+
+    // Answer incoming call
+    function answerIncomingCall() {
+      if (pendingIncomingCall) {
+        console.log('Answering incoming call...');
+        pendingIncomingCall.accept();
+        hideIncomingCallModal();
+        // Stay on current page - call is now active
+        // Show a simple "In Call" indicator
+        showActiveCallIndicator();
+      }
+    }
+
+    // Show active call indicator
+    function showActiveCallIndicator() {
+      // Create a simple call indicator if it doesn't exist
+      let indicator = document.getElementById('activeCallIndicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'activeCallIndicator';
+        indicator.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10001;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        indicator.innerHTML = '<span style="width:10px;height:10px;background:white;border-radius:50%;animation:pulse 1s infinite;"></span> Call Active <button onclick="endActiveCall()" style="margin-left:10px;background:#ef4444;border:none;color:white;padding:6px 12px;border-radius:4px;cursor:pointer;">End Call</button>';
+        document.body.appendChild(indicator);
+      }
+      indicator.style.display = 'flex';
+    }
+
+    // End active call
+    function endActiveCall() {
+      if (pendingIncomingCall) {
+        pendingIncomingCall.disconnect();
+        pendingIncomingCall = null;
+      }
+      const indicator = document.getElementById('activeCallIndicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
+
+    // Decline incoming call
+    function declineIncomingCall() {
+      if (pendingIncomingCall) {
+        // Capture caller number before rejecting
+        const callerNumber = pendingIncomingCall.parameters?.From || null;
+        pendingIncomingCall.reject();
+        pendingIncomingCall = null;
+        hideIncomingCallModal();
+        // Log the declined call to database
+        if (callerNumber && typeof createDeclinedCallRecord === 'function') {
+          createDeclinedCallRecord(callerNumber);
+        }
+      }
+    }
+
+    // Handle incoming call event from Twilio
+    function handleIncomingCall(call) {
+      console.log('Incoming call received on callbacks:', call.parameters.From);
+      pendingIncomingCall = call;
+
+      // Show the incoming call modal
+      showIncomingCallModal(call.parameters.From);
+
+      // Handle call cancel (caller hung up)
+      call.on('cancel', () => {
+        console.log('Call cancelled');
+        // Caller hung up before we answered - log as missed
+        const callerNumber = call.parameters?.From || null;
+        hideIncomingCallModal();
+        endActiveCall();
+        if (callerNumber && typeof createDeclinedCallRecord === 'function') {
+          createDeclinedCallRecord(callerNumber);
+        }
+      });
+
+      // Handle disconnect
+      call.on('disconnect', () => {
+        console.log('Call disconnected');
+        hideIncomingCallModal();
+        endActiveCall();
+      });
+    }
+
+    // Initialize Twilio Device for incoming calls
+    async function initTwilioDevice() {
+      try {
+        console.log('Initializing Twilio device for incoming calls...');
+        const response = await fetch(`/token?identity=${repIdentity}`);
+        const data = await response.json();
+
+        if (!data.token) {
+          console.error('No token received');
+          return;
+        }
+
+        twilioDevice = new Twilio.Device(data.token, {
+          codecPreferences: ['opus', 'pcmu'],
+          logLevel: 1
+        });
+
+        twilioDevice.on('registered', () => {
+          console.log('Twilio Device registered for incoming calls (callbacks page)');
+        });
+
+        twilioDevice.on('unregistered', () => {
+          console.log('Twilio Device unregistered');
+        });
+
+        twilioDevice.on('error', (error) => {
+          console.error('Twilio Device error:', error.message || error);
+        });
+
+        twilioDevice.on('incoming', handleIncomingCall);
+
+        console.log('Registering Twilio device...');
+        await twilioDevice.register();
+        console.log('Twilio Device registration complete on callbacks page');
+
+      } catch (error) {
+        console.error('Error initializing Twilio Device:', error);
+      }
+    }
+
+    // Event listeners for answer/decline buttons
+    document.getElementById('answerCallBtn')?.addEventListener('click', answerIncomingCall);
+    document.getElementById('declineCallBtn')?.addEventListener('click', declineIncomingCall);
+
+    // Initialize Twilio Device when page loads
+    initTwilioDevice();
+  </script>
+
+  <!-- Supabase Integration - All logic inline per CODING_STANDARDS -->
+  <script>
+    // ===========================================
+    // STATE
+    // ===========================================
+    let callbacks = [];
+    let completedCallbacks = [];
+    let currentTab = 'needs-callback';
+    let currentCallbackId = null;
+    let settings = { requiredAttempts: 3 };
+    let companyId = null;
+    let currentUserId = null;
+
+    // State for Log Attempt modal
+    let selectedAttemptMethod = 'call';
+    let selectedAttemptResult = 'no_answer';
+
+    // State for Mark Connected modal
+    let selectedConnectedMethod = 'call';
+
+    // ===========================================
+    // INITIALIZATION
+    // ===========================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage({
+        requireAuth: true,
+        onReady: async (user) => {
+          // Store user ID for later use
+          currentUserId = user?.id;
+
+          // Update user display
+          if (user) {
+            const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+            const userAvatarEl = document.getElementById('userAvatar');
+            if (userAvatarEl) userAvatarEl.textContent = name.charAt(0).toUpperCase();
+            const connectionTextEl = document.getElementById('connectionText');
+            if (connectionTextEl) connectionTextEl.textContent = 'Available';
+          }
+
+          // Get company membership
+          const membership = await getCompanyMembership();
+          if (membership.error || !membership.companyId) {
+            showError('#needsCallbackList', 'Unable to load callbacks. Please try again.');
+            return;
+          }
+          companyId = membership.companyId;
+
+          // Load settings from database first
+          await loadCallbackSettings();
+
+          // Load data
+          await loadAllData();
+
+          // Set up real-time subscription
+          setupRealtimeSubscription();
+
+          // Update connection status
+          updateConnectionStatus(true);
+        },
+        onError: (error) => {
+          console.error('Callbacks page init error:', error);
+          showError('#needsCallbackList', 'Failed to load callbacks');
+        }
+      });
+    });
+
+    // ===========================================
+    // SETTINGS PERSISTENCE (ISSUE-314 FIX)
+    // ===========================================
+
+    async function loadCallbackSettings() {
+      if (!currentUserId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('callback_settings')
+          .eq('user_id', currentUserId)
+          .single();
+
+        if (!error && data?.callback_settings) {
+          settings = { ...settings, ...data.callback_settings };
+          // Update UI with loaded settings
+          const requiredAttemptsInput = document.getElementById('requiredAttempts');
+          if (requiredAttemptsInput) {
+            requiredAttemptsInput.value = settings.requiredAttempts || 3;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load callback settings:', err);
+      }
+    }
+
+    async function saveCallbackSettings(newSettings) {
+      if (!currentUserId) return;
+
+      try {
+        const { error } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: currentUserId,
+            callback_settings: newSettings,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+
+        if (error) {
+          console.warn('Could not save callback settings:', error);
+        }
+      } catch (err) {
+        console.warn('Error saving callback settings:', err);
+      }
+    }
+
+    // ===========================================
+    // DATA LOADING
+    // ===========================================
+
+    async function loadAllData() {
+      if (!companyId) return;
+
+      // Show loading state
+      showLoadingState('#needsCallbackList');
+      showLoadingState('#scheduledList');
+
+      await Promise.all([
+        loadCallbacks(),
+        loadCompletedCallbacks()
+      ]);
+      updateStats();
+      updateBadges();
+    }
+
+    function showLoadingState(selector) {
+      const container = document.querySelector(selector);
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon" style="animation: spin 1s linear infinite;">⏳</div>
+            <div class="empty-state-title">Loading...</div>
+          </div>
+        `;
+      }
+    }
+
+    async function loadCallbacks() {
+      if (!companyId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('callbacks')
+          .select(`
+            id,
+            contact_id,
+            phone_number,
+            scheduled_at,
+            status,
+            attempt_count,
+            max_attempts,
+            last_attempt_at,
+            attempt_history,
+            reason,
+            priority,
+            created_at,
+            contact:contacts(id, first_name, last_name, phone, business_name)
+          `)
+          .eq('company_id', companyId)
+          .in('status', ['scheduled', 'pending', 'in_progress'])
+          .order('scheduled_at', { ascending: true })
+          .limit(100);
+
+        if (error) throw error;
+
+        callbacks = (data || []).map(cb => ({
+          id: cb.id,
+          contactId: cb.contact_id,
+          phoneNumber: cb.phone_number || cb.contact?.phone || 'Unknown',
+          contactName: cb.contact
+            ? `${cb.contact.first_name || ''} ${cb.contact.last_name || ''}`.trim() || cb.contact.business_name || 'Unknown'
+            : 'Unknown',
+          scheduledAt: cb.scheduled_at,
+          status: cb.status,
+          attemptCount: cb.attempt_count || 0,
+          maxAttempts: cb.max_attempts || 3,
+          lastAttemptAt: cb.last_attempt_at,
+          attemptHistory: cb.attempt_history || [],
+          reason: cb.reason,
+          priority: cb.priority,
+          createdAt: cb.created_at
+        }));
+
+        console.log(`Loaded ${callbacks.length} callbacks`);
+        renderCallbacks();
+
+      } catch (error) {
+        console.error('Failed to load callbacks:', error);
+        showError('#needsCallbackList', 'Failed to load callbacks');
+      }
+    }
+
+    async function loadCompletedCallbacks() {
+      if (!companyId) return;
+
+      const filter = document.getElementById('completedFilter')?.value || 'today';
+
+      // Calculate date range
+      const now = new Date();
+      let startDate = new Date(now);
+
+      switch (filter) {
+        case 'today':
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          startDate.setDate(startDate.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(startDate.getMonth() - 1);
+          break;
+        default:
+          startDate.setHours(0, 0, 0, 0);
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('callbacks')
+          .select(`
+            id,
+            contact_id,
+            phone_number,
+            status,
+            attempt_count,
+            completed_at,
+            resolution_notes,
+            contact:contacts(id, first_name, last_name, phone)
+          `)
+          .eq('company_id', companyId)
+          .in('status', ['completed', 'exhausted', 'cancelled'])
+          .gte('completed_at', startDate.toISOString())
+          .order('completed_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        completedCallbacks = (data || []).map(cb => ({
+          id: cb.id,
+          phoneNumber: cb.phone_number || cb.contact?.phone || 'Unknown',
+          contactName: cb.contact
+            ? `${cb.contact.first_name || ''} ${cb.contact.last_name || ''}`.trim()
+            : 'Unknown',
+          status: cb.status,
+          attemptCount: cb.attempt_count || 0,
+          completedAt: cb.completed_at,
+          notes: cb.resolution_notes
+        }));
+
+        renderCompletedCallbacks();
+
+      } catch (error) {
+        console.error('Failed to load completed callbacks:', error);
+      }
+    }
+
+    // ===========================================
+    // RENDERING
+    // ===========================================
+
+    function renderCallbacks() {
+      const needsCallbackList = document.getElementById('needsCallbackList');
+      const scheduledList = document.getElementById('scheduledList');
+
+      // Get today's date boundaries
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(now);
+      todayEnd.setHours(23, 59, 59, 999);
+
+      // Split by date:
+      // - Needs Callback: Due today, overdue, or no schedule set
+      // - Scheduled: Future dates (tomorrow and beyond)
+      const needsCallback = callbacks.filter(cb => {
+        if (!cb.scheduledAt) return true; // No schedule = needs callback now
+        const scheduledDate = new Date(cb.scheduledAt);
+        return scheduledDate <= todayEnd; // Today or overdue
+      });
+
+      const scheduled = callbacks.filter(cb => {
+        if (!cb.scheduledAt) return false; // No schedule = not in scheduled tab
+        const scheduledDate = new Date(cb.scheduledAt);
+        return scheduledDate > todayEnd; // Future dates only
+      });
+
+      // Render needs callback section (today + overdue)
+      if (needsCallbackList) {
+        if (needsCallback.length === 0) {
+          needsCallbackList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">✅</div>
+              <div class="empty-state-title">All caught up for today!</div>
+              <div class="empty-state-text">No callbacks due today</div>
+            </div>
+          `;
+        } else {
+          // Sort: overdue first, then by scheduled time
+          needsCallback.sort((a, b) => {
+            const aDate = a.scheduledAt ? new Date(a.scheduledAt) : new Date(0);
+            const bDate = b.scheduledAt ? new Date(b.scheduledAt) : new Date(0);
+            return aDate - bDate;
+          });
+          needsCallbackList.innerHTML = needsCallback.map(cb => renderCallbackCard(cb, 'needs')).join('');
+        }
+      }
+
+      // Render scheduled section (future dates)
+      if (scheduledList) {
+        if (scheduled.length === 0) {
+          scheduledList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📅</div>
+              <div class="empty-state-title">No upcoming callbacks</div>
+              <div class="empty-state-text">Callbacks scheduled for future dates will appear here</div>
+            </div>
+          `;
+        } else {
+          // Sort by scheduled date
+          scheduled.sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+          scheduledList.innerHTML = scheduled.map(cb => renderCallbackCard(cb, 'scheduled')).join('');
+        }
+      }
+
+      // Update tab counts
+      const needsCount = document.getElementById('needsCallbackCount');
+      const scheduledCount = document.getElementById('scheduledCount');
+      if (needsCount) needsCount.textContent = needsCallback.length;
+      if (scheduledCount) scheduledCount.textContent = scheduled.length;
+    }
+
+    function renderCallbackCard(cb, type) {
+      const safePhone = escapeHtml(formatPhone(cb.phoneNumber));
+      const safeName = escapeHtml(cb.contactName);
+      const safeReason = cb.reason ? escapeHtml(cb.reason) : '';
+
+      const isOverdue = type === 'scheduled' && new Date(cb.scheduledAt) < new Date();
+      const urgentClass = cb.priority === 'high' || isOverdue ? 'urgent' : '';
+
+      // Progress indicator for attempt tracking
+      const progressHtml = renderAttemptProgress(cb.attemptCount, cb.maxAttempts);
+
+      // Scheduled time display
+      const scheduledDisplay = cb.scheduledAt ? `<div class="callback-scheduled">📅 ${formatScheduledTime(cb.scheduledAt)}</div>` : '';
+
+      // Determine display name - show phone as primary if name is Unknown
+      const hasRealName = safeName && safeName !== 'Unknown' && safeName !== 'Unknown Caller';
+      const primaryDisplay = hasRealName ? safeName : safePhone;
+      const secondaryDisplay = hasRealName ? safePhone : '';
+
+      // Use same card structure for both Today and Upcoming
+      return `
+        <div class="missed-card ${urgentClass}" data-callback-id="${cb.id}">
+          <div class="missed-card-header">
+            <div class="missed-phone">${primaryDisplay}</div>
+            <div class="missed-time">${timeAgo(cb.createdAt)}</div>
+          </div>
+          ${secondaryDisplay ? `<div class="missed-phone-secondary">${secondaryDisplay}</div>` : ''}
+          ${scheduledDisplay}
+          ${safeReason ? `<div class="callback-reason">📝 ${safeReason}</div>` : ''}
+          ${progressHtml}
+          <div class="callback-actions">
+            <button class="btn btn-sm btn-success" onclick="callNow('${cb.id}', '${escapeHtml(cb.phoneNumber)}')" data-action="call">
+              📞 Call
+            </button>
+            <button class="btn btn-sm btn-connected" onclick="openConnectedModal('${cb.id}')" data-action="connected">
+              ✅ Connected
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="logAttempt('${cb.id}')" data-action="log">
+              📝 Log Attempt
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="editCallback('${cb.id}')" data-action="edit">
+              ✏️ Edit
+            </button>
+            ${cb.attemptCount >= cb.maxAttempts ? `
+              <button class="btn btn-sm btn-warning" onclick="markExhausted('${cb.id}')" data-action="exhaust">
+                ✗ Exhausted
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAttemptProgress(attempts, maxAttempts) {
+      const dots = [];
+      for (let i = 0; i < maxAttempts; i++) {
+        const filled = i < attempts ? 'filled' : '';
+        dots.push(`<span class="attempt-dot ${filled}"></span>`);
+      }
+
+      const canExhaust = attempts >= maxAttempts;
+      const statusClass = canExhaust ? 'can-exhaust' : 'needs-more';
+      const statusText = canExhaust
+        ? 'Can mark as exhausted'
+        : `${maxAttempts - attempts} more attempt(s) needed`;
+
+      return `
+        <div class="attempt-progress">
+          ${dots.join('')}
+          <span class="attempt-count">${attempts}/${maxAttempts}</span>
+          <span class="attempt-status ${statusClass}">${statusText}</span>
+        </div>
+      `;
+    }
+
+    function renderCompletedCallbacks() {
+      const completedList = document.getElementById('completedList');
+      if (!completedList) return;
+
+      if (completedCallbacks.length === 0) {
+        completedList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">No completed callbacks</div>
+            <div class="empty-state-text">Completed callbacks will appear here</div>
+          </div>
+        `;
+        return;
+      }
+
+      completedList.innerHTML = completedCallbacks.map(cb => {
+        const safeName = escapeHtml(cb.contactName);
+        const safePhone = escapeHtml(formatPhone(cb.phoneNumber));
+        const hasRealName = safeName && safeName !== 'Unknown' && safeName !== 'Unknown Caller';
+        const primaryDisplay = hasRealName ? safeName : safePhone;
+        const secondaryDisplay = hasRealName ? safePhone : '';
+        const progressHtml = renderAttemptProgress(cb.attemptCount, cb.attemptCount); // Show all dots filled
+
+        return `
+          <div class="missed-card ${cb.status === 'completed' ? '' : 'exhausted-card'}" data-callback-id="${cb.id}">
+            <div class="missed-card-header">
+              <div class="missed-phone">${primaryDisplay}</div>
+              <div class="missed-time">${timeAgo(cb.completedAt)}</div>
+            </div>
+            ${secondaryDisplay ? `<div class="missed-phone-secondary">${secondaryDisplay}</div>` : ''}
+            <div class="callback-status-badge" style="margin: var(--spacing-sm) 0;">
+              <span class="badge badge-${cb.status === 'completed' ? 'success' : 'secondary'}">
+                ${cb.status === 'completed' ? '✅ Connected' : '✗ Exhausted'}
+              </span>
+            </div>
+            ${cb.notes ? `<div class="callback-reason">📝 ${escapeHtml(cb.notes)}</div>` : ''}
+            ${progressHtml}
+            <div class="callback-actions">
+              <button class="btn btn-sm btn-success" onclick="callNow('${cb.id}', '${escapeHtml(cb.phoneNumber)}')" data-action="call">
+                📞 Call Again
+              </button>
+              <button class="btn btn-sm btn-secondary" onclick="reopenCallback('${cb.id}')" data-action="reopen">
+                🔄 Reopen
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Update completed count
+      const completedCount = document.getElementById('completedCount');
+      if (completedCount) completedCount.textContent = completedCallbacks.length;
+    }
+
+    // ===========================================
+    // LOADING STATE HELPERS (ISSUE-315 FIX)
+    // ===========================================
+
+    function setButtonLoading(button, loading) {
+      if (!button) return;
+      if (loading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = '<span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span>';
+      } else {
+        button.disabled = false;
+        if (button.dataset.originalText) {
+          button.innerHTML = button.dataset.originalText;
+        }
+      }
+    }
+
+    function getActionButton(callbackId, action) {
+      const card = document.querySelector(`[data-callback-id="${callbackId}"]`);
+      if (!card) return null;
+      return card.querySelector(`[data-action="${action}"]`);
+    }
+
+    // ===========================================
+    // ACTIONS
+    // ===========================================
+
+    function callNow(callbackId, phoneNumber) {
+      if (!phoneNumber) return;
+      // Navigate to call page with the number
+      window.location.href = `call.html?number=${encodeURIComponent(phoneNumber)}&callbackId=${callbackId}`;
+    }
+
+    window.callNow = callNow;
+
+    async function logAttempt(callbackId) {
+      currentCallbackId = callbackId;
+
+      // Reset selections to defaults
+      selectedAttemptMethod = 'call';
+      selectedAttemptResult = 'no_answer';
+
+      // Update UI to show defaults as selected
+      updateMethodButtonSelection();
+      updateResultButtonSelection();
+
+      // Show log attempt modal
+      const modal = document.getElementById('logAttemptModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    window.logAttempt = logAttempt;
+
+    // Selection functions for Log Attempt modal
+    function selectMethod(method) {
+      selectedAttemptMethod = method;
+      updateMethodButtonSelection();
+    }
+
+    window.selectMethod = selectMethod;
+
+    function selectResult(result) {
+      selectedAttemptResult = result;
+      updateResultButtonSelection();
+    }
+
+    window.selectResult = selectResult;
+
+    function updateMethodButtonSelection() {
+      // Update visual selection for method buttons
+      document.querySelectorAll('#logAttemptModal .method-btn').forEach(btn => {
+        const btnMethod = btn.dataset.method;
+        btn.classList.toggle('selected', btnMethod === selectedAttemptMethod);
+      });
+    }
+
+    function updateResultButtonSelection() {
+      // Update visual selection for result buttons
+      document.querySelectorAll('#logAttemptModal .result-btn').forEach(btn => {
+        const btnResult = btn.dataset.result;
+        btn.classList.toggle('selected', btnResult === selectedAttemptResult);
+      });
+    }
+
+    async function saveAttempt() {
+      if (!currentCallbackId || !companyId) return;
+
+      const saveBtn = document.querySelector('#logAttemptModal .btn-primary');
+      setButtonLoading(saveBtn, true);
+
+      const method = selectedAttemptMethod;
+      const result = selectedAttemptResult;
+      const notes = document.getElementById('attemptNotes')?.value || '';
+
+      const cb = callbacks.find(c => c.id === currentCallbackId);
+      if (!cb) {
+        setButtonLoading(saveBtn, false);
+        return;
+      }
+
+      try {
+        // Add to attempt history
+        const newAttempt = {
+          time: new Date().toISOString(),
+          method,
+          result,
+          notes
+        };
+
+        const updatedHistory = [...(cb.attemptHistory || []), newAttempt];
+        const newAttemptCount = cb.attemptCount + 1;
+
+        // Update callback
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            attempt_count: newAttemptCount,
+            attempt_history: updatedHistory,
+            last_attempt_at: new Date().toISOString(),
+            status: 'in_progress'
+          })
+          .eq('id', currentCallbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        // Save note to contact profile if there are notes
+        if (cb.contactId && notes) {
+          const resultText = formatResultText(result);
+          const methodText = method === 'call' ? 'Phone' : method === 'text' ? 'Text' : 'Email';
+          await saveNoteToContact(cb.contactId, `Callback attempt (${methodText}): ${resultText}${notes ? ' - ' + notes : ''}`);
+        }
+
+        // Close modal and reload
+        closeLogAttemptModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to save attempt:', error);
+        alert('Failed to save attempt');
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
+    }
+
+    function formatResultText(result) {
+      switch (result) {
+        case 'no_answer': return 'No Answer';
+        case 'voicemail': return 'Left Voicemail';
+        case 'busy': return 'Line Busy';
+        case 'wrong_number': return 'Wrong Number';
+        default: return result;
+      }
+    }
+
+    window.saveAttempt = saveAttempt;
+
+    function closeLogAttemptModal() {
+      const modal = document.getElementById('logAttemptModal');
+      if (modal) modal.classList.remove('active');
+      currentCallbackId = null;
+      // Reset form
+      const notes = document.getElementById('attemptNotes');
+      if (notes) notes.value = '';
+    }
+
+    window.closeLogAttemptModal = closeLogAttemptModal;
+
+    function markExhausted(callbackId) {
+      currentCallbackId = callbackId;
+
+      const cb = callbacks.find(c => c.id === callbackId);
+      if (cb) {
+        const attemptsEl = document.getElementById('exhaustedAttempts');
+        if (attemptsEl) attemptsEl.textContent = cb.attemptCount;
+      }
+
+      // Clear form
+      const reasonEl = document.getElementById('exhaustedReason');
+      const notesEl = document.getElementById('exhaustedNotes');
+      if (reasonEl) reasonEl.value = '';
+      if (notesEl) notesEl.value = '';
+
+      // Show modal
+      const modal = document.getElementById('exhaustedModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    window.markExhausted = markExhausted;
+
+    function closeExhaustedModal() {
+      const modal = document.getElementById('exhaustedModal');
+      if (modal) modal.classList.remove('active');
+      currentCallbackId = null;
+    }
+
+    window.closeExhaustedModal = closeExhaustedModal;
+
+    async function confirmExhausted() {
+      if (!currentCallbackId || !companyId) return;
+
+      const confirmBtn = document.querySelector('#exhaustedModal .btn-exhausted');
+      setButtonLoading(confirmBtn, true);
+
+      const reason = document.getElementById('exhaustedReason')?.value || '';
+      const notes = document.getElementById('exhaustedNotes')?.value || '';
+      const cb = callbacks.find(c => c.id === currentCallbackId);
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            status: 'exhausted',
+            completed_at: new Date().toISOString(),
+            resolution_notes: reason ? `${reason}${notes ? ': ' + notes : ''}` : notes
+          })
+          .eq('id', currentCallbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        // Save note to contact profile
+        if (cb && cb.contactId) {
+          const noteText = `Callback marked exhausted after ${cb.attemptCount} attempts. ${reason ? 'Reason: ' + reason + '. ' : ''}${notes || ''}`.trim();
+          await saveNoteToContact(cb.contactId, noteText);
+        }
+
+        closeExhaustedModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to mark exhausted:', error);
+        alert('Failed to update callback');
+      } finally {
+        setButtonLoading(confirmBtn, false);
+      }
+    }
+
+    window.confirmExhausted = confirmExhausted;
+
+    function openConnectedModal(callbackId) {
+      currentCallbackId = callbackId;
+      selectedConnectedMethod = 'call';
+
+      // Update connected method button selection
+      updateConnectedMethodSelection();
+
+      // Clear notes
+      const notesInput = document.getElementById('connectedNotes');
+      if (notesInput) notesInput.value = '';
+
+      // Update attempt count display
+      const cb = callbacks.find(c => c.id === callbackId);
+      if (cb) {
+        const attemptsEl = document.getElementById('exhaustedAttempts');
+        if (attemptsEl) attemptsEl.textContent = cb.attemptCount;
+      }
+
+      // Show modal
+      const modal = document.getElementById('connectedModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    window.openConnectedModal = openConnectedModal;
+
+    function selectConnectedMethod(method) {
+      selectedConnectedMethod = method;
+      updateConnectedMethodSelection();
+    }
+
+    window.selectConnectedMethod = selectConnectedMethod;
+
+    function updateConnectedMethodSelection() {
+      document.querySelectorAll('#connectedModal .method-btn').forEach(btn => {
+        const btnMethod = btn.dataset.method;
+        btn.classList.toggle('selected', btnMethod === selectedConnectedMethod);
+      });
+    }
+
+    function closeConnectedModal() {
+      const modal = document.getElementById('connectedModal');
+      if (modal) modal.classList.remove('active');
+      currentCallbackId = null;
+    }
+
+    window.closeConnectedModal = closeConnectedModal;
+
+    async function confirmConnected() {
+      if (!currentCallbackId || !companyId) return;
+
+      const confirmBtn = document.querySelector('#connectedModal .btn-connected');
+      setButtonLoading(confirmBtn, true);
+
+      const notes = document.getElementById('connectedNotes')?.value || '';
+      const cb = callbacks.find(c => c.id === currentCallbackId);
+
+      try {
+        // Update callback as completed
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            resolution_notes: notes,
+            resolution_method: selectedConnectedMethod
+          })
+          .eq('id', currentCallbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        // If there's a contact, save a note to their profile
+        if (cb && cb.contactId && notes) {
+          await saveNoteToContact(cb.contactId, `Callback connected via ${selectedConnectedMethod}: ${notes}`);
+        }
+
+        closeConnectedModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to mark connected:', error);
+        alert('Failed to update callback');
+      } finally {
+        setButtonLoading(confirmBtn, false);
+      }
+    }
+
+    window.confirmConnected = confirmConnected;
+
+    async function markConnected(callbackId) {
+      // Open the connected modal instead of directly marking
+      openConnectedModal(callbackId);
+    }
+
+    window.markConnected = markConnected;
+
+    // Save a note to the contact's profile
+    // ISSUE-313 FIX: Use correct column names (created_by, content)
+    // ISSUE-317 FIX: Only include company_id if the column exists
+    async function saveNoteToContact(contactId, noteText) {
+      if (!contactId || !currentUserId) return;
+
+      try {
+        // Use correct schema column names: created_by (not user_id), content (not note)
+        const insertData = {
+          contact_id: contactId,
+          created_by: currentUserId,
+          content: noteText,
+          created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+          .from('contact_notes')
+          .insert(insertData);
+
+        if (error) {
+          // Table might not exist or have different schema, log but don't fail
+          console.warn('Could not save note to contact:', error);
+        }
+      } catch (err) {
+        console.warn('Error saving note to contact:', err);
+      }
+    }
+
+    function rescheduleCallback(callbackId) {
+      // Use the reschedule modal instead of a prompt
+      openRescheduleModal(callbackId);
+    }
+
+    window.rescheduleCallback = rescheduleCallback;
+
+    async function editCallback(callbackId) {
+      const cb = callbacks.find(c => c.id === callbackId);
+      if (!cb) {
+        alert('Callback not found');
+        return;
+      }
+
+      // Create and show edit modal
+      let modal = document.getElementById('editCallbackModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'editCallbackModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+          <div class="modal">
+            <div class="modal-header">
+              <h3>Edit Callback</h3>
+              <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="input" id="editPhoneNumber">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Scheduled Date</label>
+                <input type="date" class="input" id="editScheduledDate">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Scheduled Time</label>
+                <input type="time" class="input" id="editScheduledTime">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Reason / Notes</label>
+                <textarea class="input" id="editReason" rows="3" placeholder="Why should you call back?"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select class="input" id="editPriority">
+                  <option value="low">Low</option>
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid var(--gray-200);">
+                <label class="form-label">Quick Actions</label>
+                <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-connected" onclick="markCompleteFromEdit()" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                    ✅ Mark Complete
+                  </button>
+                  <button class="btn btn-sm btn-warning" onclick="markExhaustedFromEdit()">
+                    ✗ Mark Exhausted
+                  </button>
+                </div>
+                <p class="text-sm text-muted" style="margin-top: var(--spacing-xs);">Mark as complete when you've successfully reached the customer.</p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+              <button class="btn btn-danger" onclick="deleteCallback()">Delete</button>
+              <button class="btn btn-primary" onclick="saveEditCallback()">Save Changes</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+
+      // Populate form with current values
+      document.getElementById('editPhoneNumber').value = cb.phoneNumber || '';
+      document.getElementById('editReason').value = cb.reason || '';
+      document.getElementById('editPriority').value = cb.priority || 'normal';
+
+      // Parse scheduled date/time
+      if (cb.scheduledAt) {
+        const scheduled = new Date(cb.scheduledAt);
+        document.getElementById('editScheduledDate').value = scheduled.toISOString().split('T')[0];
+        document.getElementById('editScheduledTime').value = scheduled.toTimeString().slice(0, 5);
+      } else {
+        // Default to tomorrow at 2pm
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('editScheduledDate').value = tomorrow.toISOString().split('T')[0];
+        document.getElementById('editScheduledTime').value = '14:00';
+      }
+
+      // Store callback ID for saving
+      modal.dataset.callbackId = callbackId;
+
+      // Show modal
+      modal.classList.add('active');
+    }
+
+    window.editCallback = editCallback;
+
+    function closeEditModal() {
+      const modal = document.getElementById('editCallbackModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    window.closeEditModal = closeEditModal;
+
+    async function saveEditCallback() {
+      const modal = document.getElementById('editCallbackModal');
+      const callbackId = modal?.dataset.callbackId;
+      if (!callbackId || !companyId) return;
+
+      const saveBtn = modal.querySelector('.btn-primary');
+      setButtonLoading(saveBtn, true);
+
+      const phoneNumber = document.getElementById('editPhoneNumber').value;
+      const scheduledDate = document.getElementById('editScheduledDate').value;
+      const scheduledTime = document.getElementById('editScheduledTime').value;
+      const reason = document.getElementById('editReason').value;
+      const priority = document.getElementById('editPriority').value;
+
+      // Build scheduled datetime
+      let scheduledAt = null;
+      if (scheduledDate && scheduledTime) {
+        scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+      }
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            phone_number: phoneNumber,
+            scheduled_at: scheduledAt,
+            reason: reason,
+            priority: priority,
+            status: scheduledAt ? 'scheduled' : 'pending'
+          })
+          .eq('id', callbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        closeEditModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to save callback:', error);
+        alert('Failed to save callback');
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
+    }
+
+    window.saveEditCallback = saveEditCallback;
+
+    async function deleteCallback() {
+      const modal = document.getElementById('editCallbackModal');
+      const callbackId = modal?.dataset.callbackId;
+      if (!callbackId || !companyId) return;
+
+      if (!confirm('Are you sure you want to delete this callback?')) return;
+
+      const deleteBtn = modal.querySelector('.btn-danger');
+      setButtonLoading(deleteBtn, true);
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .delete()
+          .eq('id', callbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        closeEditModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to delete callback:', error);
+        alert('Failed to delete callback');
+      } finally {
+        setButtonLoading(deleteBtn, false);
+      }
+    }
+
+    window.deleteCallback = deleteCallback;
+
+    /**
+     * Mark callback as complete from the edit modal
+     */
+    async function markCompleteFromEdit() {
+      const modal = document.getElementById('editCallbackModal');
+      const callbackId = modal?.dataset.callbackId;
+      if (!callbackId || !companyId) return;
+
+      const cb = callbacks.find(c => c.id === callbackId);
+      const notes = document.getElementById('editReason')?.value || '';
+
+      const completeBtn = modal.querySelector('.btn-connected');
+      setButtonLoading(completeBtn, true);
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            resolution_notes: notes || 'Marked complete from edit'
+          })
+          .eq('id', callbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        // Save note to contact profile
+        if (cb && cb.contactId) {
+          await saveNoteToContact(cb.contactId, `Callback completed: ${notes || 'Successfully reached customer'}`);
+        }
+
+        closeEditModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to mark complete:', error);
+        alert('Failed to mark as complete');
+      } finally {
+        setButtonLoading(completeBtn, false);
+      }
+    }
+
+    window.markCompleteFromEdit = markCompleteFromEdit;
+
+    /**
+     * Mark callback as exhausted from the edit modal
+     */
+    async function markExhaustedFromEdit() {
+      const modal = document.getElementById('editCallbackModal');
+      const callbackId = modal?.dataset.callbackId;
+      if (!callbackId) return;
+
+      // Close edit modal and open exhausted modal
+      closeEditModal();
+      markExhausted(callbackId);
+    }
+
+    window.markExhaustedFromEdit = markExhaustedFromEdit;
+
+    /**
+     * Reopen a completed/exhausted callback
+     */
+    async function reopenCallback(callbackId) {
+      if (!callbackId || !companyId) return;
+
+      if (!confirm('Reopen this callback and move it back to Today?')) return;
+
+      const btn = getActionButton(callbackId, 'reopen');
+      setButtonLoading(btn, true);
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            status: 'pending',
+            completed_at: null,
+            resolution_notes: null
+          })
+          .eq('id', callbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to reopen callback:', error);
+        alert('Failed to reopen callback');
+      } finally {
+        setButtonLoading(btn, false);
+      }
+    }
+
+    window.reopenCallback = reopenCallback;
+
+    // ===========================================
+    // STATS & UI
+    // ===========================================
+
+    function updateStats() {
+      const pending = callbacks.filter(cb => cb.status === 'pending' && cb.attemptCount === 0).length;
+      const inProgress = callbacks.filter(cb => cb.attemptCount > 0 && cb.attemptCount < cb.maxAttempts).length;
+      const connected = completedCallbacks.filter(cb => cb.status === 'completed').length;
+      const exhausted = completedCallbacks.filter(cb => cb.status === 'exhausted').length;
+
+      const statPending = document.getElementById('statPending');
+      const statInProgress = document.getElementById('statInProgress');
+      const statConnected = document.getElementById('statConnected');
+      const statExhausted = document.getElementById('statExhausted');
+
+      if (statPending) statPending.textContent = pending;
+      if (statInProgress) statInProgress.textContent = inProgress;
+      if (statConnected) statConnected.textContent = connected;
+      if (statExhausted) statExhausted.textContent = exhausted;
+    }
+
+    function updateBadges() {
+      const needsCount = callbacks.filter(cb => cb.status === 'pending' || cb.status === 'in_progress').length;
+      const scheduledCount = callbacks.filter(cb => cb.status === 'scheduled').length;
+
+      const needsBadge = document.getElementById('needsCallbackCount');
+      const scheduledBadge = document.getElementById('scheduledCount');
+      const completedBadge = document.getElementById('completedCount');
+
+      if (needsBadge) needsBadge.textContent = needsCount;
+      if (scheduledBadge) scheduledBadge.textContent = scheduledCount;
+      if (completedBadge) completedBadge.textContent = completedCallbacks.length;
+    }
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+
+      // Update tab buttons (support both .tab and .tab-btn classes)
+      document.querySelectorAll('.tab, .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+
+      // Update tab content - show selected, hide others
+      document.querySelectorAll('.tab-content').forEach(content => {
+        const isActive = content.id === `${tabName}-content`;
+        content.classList.toggle('active', isActive);
+        content.classList.toggle('hidden', !isActive);
+      });
+
+      // Load completed callbacks when switching to completed tab
+      if (tabName === 'completed') {
+        loadCompletedCallbacks();
+      }
+    }
+
+    window.switchTab = switchTab;
+
+    function toggleSettings() {
+      const content = document.getElementById('settingsContent');
+      const toggle = document.getElementById('settingsToggle');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = 'Hide';
+      } else {
+        content.style.display = 'none';
+        toggle.textContent = 'Show';
+      }
+    }
+
+    window.toggleSettings = toggleSettings;
+
+    async function saveSettings() {
+      const input = document.getElementById('requiredAttempts');
+      if (!input) return;
+
+      const requiredAttempts = parseInt(input.value);
+      if (isNaN(requiredAttempts) || requiredAttempts < 1 || requiredAttempts > 10) {
+        alert('Required attempts must be between 1 and 10');
+        return;
+      }
+
+      settings.requiredAttempts = requiredAttempts;
+
+      // ISSUE-314 FIX: Persist settings to database
+      await saveCallbackSettings(settings);
+
+      alert('Settings saved!');
+      renderCallbacks();
+    }
+
+    window.saveSettings = saveSettings;
+
+    // ===========================================
+    // REAL-TIME
+    // ===========================================
+
+    function setupRealtimeSubscription() {
+      if (!companyId) return;
+
+      supabase
+        .channel('callbacks-page')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'callbacks',
+          filter: `company_id=eq.${companyId}`
+        }, () => {
+          loadAllData();
+        })
+        .subscribe();
+    }
+
+    function updateConnectionStatus(connected) {
+      const statusEl = document.getElementById('connectionStatus');
+      const userStatusEl = document.getElementById('userStatus');
+      const connectionTextEl = document.getElementById('connectionText');
+
+      if (connected) {
+        if (statusEl) {
+          statusEl.className = 'connection-status connected';
+          statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Connected</span>';
+        }
+        if (userStatusEl) userStatusEl.style.color = 'var(--success)';
+        if (connectionTextEl) connectionTextEl.textContent = 'Available';
+      } else {
+        if (statusEl) {
+          statusEl.className = 'connection-status disconnected';
+          statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Disconnected</span>';
+        }
+        if (userStatusEl) userStatusEl.style.color = 'var(--gray-400)';
+        if (connectionTextEl) connectionTextEl.textContent = 'Offline';
+      }
+    }
+
+    // ===========================================
+    // HELPERS
+    // ===========================================
+
+    function formatPhone(phone) {
+      if (!phone) return '';
+      const cleaned = phone.replace(/\D/g, '');
+      if (cleaned.length === 10) {
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      } else if (cleaned.length === 11 && cleaned[0] === '1') {
+        return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      }
+      return phone;
+    }
+
+    function formatScheduledTime(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const isToday = date.toDateString() === now.toDateString();
+      const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+      const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      if (isToday) return `Today at ${timeStr}`;
+      if (isTomorrow) return `Tomorrow at ${timeStr}`;
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
+
+    // Load completed when filter changes
+    function onCompletedFilterChange() {
+      loadCompletedCallbacks();
+    }
+
+    window.onCompletedFilterChange = onCompletedFilterChange;
+
+    // Helper function to escape HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Helper function to format time ago
+    function timeAgo(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays}d ago`;
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
+    // Helper function to show error in a container
+    function showError(selector, message) {
+      const container = document.querySelector(selector);
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">Error</div>
+            <div class="empty-state-text">${escapeHtml(message)}</div>
+          </div>
+        `;
+      }
+    }
+
+    // Add loadCompleted as alias for filter change
+    function loadCompleted() {
+      loadCompletedCallbacks();
+    }
+
+    window.loadCompleted = loadCompleted;
+
+    // ===========================================
+    // SCHEDULE MODAL FUNCTIONS
+    // ===========================================
+
+    function closeScheduleModal() {
+      const modal = document.getElementById('scheduleModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    window.closeScheduleModal = closeScheduleModal;
+
+    async function saveSchedule() {
+      const phone = document.getElementById('schedulePhone')?.value;
+      const date = document.getElementById('scheduleDate')?.value;
+      const time = document.getElementById('scheduleTime')?.value;
+      const reason = document.getElementById('scheduleReason')?.value;
+
+      if (!phone || !date || !time) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const saveBtn = document.querySelector('#scheduleModal .btn-primary');
+      setButtonLoading(saveBtn, true);
+
+      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .insert({
+            company_id: companyId,
+            assigned_to: currentUserId,
+            phone_number: phone,
+            scheduled_at: scheduledAt,
+            reason: reason,
+            status: 'scheduled',
+            priority: 'normal',
+            attempt_count: 0,
+            max_attempts: settings.requiredAttempts
+          });
+
+        if (error) throw error;
+
+        closeScheduleModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to schedule callback:', error);
+        alert('Failed to schedule callback');
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
+    }
+
+    window.saveSchedule = saveSchedule;
+
+    // ===========================================
+    // RESCHEDULE MODAL FUNCTIONS
+    // ===========================================
+
+    function closeRescheduleModal() {
+      const modal = document.getElementById('rescheduleModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    window.closeRescheduleModal = closeRescheduleModal;
+
+    function openRescheduleModal(callbackId) {
+      currentCallbackId = callbackId;
+      const cb = callbacks.find(c => c.id === callbackId);
+      if (!cb) return;
+
+      // Populate form
+      document.getElementById('reschedulePhone').value = cb.phoneNumber || '';
+      document.getElementById('rescheduleReason').value = cb.reason || '';
+
+      // Default to tomorrow at current scheduled time or 2pm
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('rescheduleDate').value = tomorrow.toISOString().split('T')[0];
+
+      if (cb.scheduledAt) {
+        const scheduled = new Date(cb.scheduledAt);
+        document.getElementById('rescheduleTime').value = scheduled.toTimeString().slice(0, 5);
+      } else {
+        document.getElementById('rescheduleTime').value = '14:00';
+      }
+
+      // Show modal
+      const modal = document.getElementById('rescheduleModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    window.openRescheduleModal = openRescheduleModal;
+
+    async function saveReschedule() {
+      if (!currentCallbackId || !companyId) return;
+
+      const date = document.getElementById('rescheduleDate')?.value;
+      const time = document.getElementById('rescheduleTime')?.value;
+      const reason = document.getElementById('rescheduleReason')?.value;
+
+      if (!date || !time) {
+        alert('Please select a date and time');
+        return;
+      }
+
+      const saveBtn = document.querySelector('#rescheduleModal .btn-primary');
+      setButtonLoading(saveBtn, true);
+
+      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+
+      try {
+        const { error } = await supabase
+          .from('callbacks')
+          .update({
+            scheduled_at: scheduledAt,
+            reason: reason,
+            status: 'scheduled'
+          })
+          .eq('id', currentCallbackId)
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+
+        closeRescheduleModal();
+        await loadAllData();
+
+      } catch (error) {
+        console.error('Failed to reschedule callback:', error);
+        alert('Failed to reschedule callback');
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
+    }
+
+    window.saveReschedule = saveReschedule;
+
+    // ===========================================
+    // DECLINED/MISSED CALL RECORDING
+    // ===========================================
+
+    /**
+     * Find or create a contact by phone number
+     */
+    async function findOrCreateContactForCall(phoneNumber) {
+      if (!phoneNumber || !companyId) return null;
+
+      try {
+        // Clean phone number
+        const cleanedPhone = phoneNumber.replace(/\D/g, '');
+
+        // Try to find existing contact
+        const { data: existingContact } = await supabase
+          .from('contacts')
+          .select('id, first_name, last_name')
+          .eq('company_id', companyId)
+          .or(`phone.eq.${phoneNumber},phone.eq.${cleanedPhone},phone.eq.+1${cleanedPhone}`)
+          .limit(1)
+          .single();
+
+        if (existingContact) {
+          return existingContact;
+        }
+
+        // Create new contact
+        const { data: newContact, error } = await supabase
+          .from('contacts')
+          .insert({
+            company_id: companyId,
+            phone: phoneNumber,
+            first_name: 'Unknown',
+            last_name: 'Caller',
+            source: 'inbound_call'
+          })
+          .select('id, first_name, last_name')
+          .single();
+
+        if (error) {
+          console.error('Error creating contact:', error);
+          return null;
+        }
+
+        return newContact;
+      } catch (error) {
+        console.error('findOrCreateContactForCall error:', error);
+        return null;
+      }
+    }
+
+    /**
+     * Create a declined/missed call record
+     * Called from inline script when user declines an incoming call or caller hangs up
+     */
+    async function createDeclinedCallRecord(phoneNumber) {
+      console.log('createDeclinedCallRecord: Logging declined call from:', phoneNumber);
+
+      if (!companyId) {
+        console.error('Cannot create declined call record: missing company ID');
+        return;
+      }
+
+      if (!currentUserId) {
+        console.error('Cannot create declined call record: no authenticated user');
+        return;
+      }
+
+      try {
+        const contact = await findOrCreateContactForCall(phoneNumber);
+        const contactId = contact?.id || null;
+
+        const insertData = {
+          company_id: companyId,
+          rep_id: currentUserId,
+          contact_id: contactId,
+          phone_number: phoneNumber,
+          direction: 'inbound',
+          status: 'missed',
+          outcome: null,
+          started_at: new Date().toISOString(),
+          ended_at: new Date().toISOString(),
+          duration_seconds: 0
+        };
+
+        const { data, error } = await supabase
+          .from('calls')
+          .insert(insertData)
+          .select('id')
+          .single();
+
+        if (error) {
+          console.error('createDeclinedCallRecord: Failed:', error);
+        } else {
+          console.log('createDeclinedCallRecord: SUCCESS:', data.id);
+        }
+      } catch (error) {
+        console.error('createDeclinedCallRecord: Exception:', error);
+      }
+    }
+
+    // Make available globally for inline script
+    window.createDeclinedCallRecord = createDeclinedCallRecord;
+  </script>
+
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</body>
+</html>

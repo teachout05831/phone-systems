@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outreach System - Complete Flow</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a24;
+      --bg-card: #1e1e2a;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+      --border-color: #2a2a3a;
+      --glow-blue: rgba(59, 130, 246, 0.3);
+      --glow-green: rgba(34, 197, 94, 0.3);
+      --glow-purple: rgba(168, 85, 247, 0.3);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 100;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 100px 40px 60px;
+    }
+
+    /* Section Headers */
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section-header {
+      margin-bottom: 40px;
+    }
+
+    .section-number {
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 60px 0 80px;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, var(--glow-purple) 0%, transparent 70%);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff, var(--accent-purple), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Flow Diagrams */
+    .flow-horizontal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      flex-wrap: wrap;
+      padding: 40px 0;
+    }
+
+    .flow-vertical {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px 32px;
+      text-align: center;
+      min-width: 200px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .flow-step:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .flow-step.highlight-blue {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 30px var(--glow-blue);
+    }
+
+    .flow-step.highlight-green {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 30px var(--glow-green);
+    }
+
+    .flow-step.highlight-purple {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 30px var(--glow-purple);
+    }
+
+    .flow-step-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .flow-step-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 1.1rem;
+    }
+
+    .flow-step-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .flow-arrow {
+      font-size: 2rem;
+      color: var(--accent-blue);
+      padding: 0 16px;
+      opacity: 0.7;
+    }
+
+    .flow-arrow-down {
+      font-size: 2rem;
+      color: var(--accent-blue);
+      padding: 16px 0;
+      opacity: 0.7;
+    }
+
+    /* Big Flow Diagram */
+    .master-flow {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 60px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .master-flow::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+    }
+
+    .flow-lane {
+      margin-bottom: 60px;
+    }
+
+    .flow-lane:last-child {
+      margin-bottom: 0;
+    }
+
+    .flow-lane-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .flow-lane-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .flow-lane-icon.user { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+    .flow-lane-icon.system { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+    .flow-lane-icon.twilio { background: linear-gradient(135deg, #dc2626, #f87171); }
+    .flow-lane-icon.ai { background: linear-gradient(135deg, #059669, #34d399); }
+    .flow-lane-icon.data { background: linear-gradient(135deg, #d97706, #fbbf24); }
+
+    .flow-lane-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .flow-lane-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .flow-lane-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-left: 64px;
+      flex-wrap: wrap;
+    }
+
+    .flow-node {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .flow-node-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .flow-node-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .flow-connector {
+      color: var(--text-muted);
+      font-size: 1.25rem;
+    }
+
+    /* User Journey */
+    .journey-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .journey-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .journey-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .journey-header.login { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(168,85,247,0.2)); }
+    .journey-header.dashboard { background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(6,182,212,0.2)); }
+    .journey-header.call { background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.2)); }
+    .journey-header.postcall { background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.2)); }
+
+    .journey-step-num {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .journey-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .journey-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .journey-body {
+      padding: 24px;
+    }
+
+    .journey-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .journey-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .journey-item-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .journey-item-content h4 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .journey-item-content p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Role Flow */
+    .role-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .role-flow-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 32px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .role-flow-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .role-flow-card.rep::before { background: var(--accent-blue); }
+    .role-flow-card.supervisor::before { background: var(--accent-purple); }
+    .role-flow-card.admin::before { background: var(--accent-yellow); }
+
+    .role-flow-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .role-flow-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+    }
+
+    .role-flow-card.rep .role-flow-icon { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+    .role-flow-card.supervisor .role-flow-icon { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+    .role-flow-card.admin .role-flow-icon { background: linear-gradient(135deg, #d97706, #fbbf24); }
+
+    .role-flow-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .role-flow-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .role-flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .role-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .role-step-num {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Data Flow Detailed */
+    .data-flow-container {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 48px;
+      border: 1px solid var(--border-color);
+    }
+
+    .data-flow-row {
+      display: flex;
+      align-items: stretch;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .data-flow-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .data-source {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      flex: 1;
+      border: 1px solid var(--border-color);
+    }
+
+    .data-source-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .data-source-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .data-source-title {
+      font-weight: 600;
+    }
+
+    .data-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .data-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .data-field-key {
+      color: var(--text-secondary);
+    }
+
+    .data-field-value {
+      color: var(--accent-green);
+      font-family: monospace;
+    }
+
+    .data-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--accent-cyan);
+    }
+
+    /* Call Flow Detailed */
+    .call-flow-timeline {
+      position: relative;
+      padding: 40px 0;
+    }
+
+    .call-flow-timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple), var(--accent-green));
+      transform: translateX(-50%);
+    }
+
+    .call-flow-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .call-flow-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .call-flow-item:nth-child(odd) {
+      flex-direction: row;
+    }
+
+    .call-flow-item:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .call-flow-content {
+      width: calc(50% - 40px);
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .call-flow-item:nth-child(odd) .call-flow-content {
+      margin-right: 40px;
+      text-align: right;
+    }
+
+    .call-flow-item:nth-child(even) .call-flow-content {
+      margin-left: 40px;
+      text-align: left;
+    }
+
+    .call-flow-dot {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      background: var(--bg-primary);
+      border: 3px solid var(--accent-blue);
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    .call-flow-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .call-flow-item:nth-child(odd) .call-flow-title {
+      justify-content: flex-end;
+    }
+
+    .call-flow-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Screen Flows */
+    .screen-flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .screen-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .screen-preview {
+      height: 160px;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .screen-info {
+      padding: 20px;
+    }
+
+    .screen-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .screen-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .screen-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .screen-tag {
+      padding: 4px 10px;
+      background: var(--bg-tertiary);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Integration Flow */
+    .integration-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .integration-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 32px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .integration-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .integration-icon.twilio { background: linear-gradient(135deg, #f22f46, #ff6b6b); }
+    .integration-icon.deepgram { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 2px solid var(--accent-green); }
+    .integration-icon.ai { background: linear-gradient(135deg, #d4a574, #c9956c); }
+
+    .integration-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .integration-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .integration-features {
+      text-align: left;
+    }
+
+    .integration-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    .integration-feature:last-child {
+      border-bottom: none;
+    }
+
+    .integration-feature-icon {
+      color: var(--accent-green);
+    }
+
+    /* WebSocket Flow */
+    .websocket-diagram {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 48px;
+      border: 1px solid var(--border-color);
+    }
+
+    .ws-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .ws-endpoint {
+      flex: 1;
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .ws-endpoint-title {
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ws-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ws-message {
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+
+    .ws-message.outgoing {
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    .ws-message.incoming {
+      border-left: 3px solid var(--accent-green);
+    }
+
+    .ws-server {
+      width: 120px;
+      text-align: center;
+    }
+
+    .ws-server-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 12px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .ws-arrows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ws-arrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .ws-arrow-icon {
+      font-size: 1.25rem;
+    }
+
+    .ws-arrow-icon.right { color: var(--accent-blue); }
+    .ws-arrow-icon.left { color: var(--accent-green); }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .role-flow-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .screen-flow {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .integration-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ws-container {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 100px 20px 40px;
+      }
+
+      .hero-title {
+        font-size: 2rem;
+      }
+
+      .section-title {
+        font-size: 1.75rem;
+      }
+
+      .flow-horizontal {
+        flex-direction: column;
+      }
+
+      .flow-arrow {
+        transform: rotate(90deg);
+        padding: 8px 0;
+      }
+
+      .screen-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .journey-container {
+        grid-template-columns: 1fr;
+      }
+
+      .call-flow-timeline::before {
+        left: 20px;
+      }
+
+      .call-flow-item {
+        flex-direction: column !important;
+        align-items: flex-start;
+        padding-left: 50px;
+      }
+
+      .call-flow-content {
+        width: 100% !important;
+        margin: 0 !important;
+        text-align: left !important;
+      }
+
+      .call-flow-title {
+        justify-content: flex-start !important;
+      }
+
+      .call-flow-dot {
+        left: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">AI</div>
+      <span>Outreach System Flow</span>
+    </div>
+    <div class="nav-links">
+      <a href="#overview" class="nav-link active">Overview</a>
+      <a href="#user-journey" class="nav-link">User Journey</a>
+      <a href="#call-flow" class="nav-link">Call Flow</a>
+      <a href="#data-flow" class="nav-link">Data Flow</a>
+      <a href="#integrations" class="nav-link">Integrations</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <h1 class="hero-title">Complete System Flow</h1>
+      <p class="hero-subtitle">Understanding how every piece connects - from user login to call completion, data storage, and real-time updates</p>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div class="section-number">Section 01</div>
+        <h2 class="section-title">High-Level Overview</h2>
+        <p class="section-subtitle">The complete flow from a user opening the app to making calls and tracking results</p>
+      </div>
+
+      <div class="flow-horizontal">
+        <div class="flow-step highlight-blue">
+          <div class="flow-step-icon">🔐</div>
+          <div class="flow-step-title">Login</div>
+          <div class="flow-step-desc">User authenticates</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">🎯</div>
+          <div class="flow-step-title">Role Check</div>
+          <div class="flow-step-desc">System checks permissions</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight-purple">
+          <div class="flow-step-icon">📊</div>
+          <div class="flow-step-title">Dashboard</div>
+          <div class="flow-step-desc">Role-specific view loads</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">📞</div>
+          <div class="flow-step-title">Make Call</div>
+          <div class="flow-step-desc">Twilio handles voice</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight-green">
+          <div class="flow-step-icon">💾</div>
+          <div class="flow-step-title">Save Data</div>
+          <div class="flow-step-desc">Call logged to database</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Master Flow Diagram -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-number">Section 02</div>
+        <h2 class="section-title">System Layers</h2>
+        <p class="section-subtitle">Each layer of the system and what flows through it</p>
+      </div>
+
+      <div class="master-flow">
+        <!-- User Layer -->
+        <div class="flow-lane">
+          <div class="flow-lane-header">
+            <div class="flow-lane-icon user">👤</div>
+            <div>
+              <div class="flow-lane-title">User Layer</div>
+              <div class="flow-lane-subtitle">What users see and interact with</div>
+            </div>
+          </div>
+          <div class="flow-lane-content">
+            <div class="flow-node">
+              <div class="flow-node-label">Login Screen</div>
+              <div class="flow-node-sub">Email + Password</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Dashboard</div>
+              <div class="flow-node-sub">Stats & Activity</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Call Interface</div>
+              <div class="flow-node-sub">Dial & Talk</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">History</div>
+              <div class="flow-node-sub">Review Calls</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Callbacks</div>
+              <div class="flow-node-sub">Follow-ups</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Layer -->
+        <div class="flow-lane">
+          <div class="flow-lane-header">
+            <div class="flow-lane-icon system">⚙️</div>
+            <div>
+              <div class="flow-lane-title">Application Layer</div>
+              <div class="flow-lane-subtitle">Server processes and business logic</div>
+            </div>
+          </div>
+          <div class="flow-lane-content">
+            <div class="flow-node">
+              <div class="flow-node-label">Auth Service</div>
+              <div class="flow-node-sub">JWT Tokens</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Role Guard</div>
+              <div class="flow-node-sub">Permission Check</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">API Routes</div>
+              <div class="flow-node-sub">REST Endpoints</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">WebSocket</div>
+              <div class="flow-node-sub">Real-time Events</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Call Manager</div>
+              <div class="flow-node-sub">Track Active Calls</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Twilio Layer -->
+        <div class="flow-lane">
+          <div class="flow-lane-header">
+            <div class="flow-lane-icon twilio">📞</div>
+            <div>
+              <div class="flow-lane-title">Twilio Layer</div>
+              <div class="flow-lane-subtitle">Voice calling and telephony</div>
+            </div>
+          </div>
+          <div class="flow-lane-content">
+            <div class="flow-node">
+              <div class="flow-node-label">Voice SDK</div>
+              <div class="flow-node-sub">Browser Calling</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">TwiML App</div>
+              <div class="flow-node-sub">Call Routing</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Media Stream</div>
+              <div class="flow-node-sub">Audio Data</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Recording</div>
+              <div class="flow-node-sub">Call Capture</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Webhooks</div>
+              <div class="flow-node-sub">Status Updates</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Layer -->
+        <div class="flow-lane">
+          <div class="flow-lane-header">
+            <div class="flow-lane-icon ai">🤖</div>
+            <div>
+              <div class="flow-lane-title">AI Layer</div>
+              <div class="flow-lane-subtitle">Transcription and intelligence</div>
+            </div>
+          </div>
+          <div class="flow-lane-content">
+            <div class="flow-node">
+              <div class="flow-node-label">Deepgram</div>
+              <div class="flow-node-sub">Speech-to-Text</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Live Transcript</div>
+              <div class="flow-node-sub">Real-time Words</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Claude AI</div>
+              <div class="flow-node-sub">Analysis Engine</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Coaching Tips</div>
+              <div class="flow-node-sub">Live Suggestions</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Call Summary</div>
+              <div class="flow-node-sub">Post-call Analysis</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Layer -->
+        <div class="flow-lane">
+          <div class="flow-lane-header">
+            <div class="flow-lane-icon data">💾</div>
+            <div>
+              <div class="flow-lane-title">Data Layer</div>
+              <div class="flow-lane-subtitle">Storage and persistence</div>
+            </div>
+          </div>
+          <div class="flow-lane-content">
+            <div class="flow-node">
+              <div class="flow-node-label">Users Table</div>
+              <div class="flow-node-sub">Accounts & Roles</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Calls Table</div>
+              <div class="flow-node-sub">Call Records</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Transcripts</div>
+              <div class="flow-node-sub">Conversation Text</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Callbacks</div>
+              <div class="flow-node-sub">Follow-up Queue</div>
+            </div>
+            <div class="flow-connector">→</div>
+            <div class="flow-node">
+              <div class="flow-node-label">Analytics</div>
+              <div class="flow-node-sub">AI Insights</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User Journey -->
+    <section class="section" id="user-journey">
+      <div class="section-header">
+        <div class="section-number">Section 03</div>
+        <h2 class="section-title">User Journey</h2>
+        <p class="section-subtitle">Step-by-step flow of what a sales rep experiences</p>
+      </div>
+
+      <div class="journey-container">
+        <!-- Step 1: Login -->
+        <div class="journey-card">
+          <div class="journey-header login">
+            <div class="journey-step-num">1</div>
+            <div class="journey-title">Login & Authentication</div>
+            <div class="journey-subtitle">User enters the system</div>
+          </div>
+          <div class="journey-body">
+            <div class="journey-item">
+              <div class="journey-item-icon">📧</div>
+              <div class="journey-item-content">
+                <h4>Enter Credentials</h4>
+                <p>User enters email and password on login screen</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">🔑</div>
+              <div class="journey-item-content">
+                <h4>Server Validates</h4>
+                <p>Checks credentials against database, returns JWT token</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">👤</div>
+              <div class="journey-item-content">
+                <h4>Role Determined</h4>
+                <p>System identifies user as Rep, Supervisor, or Admin</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📱</div>
+              <div class="journey-item-content">
+                <h4>Twilio Token Generated</h4>
+                <p>Access token created for browser-based calling</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Dashboard -->
+        <div class="journey-card">
+          <div class="journey-header dashboard">
+            <div class="journey-step-num">2</div>
+            <div class="journey-title">Dashboard Loads</div>
+            <div class="journey-subtitle">Personalized view appears</div>
+          </div>
+          <div class="journey-body">
+            <div class="journey-item">
+              <div class="journey-item-icon">🔌</div>
+              <div class="journey-item-content">
+                <h4>WebSocket Connects</h4>
+                <p>Real-time connection established with server</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📊</div>
+              <div class="journey-item-content">
+                <h4>Stats Load</h4>
+                <p>Today's calls, connected, missed, avg duration</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📋</div>
+              <div class="journey-item-content">
+                <h4>Recent Calls Load</h4>
+                <p>Last 10 calls with status, duration, outcomes</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">🔔</div>
+              <div class="journey-item-content">
+                <h4>Callbacks/Missed Load</h4>
+                <p>Pending follow-ups and missed calls queue</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Make Call -->
+        <div class="journey-card">
+          <div class="journey-header call">
+            <div class="journey-step-num">3</div>
+            <div class="journey-title">Making a Call</div>
+            <div class="journey-subtitle">Live calling experience</div>
+          </div>
+          <div class="journey-body">
+            <div class="journey-item">
+              <div class="journey-item-icon">📞</div>
+              <div class="journey-item-content">
+                <h4>Dial Number</h4>
+                <p>Enter phone number or click recent contact</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">🔊</div>
+              <div class="journey-item-content">
+                <h4>Call Connects</h4>
+                <p>Twilio routes call, audio streams begin</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📝</div>
+              <div class="journey-item-content">
+                <h4>Live Transcript</h4>
+                <p>Real-time speech-to-text appears on screen</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">💡</div>
+              <div class="journey-item-content">
+                <h4>AI Coaching</h4>
+                <p>Suggestions appear based on conversation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Post Call -->
+        <div class="journey-card">
+          <div class="journey-header postcall">
+            <div class="journey-step-num">4</div>
+            <div class="journey-title">After the Call</div>
+            <div class="journey-subtitle">Logging and follow-up</div>
+          </div>
+          <div class="journey-body">
+            <div class="journey-item">
+              <div class="journey-item-icon">✅</div>
+              <div class="journey-item-content">
+                <h4>Log Outcome</h4>
+                <p>Select result: Booked, Callback, Not Interested, etc.</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📝</div>
+              <div class="journey-item-content">
+                <h4>Add Notes</h4>
+                <p>Optional notes for future reference</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">🤖</div>
+              <div class="journey-item-content">
+                <h4>AI Summary Generated</h4>
+                <p>Automatic overview, sentiment, action items</p>
+              </div>
+            </div>
+            <div class="journey-item">
+              <div class="journey-item-icon">📅</div>
+              <div class="journey-item-content">
+                <h4>Schedule Callback</h4>
+                <p>Set follow-up reminder if needed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Role-Specific Flows -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-number">Section 04</div>
+        <h2 class="section-title">Role-Specific Flows</h2>
+        <p class="section-subtitle">How the experience differs by user role</p>
+      </div>
+
+      <div class="role-flow-grid">
+        <!-- Sales Rep -->
+        <div class="role-flow-card rep">
+          <div class="role-flow-header">
+            <div class="role-flow-icon">👤</div>
+            <div>
+              <div class="role-flow-title">Sales Rep</div>
+              <div class="role-flow-subtitle">Individual Contributor</div>
+            </div>
+          </div>
+          <div class="role-flow-steps">
+            <div class="role-step">
+              <div class="role-step-num">1</div>
+              Login with email/password
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">2</div>
+              See personal dashboard (own stats only)
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">3</div>
+              Make outbound calls
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">4</div>
+              Receive AI coaching during calls
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">5</div>
+              Log call outcomes
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">6</div>
+              View own call history
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">7</div>
+              Manage assigned callbacks
+            </div>
+          </div>
+        </div>
+
+        <!-- Supervisor -->
+        <div class="role-flow-card supervisor">
+          <div class="role-flow-header">
+            <div class="role-flow-icon">👁️</div>
+            <div>
+              <div class="role-flow-title">Supervisor</div>
+              <div class="role-flow-subtitle">Team Lead</div>
+            </div>
+          </div>
+          <div class="role-flow-steps">
+            <div class="role-step">
+              <div class="role-step-num">1</div>
+              Login with supervisor credentials
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">2</div>
+              See team dashboard (all team stats)
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">3</div>
+              View active calls panel (live monitoring)
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">4</div>
+              Listen to live calls silently
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">5</div>
+              Whisper coaching to reps
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">6</div>
+              Review any team member's calls
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">7</div>
+              Reassign callbacks between reps
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin -->
+        <div class="role-flow-card admin">
+          <div class="role-flow-header">
+            <div class="role-flow-icon">⚙️</div>
+            <div>
+              <div class="role-flow-title">Admin</div>
+              <div class="role-flow-subtitle">System Administrator</div>
+            </div>
+          </div>
+          <div class="role-flow-steps">
+            <div class="role-step">
+              <div class="role-step-num">1</div>
+              Login with admin credentials
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">2</div>
+              See org-wide dashboard (all teams)
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">3</div>
+              Create/manage user accounts
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">4</div>
+              Assign roles and permissions
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">5</div>
+              Configure Twilio settings
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">6</div>
+              View billing and usage
+            </div>
+            <div class="role-step">
+              <div class="role-step-num">7</div>
+              Export data and reports
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call Flow Detailed -->
+    <section class="section" id="call-flow">
+      <div class="section-header">
+        <div class="section-number">Section 05</div>
+        <h2 class="section-title">Detailed Call Flow</h2>
+        <p class="section-subtitle">What happens technically during a call</p>
+      </div>
+
+      <div class="call-flow-timeline">
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>📞</span> User Clicks "Call"
+            </div>
+            <div class="call-flow-desc">
+              Browser sends request to server with phone number and user ID. Server validates user has permission to make calls.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>🔑</span> Twilio Token Generated
+            </div>
+            <div class="call-flow-desc">
+              Server creates a Twilio access token with the user's identity. Token allows browser to connect to Twilio Voice SDK.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>🔌</span> Voice SDK Connects
+            </div>
+            <div class="call-flow-desc">
+              Browser initializes Twilio Device with token. WebRTC connection established for browser-based calling.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>📲</span> Outbound Call Initiated
+            </div>
+            <div class="call-flow-desc">
+              Twilio routes call through TwiML application. Call SID generated. Server notified via webhook. Database record created.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>🎙️</span> Media Stream Starts
+            </div>
+            <div class="call-flow-desc">
+              Audio from both parties streams to server via WebSocket. Server forwards audio to Deepgram for transcription.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>📝</span> Live Transcription
+            </div>
+            <div class="call-flow-desc">
+              Deepgram returns real-time text. Server broadcasts transcript to user's browser. Supervisor can also see it.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>💡</span> AI Coaching
+            </div>
+            <div class="call-flow-desc">
+              Every few transcript updates, Claude AI analyzes conversation. Coaching suggestions sent to rep's screen in real-time.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>🔴</span> Recording Saved
+            </div>
+            <div class="call-flow-desc">
+              Twilio records call with dual-track audio. When call ends, recording URL sent to server via callback webhook.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+
+        <div class="call-flow-item">
+          <div class="call-flow-content">
+            <div class="call-flow-title">
+              <span>📊</span> Call Completed
+            </div>
+            <div class="call-flow-desc">
+              User logs outcome. AI generates summary. All data saved to database. Stats updated. Dashboard refreshes.
+            </div>
+          </div>
+          <div class="call-flow-dot"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen Flow -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-number">Section 06</div>
+        <h2 class="section-title">Screen Flow</h2>
+        <p class="section-subtitle">The pages users navigate through</p>
+      </div>
+
+      <div class="screen-flow">
+        <div class="screen-card">
+          <div class="screen-preview">🔐</div>
+          <div class="screen-info">
+            <div class="screen-title">Login</div>
+            <div class="screen-desc">Entry point for all users. Email/password authentication.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Email Input</span>
+              <span class="screen-tag">Password</span>
+              <span class="screen-tag">Forgot Password</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">📊</div>
+          <div class="screen-info">
+            <div class="screen-title">Dashboard</div>
+            <div class="screen-desc">Main hub showing stats, recent calls, and quick actions.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Stats Cards</span>
+              <span class="screen-tag">Quick Dial</span>
+              <span class="screen-tag">Recent Calls</span>
+              <span class="screen-tag">Missed Calls</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">📞</div>
+          <div class="screen-info">
+            <div class="screen-title">Call Interface</div>
+            <div class="screen-desc">Live calling screen with transcript and AI coaching.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Dialer</span>
+              <span class="screen-tag">Transcript</span>
+              <span class="screen-tag">AI Tips</span>
+              <span class="screen-tag">Controls</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">📋</div>
+          <div class="screen-info">
+            <div class="screen-title">Call History</div>
+            <div class="screen-desc">Searchable log of all past calls with filters.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Search</span>
+              <span class="screen-tag">Filters</span>
+              <span class="screen-tag">Transcripts</span>
+              <span class="screen-tag">Export</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">🔔</div>
+          <div class="screen-info">
+            <div class="screen-title">Callbacks</div>
+            <div class="screen-desc">Manage follow-ups and missed call returns.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Pending</span>
+              <span class="screen-tag">Scheduled</span>
+              <span class="screen-tag">Completed</span>
+              <span class="screen-tag">Attempts</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">👁️</div>
+          <div class="screen-info">
+            <div class="screen-title">Supervisor Panel</div>
+            <div class="screen-desc">Live monitoring of team calls (Supervisor only).</div>
+            <div class="screen-features">
+              <span class="screen-tag">Active Calls</span>
+              <span class="screen-tag">Listen</span>
+              <span class="screen-tag">Whisper</span>
+              <span class="screen-tag">Barge</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">👥</div>
+          <div class="screen-info">
+            <div class="screen-title">User Management</div>
+            <div class="screen-desc">Create and manage user accounts (Admin only).</div>
+            <div class="screen-features">
+              <span class="screen-tag">Add User</span>
+              <span class="screen-tag">Edit Role</span>
+              <span class="screen-tag">Deactivate</span>
+              <span class="screen-tag">Teams</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-preview">⚙️</div>
+          <div class="screen-info">
+            <div class="screen-title">Settings</div>
+            <div class="screen-desc">System configuration and preferences.</div>
+            <div class="screen-features">
+              <span class="screen-tag">Twilio Config</span>
+              <span class="screen-tag">AI Settings</span>
+              <span class="screen-tag">Notifications</span>
+              <span class="screen-tag">Billing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Flow -->
+    <section class="section" id="data-flow">
+      <div class="section-header">
+        <div class="section-number">Section 07</div>
+        <h2 class="section-title">Data Flow</h2>
+        <p class="section-subtitle">How data moves through the system and what gets stored</p>
+      </div>
+
+      <div class="data-flow-container">
+        <div class="data-flow-row">
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-blue);">👤</div>
+              <div class="data-source-title">User Action</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Action</span>
+                <span class="data-field-value">"make_call"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Phone</span>
+                <span class="data-field-value">"+15551234567"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">User ID</span>
+                <span class="data-field-value">"usr_123"</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-arrow">→</div>
+
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-purple);">⚙️</div>
+              <div class="data-source-title">Server Creates Record</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Call SID</span>
+                <span class="data-field-value">"CA123abc..."</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Status</span>
+                <span class="data-field-value">"initiated"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Start Time</span>
+                <span class="data-field-value">"2025-01-20T14:34"</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-arrow">→</div>
+
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-red);">📞</div>
+              <div class="data-source-title">Twilio Events</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Event</span>
+                <span class="data-field-value">"call-progress"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Status</span>
+                <span class="data-field-value">"in-progress"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Recording</span>
+                <span class="data-field-value">"RE456def..."</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-flow-row">
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-green);">🎙️</div>
+              <div class="data-source-title">Deepgram Transcript</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Text</span>
+                <span class="data-field-value">"Hello, I'm calling..."</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Speaker</span>
+                <span class="data-field-value">"rep"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Confidence</span>
+                <span class="data-field-value">0.95</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-arrow">→</div>
+
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-cyan);">🤖</div>
+              <div class="data-source-title">Claude AI Analysis</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Sentiment</span>
+                <span class="data-field-value">"positive"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Coaching</span>
+                <span class="data-field-value">"Ask about budget"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Summary</span>
+                <span class="data-field-value">"Customer interested..."</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-arrow">→</div>
+
+          <div class="data-source">
+            <div class="data-source-header">
+              <div class="data-source-icon" style="background: var(--accent-yellow);">💾</div>
+              <div class="data-source-title">Database Record</div>
+            </div>
+            <div class="data-fields">
+              <div class="data-field">
+                <span class="data-field-key">Duration</span>
+                <span class="data-field-value">272</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Outcome</span>
+                <span class="data-field-value">"booked"</span>
+              </div>
+              <div class="data-field">
+                <span class="data-field-key">Has Transcript</span>
+                <span class="data-field-value">true</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Integrations -->
+    <section class="section" id="integrations">
+      <div class="section-header">
+        <div class="section-number">Section 08</div>
+        <h2 class="section-title">External Integrations</h2>
+        <p class="section-subtitle">Third-party services that power the system</p>
+      </div>
+
+      <div class="integration-grid">
+        <div class="integration-card">
+          <div class="integration-icon twilio">📞</div>
+          <div class="integration-title">Twilio</div>
+          <div class="integration-desc">Voice calling, recording, and telephony infrastructure</div>
+          <div class="integration-features">
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Browser-based calling (Voice SDK)
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Outbound/inbound call routing
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Call recording with dual-track
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Media streaming for transcription
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Status webhooks for events
+            </div>
+          </div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-icon deepgram">🎙️</div>
+          <div class="integration-title">Deepgram</div>
+          <div class="integration-desc">Real-time speech-to-text transcription</div>
+          <div class="integration-features">
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Live streaming transcription
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Phone-optimized model (nova-2)
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Speaker diarization
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Interim results (real-time)
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Smart formatting & punctuation
+            </div>
+          </div>
+        </div>
+
+        <div class="integration-card">
+          <div class="integration-icon ai">🤖</div>
+          <div class="integration-title">Claude AI</div>
+          <div class="integration-desc">Intelligent analysis and coaching suggestions</div>
+          <div class="integration-features">
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Real-time coaching tips
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Post-call summaries
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Sentiment analysis
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Action item extraction
+            </div>
+            <div class="integration-feature">
+              <span class="integration-feature-icon">✓</span>
+              Outcome prediction
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-Time WebSocket -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-number">Section 09</div>
+        <h2 class="section-title">Real-Time Communication</h2>
+        <p class="section-subtitle">How live updates flow between browser and server</p>
+      </div>
+
+      <div class="websocket-diagram">
+        <div class="ws-container">
+          <div class="ws-endpoint">
+            <div class="ws-endpoint-title">
+              <span>💻</span> Browser (Sales Rep)
+            </div>
+            <div class="ws-messages">
+              <div class="ws-message outgoing">connect: { role: "rep", userId: "usr_123" }</div>
+              <div class="ws-message outgoing">make_call: { to: "+15551234567" }</div>
+              <div class="ws-message incoming">call_started: { callSid: "CA..." }</div>
+              <div class="ws-message incoming">transcript: { text: "Hello...", speaker: "customer" }</div>
+              <div class="ws-message incoming">ai_coaching: { tip: "Ask about budget" }</div>
+              <div class="ws-message incoming">call_ended: { duration: 272 }</div>
+            </div>
+          </div>
+
+          <div class="ws-arrows">
+            <div class="ws-arrow">
+              <span class="ws-arrow-icon right">→</span>
+              <span>Events</span>
+            </div>
+            <div class="ws-server">
+              <div class="ws-server-icon">🖥️</div>
+              <div>Server</div>
+            </div>
+            <div class="ws-arrow">
+              <span class="ws-arrow-icon left">←</span>
+              <span>Updates</span>
+            </div>
+          </div>
+
+          <div class="ws-endpoint">
+            <div class="ws-endpoint-title">
+              <span>👁️</span> Browser (Supervisor)
+            </div>
+            <div class="ws-messages">
+              <div class="ws-message outgoing">connect: { role: "supervisor", teamId: "team_1" }</div>
+              <div class="ws-message incoming">team_call_started: { rep: "John", callSid: "CA..." }</div>
+              <div class="ws-message outgoing">listen: { callSid: "CA..." }</div>
+              <div class="ws-message incoming">full_transcript: { messages: [...] }</div>
+              <div class="ws-message incoming">transcript: { text: "...", speaker: "rep" }</div>
+              <div class="ws-message incoming">team_stats_update: { activeCalls: 5 }</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-number">Summary</div>
+        <h2 class="section-title">Putting It All Together</h2>
+      </div>
+
+      <div style="background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); border-radius: 24px; padding: 48px; border: 1px solid var(--border-color);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px;">
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">🔐</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Authentication</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Users log in → Server validates → Role determines dashboard view → Twilio token enables calling</p>
+          </div>
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">📊</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Dashboard</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">WebSocket connects → Stats load → Recent calls display → Real-time updates flow</p>
+          </div>
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">📞</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Calling</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Twilio handles voice → Deepgram transcribes → Claude coaches → Everything recorded</p>
+          </div>
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">💾</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Data Storage</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Every call logged with user ID → Transcripts saved → AI summaries generated → Full history available</p>
+          </div>
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">👁️</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Supervision</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Supervisors see team activity → Can listen live → Whisper coaching → Full visibility</p>
+          </div>
+          <div>
+            <div style="font-size: 2rem; margin-bottom: 12px;">⚡</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Real-Time</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">WebSockets push updates → No page refresh needed → Everyone stays in sync</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

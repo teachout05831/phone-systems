@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twilio Multi-User System Design</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+      --border-color: #475569;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 60px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title .icon {
+      font-size: 1.8rem;
+    }
+
+    /* Architecture Diagram */
+    .architecture-diagram {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 40px;
+      border: 1px solid var(--border-color);
+    }
+
+    .arch-layer {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .arch-layer:last-child {
+      margin-bottom: 0;
+    }
+
+    .arch-layer-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .arch-boxes {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .arch-box {
+      background: var(--bg-secondary);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .arch-arrow {
+      text-align: center;
+      padding: 10px;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+    }
+
+    /* Role Cards */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+    }
+
+    .role-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .role-header {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .role-header.sales-rep {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+    }
+
+    .role-header.supervisor {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+    }
+
+    .role-header.admin {
+      background: linear-gradient(135deg, #b45309, #f59e0b);
+    }
+
+    .role-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .role-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .role-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .role-body {
+      padding: 24px;
+    }
+
+    .role-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .role-stat {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .role-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .role-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .role-features {
+      margin-bottom: 20px;
+    }
+
+    .role-features h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .feature-list {
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .feature-list li .check {
+      color: var(--accent-green);
+    }
+
+    .feature-list li .cross {
+      color: var(--accent-red);
+    }
+
+    /* Dashboard Preview */
+    .dashboard-preview {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .preview-header {
+      background: var(--bg-tertiary);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .preview-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preview-nav-item {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preview-nav-item.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .preview-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preview-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-purple);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .preview-body {
+      padding: 24px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-tertiary);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-card-value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .stat-card-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-card-trend {
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    .stat-card-trend.up {
+      color: var(--accent-green);
+    }
+
+    .stat-card-trend.down {
+      color: var(--accent-red);
+    }
+
+    /* Call Log */
+    .call-log {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .call-log-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .call-log-header h3 {
+      font-size: 1rem;
+    }
+
+    .call-log-body {
+      padding: 0;
+    }
+
+    .call-item {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .call-item:last-child {
+      border-bottom: none;
+    }
+
+    .call-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .call-status-dot.connected {
+      background: var(--accent-green);
+    }
+
+    .call-status-dot.missed {
+      background: var(--accent-red);
+    }
+
+    .call-info {
+      flex: 1;
+    }
+
+    .call-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .call-meta {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 12px;
+    }
+
+    .call-rep {
+      color: var(--accent-cyan);
+      font-size: 0.8rem;
+    }
+
+    .call-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent-green);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+    }
+
+    /* Live Monitoring Panel */
+    .monitoring-panel {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .monitoring-header {
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .monitoring-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .monitoring-body {
+      padding: 0;
+    }
+
+    .active-call {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .active-call:last-child {
+      border-bottom: none;
+    }
+
+    .active-call-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .active-call-rep {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .active-call-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .active-call-name {
+      font-weight: 600;
+    }
+
+    .active-call-customer {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .active-call-duration {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent-green);
+      font-family: monospace;
+    }
+
+    .active-call-transcript {
+      background: var(--bg-tertiary);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .monitoring-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .monitoring-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .monitoring-btn:hover {
+      background: var(--bg-secondary);
+    }
+
+    .monitoring-btn.listen {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .monitoring-btn.whisper {
+      border-color: var(--accent-yellow);
+      color: var(--accent-yellow);
+    }
+
+    .monitoring-btn.barge {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    /* Data Flow Diagram */
+    .data-flow {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 40px;
+      border: 1px solid var(--border-color);
+    }
+
+    .flow-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      background: var(--bg-tertiary);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      min-width: 180px;
+    }
+
+    .flow-box-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .flow-box-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .flow-box-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .flow-arrow {
+      font-size: 1.5rem;
+      color: var(--accent-blue);
+    }
+
+    /* Call Record Structure */
+    .record-structure {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .record-group {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .record-group-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-cyan);
+      margin-bottom: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .record-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    .record-item:last-child {
+      border-bottom: none;
+    }
+
+    .record-key {
+      color: var(--text-secondary);
+    }
+
+    .record-value {
+      font-family: monospace;
+      color: var(--accent-green);
+    }
+
+    /* Login Flow */
+    .login-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .login-screen {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 40px;
+      border: 1px solid var(--border-color);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 auto 12px;
+    }
+
+    .login-logo-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .login-forgot {
+      text-align: center;
+      margin-top: 20px;
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+    }
+
+    .login-arrow {
+      font-size: 3rem;
+      color: var(--accent-blue);
+      text-align: center;
+    }
+
+    .login-result {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .login-result h4 {
+      margin-bottom: 16px;
+      color: var(--accent-green);
+    }
+
+    .login-result-code {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+
+    .login-result-code .key {
+      color: var(--accent-cyan);
+    }
+
+    .login-result-code .value {
+      color: var(--accent-green);
+    }
+
+    .login-result-code .highlight {
+      color: var(--accent-yellow);
+    }
+
+    /* Dashboard Routing */
+    .routing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .routing-card {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .routing-card.rep {
+      border-color: var(--accent-blue);
+    }
+
+    .routing-card.supervisor {
+      border-color: var(--accent-purple);
+    }
+
+    .routing-card.admin {
+      border-color: var(--accent-yellow);
+    }
+
+    .routing-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .routing-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .routing-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Implementation Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 40px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 32px;
+    }
+
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -33px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      border: 3px solid var(--bg-primary);
+    }
+
+    .timeline-item.phase-1 .timeline-dot {
+      background: var(--accent-green);
+    }
+
+    .timeline-item.phase-2 .timeline-dot {
+      background: var(--accent-blue);
+    }
+
+    .timeline-item.phase-3 .timeline-dot {
+      background: var(--accent-purple);
+    }
+
+    .timeline-item.phase-4 .timeline-dot {
+      background: var(--accent-yellow);
+    }
+
+    .timeline-content {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .timeline-phase {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .phase-1 .timeline-phase {
+      color: var(--accent-green);
+    }
+
+    .phase-2 .timeline-phase {
+      color: var(--accent-blue);
+    }
+
+    .phase-3 .timeline-phase {
+      color: var(--accent-purple);
+    }
+
+    .phase-4 .timeline-phase {
+      color: var(--accent-yellow);
+    }
+
+    .timeline-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .timeline-tasks {
+      list-style: none;
+    }
+
+    .timeline-tasks li {
+      padding: 6px 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timeline-tasks li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .role-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .login-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .login-arrow {
+        transform: rotate(90deg);
+      }
+
+      .routing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-container {
+        flex-direction: column;
+      }
+
+      .flow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Twilio Multi-User System Design</h1>
+      <p>A comprehensive dashboard where different users can track calls, view activity, and collaborate</p>
+    </header>
+
+    <!-- System Architecture -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">🏗️</span>
+        System Architecture
+      </h2>
+
+      <div class="architecture-diagram">
+        <div class="arch-layer">
+          <div class="arch-layer-title">Authentication Layer</div>
+          <div class="arch-boxes">
+            <div class="arch-box">Login Page</div>
+            <div class="arch-box">Register</div>
+            <div class="arch-box">Session Manager</div>
+            <div class="arch-box">Role Guard</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">▼</div>
+
+        <div class="arch-layer">
+          <div class="arch-layer-title">User Role Routing</div>
+          <div class="arch-boxes">
+            <div class="arch-box" style="border-color: var(--accent-blue); border-width: 2px;">Sales Rep Dashboard</div>
+            <div class="arch-box" style="border-color: var(--accent-purple); border-width: 2px;">Supervisor Dashboard</div>
+            <div class="arch-box" style="border-color: var(--accent-yellow); border-width: 2px;">Admin Dashboard</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">▼</div>
+
+        <div class="arch-layer">
+          <div class="arch-layer-title">Shared Components</div>
+          <div class="arch-boxes">
+            <div class="arch-box">Call Panel (Softphone)</div>
+            <div class="arch-box">Transcript Viewer</div>
+            <div class="arch-box">AI Coach</div>
+            <div class="arch-box">Call History</div>
+            <div class="arch-box">Callback Scheduler</div>
+            <div class="arch-box">Recording Playback</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">▼</div>
+
+        <div class="arch-layer">
+          <div class="arch-layer-title">Twilio Integration</div>
+          <div class="arch-boxes">
+            <div class="arch-box">Twilio Voice SDK</div>
+            <div class="arch-box">Media Streaming</div>
+            <div class="arch-box">Deepgram STT</div>
+            <div class="arch-box">Call Recording</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User Roles -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">👥</span>
+        User Roles & Access Levels
+      </h2>
+
+      <div class="role-grid">
+        <!-- Sales Rep -->
+        <div class="role-card">
+          <div class="role-header sales-rep">
+            <div class="role-icon">👤</div>
+            <div>
+              <div class="role-title">Sales Rep</div>
+              <div class="role-subtitle">Individual User</div>
+            </div>
+          </div>
+          <div class="role-body">
+            <div class="role-stats">
+              <div class="role-stat">
+                <div class="role-stat-value">12</div>
+                <div class="role-stat-label">My Calls</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value">8</div>
+                <div class="role-stat-label">Connected</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value">4</div>
+                <div class="role-stat-label">Missed</div>
+              </div>
+            </div>
+
+            <div class="role-features">
+              <h4>What They See</h4>
+              <ul class="feature-list">
+                <li><span class="check">✓</span> Their own call history</li>
+                <li><span class="check">✓</span> Their own statistics</li>
+                <li><span class="check">✓</span> Their assigned callbacks</li>
+                <li><span class="check">✓</span> AI coaching during calls</li>
+                <li><span class="check">✓</span> Their recordings & transcripts</li>
+              </ul>
+            </div>
+
+            <div class="role-features">
+              <h4>What They Cannot See</h4>
+              <ul class="feature-list">
+                <li><span class="cross">✗</span> Other reps' calls or stats</li>
+                <li><span class="cross">✗</span> Team-wide analytics</li>
+                <li><span class="cross">✗</span> Supervisor tools</li>
+                <li><span class="cross">✗</span> Admin settings</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supervisor -->
+        <div class="role-card">
+          <div class="role-header supervisor">
+            <div class="role-icon">👁️</div>
+            <div>
+              <div class="role-title">Supervisor</div>
+              <div class="role-subtitle">Team Lead</div>
+            </div>
+          </div>
+          <div class="role-body">
+            <div class="role-stats">
+              <div class="role-stat">
+                <div class="role-stat-value">156</div>
+                <div class="role-stat-label">Team Calls</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value" style="color: var(--accent-green);">5</div>
+                <div class="role-stat-label">Active Now</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value">72%</div>
+                <div class="role-stat-label">Connect Rate</div>
+              </div>
+            </div>
+
+            <div class="role-features">
+              <h4>Supervisor Features</h4>
+              <ul class="feature-list">
+                <li><span class="check">✓</span> View all team calls real-time</li>
+                <li><span class="check">✓</span> Listen to live calls</li>
+                <li><span class="check">✓</span> Whisper coaching to reps</li>
+                <li><span class="check">✓</span> Barge into calls</li>
+                <li><span class="check">✓</span> Team performance leaderboard</li>
+                <li><span class="check">✓</span> Reassign callbacks</li>
+                <li><span class="check">✓</span> Review any team recording</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin -->
+        <div class="role-card">
+          <div class="role-header admin">
+            <div class="role-icon">⚙️</div>
+            <div>
+              <div class="role-title">Admin</div>
+              <div class="role-subtitle">Full System Access</div>
+            </div>
+          </div>
+          <div class="role-body">
+            <div class="role-stats">
+              <div class="role-stat">
+                <div class="role-stat-value">1,247</div>
+                <div class="role-stat-label">Org Calls</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value">8</div>
+                <div class="role-stat-label">Teams</div>
+              </div>
+              <div class="role-stat">
+                <div class="role-stat-value">24</div>
+                <div class="role-stat-label">Users</div>
+              </div>
+            </div>
+
+            <div class="role-features">
+              <h4>Admin-Only Features</h4>
+              <ul class="feature-list">
+                <li><span class="check">✓</span> Create/manage users</li>
+                <li><span class="check">✓</span> Assign roles & permissions</li>
+                <li><span class="check">✓</span> Configure Twilio settings</li>
+                <li><span class="check">✓</span> Manage phone numbers</li>
+                <li><span class="check">✓</span> View billing & usage</li>
+                <li><span class="check">✓</span> Set compliance rules</li>
+                <li><span class="check">✓</span> Export all data</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">📊</span>
+        Sales Rep Dashboard View
+      </h2>
+
+      <div class="dashboard-preview">
+        <div class="preview-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">AI</div>
+              <span style="font-weight: 600;">Sales Coach</span>
+            </div>
+            <div class="preview-nav">
+              <div class="preview-nav-item active">Dashboard</div>
+              <div class="preview-nav-item">Call</div>
+              <div class="preview-nav-item">History</div>
+              <div class="preview-nav-item">Callbacks</div>
+            </div>
+          </div>
+          <div class="preview-user">
+            <div style="display: flex; align-items: center; gap: 6px; color: var(--accent-green); font-size: 0.85rem;">
+              <span style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%;"></span>
+              Connected
+            </div>
+            <div class="preview-avatar">JS</div>
+            <span style="font-size: 0.9rem;">John Smith</span>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-card-icon">📞</div>
+              <div class="stat-card-value">12</div>
+              <div class="stat-card-label">My Calls Today</div>
+              <div class="stat-card-trend up">+3 vs yesterday</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon">✅</div>
+              <div class="stat-card-value">8</div>
+              <div class="stat-card-label">Connected</div>
+              <div class="stat-card-trend">67% rate</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon">❌</div>
+              <div class="stat-card-value">4</div>
+              <div class="stat-card-label">Missed</div>
+              <div class="stat-card-trend down">+2 vs yesterday</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon">⏱️</div>
+              <div class="stat-card-value">3:45</div>
+              <div class="stat-card-label">Avg Duration</div>
+              <div class="stat-card-trend up">+0:30</div>
+            </div>
+          </div>
+
+          <div class="call-log">
+            <div class="call-log-header">
+              <h3>Recent Calls</h3>
+              <button class="btn btn-secondary">View All</button>
+            </div>
+            <div class="call-log-body">
+              <div class="call-item">
+                <div class="call-status-dot connected"></div>
+                <div class="call-info">
+                  <div class="call-number">(555) 123-4567</div>
+                  <div class="call-meta">
+                    <span>2:34 PM</span>
+                    <span>4:32</span>
+                    <span class="badge badge-success">Connected</span>
+                  </div>
+                </div>
+                <div class="call-actions">
+                  <button class="btn btn-secondary">📄</button>
+                  <button class="btn btn-success">📞</button>
+                </div>
+              </div>
+              <div class="call-item">
+                <div class="call-status-dot missed"></div>
+                <div class="call-info">
+                  <div class="call-number">(555) 987-6543</div>
+                  <div class="call-meta">
+                    <span>2:15 PM</span>
+                    <span>0:00</span>
+                    <span class="badge badge-danger">Missed</span>
+                  </div>
+                </div>
+                <div class="call-actions">
+                  <button class="btn btn-success">📞 Call Back</button>
+                </div>
+              </div>
+              <div class="call-item">
+                <div class="call-status-dot connected"></div>
+                <div class="call-info">
+                  <div class="call-number">(555) 456-7890</div>
+                  <div class="call-meta">
+                    <span>1:48 PM</span>
+                    <span>8:15</span>
+                    <span class="badge badge-success">Booked</span>
+                  </div>
+                </div>
+                <div class="call-actions">
+                  <button class="btn btn-secondary">📄</button>
+                  <button class="btn btn-success">📞</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supervisor Monitoring Panel -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">👁️</span>
+        Supervisor Live Monitoring Panel
+      </h2>
+
+      <div class="monitoring-panel">
+        <div class="monitoring-header">
+          <h3>
+            <span class="pulse"></span>
+            Active Calls (5)
+          </h3>
+          <span style="font-size: 0.85rem; opacity: 0.8;">Auto-refreshing</span>
+        </div>
+        <div class="monitoring-body">
+          <div class="active-call">
+            <div class="active-call-header">
+              <div class="active-call-rep">
+                <div class="active-call-avatar">JS</div>
+                <div>
+                  <div class="active-call-name">John Smith</div>
+                  <div class="active-call-customer">(555) 123-4567</div>
+                </div>
+              </div>
+              <div class="active-call-duration">3:45</div>
+            </div>
+            <div class="active-call-transcript">
+              "...I'm really interested in the premium plan, can you tell me more about..."
+            </div>
+            <div class="monitoring-actions">
+              <button class="monitoring-btn listen">👂 Listen</button>
+              <button class="monitoring-btn whisper">🗣️ Whisper</button>
+              <button class="monitoring-btn barge">📢 Barge</button>
+            </div>
+          </div>
+
+          <div class="active-call">
+            <div class="active-call-header">
+              <div class="active-call-rep">
+                <div class="active-call-avatar" style="background: var(--accent-purple);">MG</div>
+                <div>
+                  <div class="active-call-name">Maria Garcia</div>
+                  <div class="active-call-customer">(555) 987-6543</div>
+                </div>
+              </div>
+              <div class="active-call-duration">1:22</div>
+            </div>
+            <div class="active-call-transcript">
+              "Let me check that pricing for you, one moment please..."
+            </div>
+            <div class="monitoring-actions">
+              <button class="monitoring-btn listen">👂 Listen</button>
+              <button class="monitoring-btn whisper">🗣️ Whisper</button>
+              <button class="monitoring-btn barge">📢 Barge</button>
+            </div>
+          </div>
+
+          <div class="active-call">
+            <div class="active-call-header">
+              <div class="active-call-rep">
+                <div class="active-call-avatar" style="background: var(--accent-green);">AJ</div>
+                <div>
+                  <div class="active-call-name">Alex Johnson</div>
+                  <div class="active-call-customer">(555) 456-7890</div>
+                </div>
+              </div>
+              <div class="active-call-duration">5:18</div>
+            </div>
+            <div class="active-call-transcript" style="background: rgba(234, 179, 8, 0.1); border: 1px solid var(--accent-yellow);">
+              💡 AI Suggestion: "Ask about their budget - customer mentioned price concerns"
+            </div>
+            <div class="monitoring-actions">
+              <button class="monitoring-btn listen">👂 Listen</button>
+              <button class="monitoring-btn whisper">🗣️ Whisper</button>
+              <button class="monitoring-btn barge">📢 Barge</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+        <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; border: 1px solid var(--accent-blue);">
+          <div style="font-size: 1.5rem; margin-bottom: 8px;">👂</div>
+          <div style="font-weight: 600; margin-bottom: 4px;">Listen</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Silently monitor the call. Neither party can hear you.</div>
+        </div>
+        <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; border: 1px solid var(--accent-yellow);">
+          <div style="font-size: 1.5rem; margin-bottom: 8px;">🗣️</div>
+          <div style="font-weight: 600; margin-bottom: 4px;">Whisper</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Coach your rep privately. Customer cannot hear you.</div>
+        </div>
+        <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; border: 1px solid var(--accent-red);">
+          <div style="font-size: 1.5rem; margin-bottom: 8px;">📢</div>
+          <div style="font-weight: 600; margin-bottom: 4px;">Barge</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">Join the call as a participant. Both sides hear you.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Flow -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">🔄</span>
+        Call Tracking Data Flow
+      </h2>
+
+      <div class="data-flow">
+        <div class="flow-container">
+          <div class="flow-box">
+            <div class="flow-box-icon">👤</div>
+            <div class="flow-box-title">Sales Rep</div>
+            <div class="flow-box-subtitle">"John Smith"<br>ID: usr_123</div>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <div class="flow-box-icon">📞</div>
+            <div class="flow-box-title">Twilio Voice</div>
+            <div class="flow-box-subtitle">Makes Call<br>Records Events</div>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <div class="flow-box-icon">💾</div>
+            <div class="flow-box-title">Database</div>
+            <div class="flow-box-subtitle">Stores Call Log<br>With User ID</div>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <div class="flow-box-icon">📊</div>
+            <div class="flow-box-title">Dashboard</div>
+            <div class="flow-box-subtitle">Shows Activity<br>By Role</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call Record Structure -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">📋</span>
+        What Each Call Records
+      </h2>
+
+      <div class="record-structure">
+        <div class="record-grid">
+          <div class="record-group">
+            <div class="record-group-title">👤 Identity - Who Called</div>
+            <div class="record-item">
+              <span class="record-key">userId</span>
+              <span class="record-value">"usr_123"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">userName</span>
+              <span class="record-value">"John Smith"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">teamId</span>
+              <span class="record-value">"team_sales_1"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">userEmail</span>
+              <span class="record-value">"john@company.com"</span>
+            </div>
+          </div>
+
+          <div class="record-group">
+            <div class="record-group-title">📞 Details - What Happened</div>
+            <div class="record-item">
+              <span class="record-key">direction</span>
+              <span class="record-value">"outbound"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">toNumber</span>
+              <span class="record-value">"+15551234567"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">fromNumber</span>
+              <span class="record-value">"+15559876543"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">customerName</span>
+              <span class="record-value">"Jane Doe"</span>
+            </div>
+          </div>
+
+          <div class="record-group">
+            <div class="record-group-title">⏱️ Timing - When</div>
+            <div class="record-item">
+              <span class="record-key">startTime</span>
+              <span class="record-value">"2025-01-20T14:34:00Z"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">endTime</span>
+              <span class="record-value">"2025-01-20T14:38:32Z"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">duration</span>
+              <span class="record-value">272 seconds</span>
+            </div>
+          </div>
+
+          <div class="record-group">
+            <div class="record-group-title">✅ Status & Outcome</div>
+            <div class="record-item">
+              <span class="record-key">status</span>
+              <span class="record-value">"completed"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">outcome</span>
+              <span class="record-value">"booked_appointment"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">notes</span>
+              <span class="record-value">"Callback Tuesday"</span>
+            </div>
+          </div>
+
+          <div class="record-group">
+            <div class="record-group-title">🎙️ Recordings & Transcripts</div>
+            <div class="record-item">
+              <span class="record-key">hasRecording</span>
+              <span class="record-value">true</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">recordingUrl</span>
+              <span class="record-value">"https://..."</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">hasTranscript</span>
+              <span class="record-value">true</span>
+            </div>
+          </div>
+
+          <div class="record-group">
+            <div class="record-group-title">🤖 AI Analysis</div>
+            <div class="record-item">
+              <span class="record-key">sentiment</span>
+              <span class="record-value">"positive"</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">overview</span>
+              <span class="record-value">"Customer interested..."</span>
+            </div>
+            <div class="record-item">
+              <span class="record-key">actionItems</span>
+              <span class="record-value">["Send email", "Demo"]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Login Flow -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">🔐</span>
+        Login Flow
+      </h2>
+
+      <div class="login-flow">
+        <div class="login-screen">
+          <div class="login-logo">
+            <div class="login-logo-icon">AI</div>
+            <div class="login-logo-text">Sales Coach</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="john@company.com" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" value="••••••••••" readonly>
+          </div>
+          <button class="login-btn">Sign In</button>
+          <div class="login-forgot">Forgot password?</div>
+        </div>
+
+        <div class="login-arrow">→</div>
+
+        <div>
+          <div class="login-result">
+            <h4>Server Response</h4>
+            <div class="login-result-code">
+              {<br>
+              &nbsp;&nbsp;<span class="key">userId</span>: <span class="value">"usr_123"</span>,<br>
+              &nbsp;&nbsp;<span class="key">name</span>: <span class="value">"John Smith"</span>,<br>
+              &nbsp;&nbsp;<span class="key">email</span>: <span class="value">"john@company.com"</span>,<br>
+              &nbsp;&nbsp;<span class="key">role</span>: <span class="highlight">"sales_rep"</span>, ← Determines dashboard<br>
+              &nbsp;&nbsp;<span class="key">teamId</span>: <span class="value">"team_sales_1"</span>,<br>
+              &nbsp;&nbsp;<span class="key">twilioToken</span>: <span class="value">"eyJ..."</span> ← For browser calling<br>
+              }
+            </div>
+          </div>
+
+          <div class="routing-grid">
+            <div class="routing-card rep">
+              <div class="routing-icon">👤</div>
+              <div class="routing-title">Sales Rep</div>
+              <div class="routing-desc">Personal dashboard</div>
+            </div>
+            <div class="routing-card supervisor">
+              <div class="routing-icon">👁️</div>
+              <div class="routing-title">Supervisor</div>
+              <div class="routing-desc">Team monitoring</div>
+            </div>
+            <div class="routing-card admin">
+              <div class="routing-icon">⚙️</div>
+              <div class="routing-title">Admin</div>
+              <div class="routing-desc">Full system access</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Implementation Timeline -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">📅</span>
+        Implementation Phases
+      </h2>
+
+      <div class="timeline">
+        <div class="timeline-item phase-1">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-phase">Phase 1</div>
+            <div class="timeline-title">Foundation</div>
+            <ul class="timeline-tasks">
+              <li>User authentication (login/logout)</li>
+              <li>Basic role system (rep/supervisor/admin)</li>
+              <li>User-scoped call history</li>
+              <li>Database persistence (replace in-memory)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="timeline-item phase-2">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-phase">Phase 2</div>
+            <div class="timeline-title">Multi-User Calls</div>
+            <ul class="timeline-tasks">
+              <li>Per-user Twilio tokens</li>
+              <li>Call logging with user attribution</li>
+              <li>User-specific dashboards</li>
+              <li>Team assignment</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="timeline-item phase-3">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-phase">Phase 3</div>
+            <div class="timeline-title">Supervisor Features</div>
+            <ul class="timeline-tasks">
+              <li>Team-wide call visibility</li>
+              <li>Live call monitoring</li>
+              <li>Listen/Whisper/Barge functionality</li>
+              <li>Team analytics & leaderboard</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="timeline-item phase-4">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-phase">Phase 4</div>
+            <div class="timeline-title">Admin Features</div>
+            <ul class="timeline-tasks">
+              <li>User management interface</li>
+              <li>Organization settings</li>
+              <li>Billing & usage tracking</li>
+              <li>Advanced reporting & export</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="icon">✨</span>
+        Summary
+      </h2>
+
+      <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; border: 1px solid var(--border-color);">
+        <p style="font-size: 1.1rem; margin-bottom: 24px; color: var(--text-secondary);">
+          This design enables a complete multi-user call center where:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">🔐</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Multiple Users</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Each person logs in with their own credentials</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">👁️</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Role-Based Views</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Appropriate data shown per role</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">📊</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Call Attribution</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Every call tied to a specific user</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">👥</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Team Structure</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Supervisors see their team's activity</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">🎯</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Real-Time Monitoring</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Supervisors can watch live calls</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">🏗️</div>
+            <div>
+              <div style="font-weight: 600; margin-bottom: 4px;">Shared Infrastructure</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Same Twilio account, properly segmented</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

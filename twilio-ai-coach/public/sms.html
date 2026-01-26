@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    :root {
+      --sms-color: #8b5cf6;
+      --sms-light: #ede9fe;
+      --call-color: #10b981;
+      --call-light: #d1fae5;
+    }
+
+    /* SMS Layout - Three Panel */
+    .sms-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr 320px;
+      gap: 0;
+      height: calc(100vh - 73px);
+      overflow: hidden;
+    }
+
+    /* Left Panel - Conversations List */
+    .conversations-panel {
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .new-message-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: var(--sms-color);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .new-message-btn:hover {
+      background: #7c3aed;
+    }
+
+    /* Search */
+    .conversations-search {
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--sms-color);
+    }
+
+    /* Conversation List */
+    .conversations-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .conversation-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background var(--transition-fast);
+    }
+
+    .conversation-item:hover {
+      background: var(--gray-50);
+    }
+
+    .conversation-item.active {
+      background: var(--sms-light);
+      border-left: 3px solid var(--sms-color);
+    }
+
+    .conversation-item.unread {
+      background: #fef3c7;
+    }
+
+    .conversation-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .unread-dot {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      background: var(--sms-color);
+      border: 2px solid white;
+      border-radius: var(--radius-full);
+    }
+
+    .conversation-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .conversation-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .conversation-preview {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conversation-item.unread .conversation-preview {
+      color: var(--gray-700);
+      font-weight: 500;
+    }
+
+    .conversation-meta {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .conversation-time {
+      font-size: 0.7rem;
+      color: var(--gray-400);
+    }
+
+    .conversation-badge {
+      display: inline-block;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      background: var(--sms-color);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 600;
+      border-radius: var(--radius-full);
+      text-align: center;
+      line-height: 18px;
+      margin-top: 4px;
+    }
+
+    /* Center Panel - Chat View */
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--gray-50);
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .chat-contact {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .chat-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .chat-info .phone {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    /* Messages Area */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .message-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .message-date {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--gray-400);
+      padding: var(--spacing-md) 0;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-lg);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .message.outbound {
+      background: var(--sms-color);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: var(--radius-xs);
+    }
+
+    .message.inbound {
+      background: white;
+      color: var(--gray-900);
+      align-self: flex-start;
+      border-bottom-left-radius: var(--radius-xs);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .message-time {
+      font-size: 0.65rem;
+      margin-top: var(--spacing-xs);
+      opacity: 0.7;
+    }
+
+    .message.outbound .message-time {
+      text-align: right;
+    }
+
+    .message-status {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.7);
+      text-align: right;
+      margin-top: 2px;
+    }
+
+    /* Message Composer */
+    .message-composer {
+      background: white;
+      border-top: 1px solid var(--gray-200);
+      padding: var(--spacing-md);
+    }
+
+    .template-chips {
+      display: flex;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-sm);
+      overflow-x: auto;
+      padding-bottom: var(--spacing-xs);
+    }
+
+    .template-chip {
+      white-space: nowrap;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: var(--gray-100);
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      border: none;
+    }
+
+    .template-chip:hover {
+      background: var(--sms-light);
+      color: var(--sms-color);
+    }
+
+    .composer-row {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: flex-end;
+    }
+
+    .composer-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      font-size: 0.875rem;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+    }
+
+    .composer-input:focus {
+      outline: none;
+      border-color: var(--sms-color);
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: var(--sms-color);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: #7c3aed;
+    }
+
+    .send-btn:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    /* Right Panel - Contact Info */
+    .contact-panel {
+      background: white;
+      border-left: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .contact-header {
+      padding: var(--spacing-lg);
+      text-align: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .contact-header-avatar {
+      width: 72px;
+      height: 72px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.5rem;
+      margin: 0 auto var(--spacing-md);
+    }
+
+    .contact-header-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .contact-header-phone {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .contact-actions-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+    }
+
+    .contact-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      background: white;
+      cursor: pointer;
+    }
+
+    .contact-action-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--primary);
+    }
+
+    .contact-action-btn .icon {
+      font-size: 1.25rem;
+    }
+
+    .contact-action-btn .label {
+      font-size: 0.65rem;
+      color: var(--gray-600);
+    }
+
+    .contact-section {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .contact-section-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-400);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .contact-detail {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--spacing-xs) 0;
+      font-size: 0.875rem;
+    }
+
+    .contact-detail-label {
+      color: var(--gray-500);
+    }
+
+    .contact-detail-value {
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .contact-notes {
+      width: 100%;
+      padding: var(--spacing-sm);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .sms-layout {
+        grid-template-columns: 280px 1fr;
+      }
+      .contact-panel {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sms-layout {
+        grid-template-columns: 1fr;
+      }
+      .conversations-panel {
+        display: none;
+      }
+      .sms-layout.show-list .conversations-panel {
+        display: flex;
+      }
+      .sms-layout.show-list .chat-panel {
+        display: none;
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+
+    /* New Message Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-400);
+      padding: 0;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--gray-600);
+    }
+
+    .modal-body {
+      padding: var(--spacing-lg);
+    }
+
+    .form-group {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--sms-color);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    /* Contact Search Results */
+    .contact-search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 10;
+      margin-top: 4px;
+    }
+
+    .contact-search-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .contact-search-item:hover {
+      background: var(--gray-50);
+    }
+
+    .contact-search-item .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .contact-search-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contact-search-item .name {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+    }
+
+    .contact-search-item .phone {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .contact-search-item .company {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .contact-search-empty {
+      padding: var(--spacing-lg);
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Selected Contact Card */
+    .selected-contact-card {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--sms-light);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--sms-color);
+    }
+
+    .selected-contact-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--sms-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .selected-contact-info {
+      flex: 1;
+    }
+
+    .selected-contact-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+    }
+
+    .selected-contact-phone {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-primary {
+      background: var(--sms-color);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #7c3aed;
+    }
+
+    .btn-primary:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    .btn-sm {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>&#9664;</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge" id="smsBadge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Connected</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">SMS Messages</h1>
+        </div>
+        <div class="top-header-right">
+          <div class="connection-status connected" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="desktop-only">Connected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area" style="padding: 0; overflow: hidden;">
+        <div class="sms-layout" id="smsLayout">
+          <!-- Left Panel - Conversations -->
+          <div class="conversations-panel">
+            <div class="panel-header">
+              <span class="panel-title">Conversations</span>
+              <button class="new-message-btn" onclick="newMessage()" title="New Message">+</button>
+            </div>
+            <div class="conversations-search">
+              <input type="text" class="search-input" placeholder="Search conversations...">
+            </div>
+            <div class="conversations-list" id="conversationsList">
+              <!-- Conversations populated by JS -->
+            </div>
+          </div>
+
+          <!-- Center Panel - Chat -->
+          <div class="chat-panel">
+            <div class="chat-header">
+              <div class="chat-contact">
+                <button class="btn btn-secondary btn-sm mobile-only" onclick="showConversationsList()">←</button>
+                <div class="chat-avatar" id="chatAvatar">SW</div>
+                <div class="chat-info">
+                  <h3 id="chatName">Sarah Williams</h3>
+                  <span class="phone" id="chatPhone">+1 (555) 234-5678</span>
+                </div>
+              </div>
+              <div class="chat-actions">
+                <a href="call.html" class="btn btn-success btn-sm">📞 Call</a>
+                <a href="contact-profile.html" class="btn btn-secondary btn-sm">View Profile</a>
+              </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+              <!-- Messages populated by JS -->
+            </div>
+
+            <div class="message-composer">
+              <div class="template-chips">
+                <button class="template-chip" onclick="useTemplate('follow-up')">Following up...</button>
+                <button class="template-chip" onclick="useTemplate('meeting')">Meeting confirmation</button>
+                <button class="template-chip" onclick="useTemplate('thanks')">Thank you!</button>
+                <button class="template-chip" onclick="useTemplate('pricing')">Pricing info</button>
+                <button class="template-chip" onclick="showTemplates()">+ More</button>
+              </div>
+              <div class="composer-row">
+                <textarea class="composer-input" id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn" disabled>➤</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Message Modal -->
+          <div class="modal-overlay" id="newMessageModal" style="display: none;">
+            <div class="modal-content" style="max-width: 480px;">
+              <div class="modal-header">
+                <h3>New Message</h3>
+                <button class="modal-close" onclick="closeNewMessageModal()">&times;</button>
+              </div>
+              <div class="modal-body">
+                <!-- Search/Enter Phone -->
+                <div class="form-group">
+                  <label class="form-label">Search contacts or enter phone number</label>
+                  <div style="position: relative;">
+                    <input type="text"
+                           class="form-control"
+                           id="newMessageSearch"
+                           placeholder="Search by name, phone, or company..."
+                           autocomplete="off"
+                           oninput="handleNewMessageSearch(event)">
+                    <div id="contactSearchResults" class="contact-search-results" style="display: none;"></div>
+                  </div>
+                </div>
+
+                <!-- Selected Contact or New Number -->
+                <div id="selectedContactDisplay" style="display: none; margin-top: 1rem;">
+                  <div class="selected-contact-card">
+                    <div class="selected-contact-avatar" id="selectedContactAvatar">?</div>
+                    <div class="selected-contact-info">
+                      <div class="selected-contact-name" id="selectedContactName">-</div>
+                      <div class="selected-contact-phone" id="selectedContactPhone">-</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="clearSelectedContact()" style="margin-left: auto;">Change</button>
+                  </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div style="margin-top: 1.5rem;">
+                  <label class="form-label">Or enter a new number</label>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <input type="tel"
+                           class="form-control"
+                           id="newPhoneNumber"
+                           placeholder="(555) 123-4567"
+                           oninput="formatPhoneInput(this)">
+                    <button class="btn btn-primary" onclick="startConversationFromModal()" id="startConversationBtn" disabled>
+                      Start Chat
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel - Contact Info -->
+          <div class="contact-panel">
+            <div class="contact-header">
+              <div class="contact-header-avatar" id="contactAvatar">SW</div>
+              <div class="contact-header-name" id="contactName">Sarah Williams</div>
+              <div class="contact-header-phone" id="contactPhone">+1 (555) 234-5678</div>
+              <div class="contact-actions-row">
+                <button class="contact-action-btn" onclick="window.location.href='call.html'">
+                  <span class="icon">📞</span>
+                  <span class="label">Call</span>
+                </button>
+                <button class="contact-action-btn" onclick="window.location.href='contact-profile.html'">
+                  <span class="icon">👤</span>
+                  <span class="label">Profile</span>
+                </button>
+                <button class="contact-action-btn">
+                  <span class="icon">📧</span>
+                  <span class="label">Email</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="contact-section">
+              <div class="contact-section-title">Contact Details</div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Company</span>
+                <span class="contact-detail-value" id="contactCompany">Williams Design Co</span>
+              </div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Email</span>
+                <span class="contact-detail-value" id="contactEmail">sarah@williams.co</span>
+              </div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Source</span>
+                <span class="contact-detail-value" id="contactSource">Facebook Ad</span>
+              </div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Status</span>
+                <span class="contact-detail-value" id="contactStatus">Qualified</span>
+              </div>
+            </div>
+
+            <div class="contact-section">
+              <div class="contact-section-title">Engagement</div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Total SMS</span>
+                <span class="contact-detail-value">12</span>
+              </div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Total Calls</span>
+                <span class="contact-detail-value">3</span>
+              </div>
+              <div class="contact-detail">
+                <span class="contact-detail-label">Last Contact</span>
+                <span class="contact-detail-value">Today</span>
+              </div>
+            </div>
+
+            <div class="contact-section" style="flex: 1;">
+              <div class="contact-section-title">Notes</div>
+              <textarea class="contact-notes" placeholder="Add notes about this contact...">Interested in website redesign. Budget ~$3-5k. Demo scheduled for Thursday.</textarea>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <a href="dashboard.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">📊</span>
+        <span class="mobile-nav-label">Dashboard</span>
+      </a>
+      <a href="sms.html" class="mobile-nav-item active">
+        <span class="mobile-nav-icon">💬</span>
+        <span class="mobile-nav-label">SMS</span>
+      </a>
+      <a href="call.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">📞</span>
+        <span class="mobile-nav-label">Call</span>
+      </a>
+      <a href="contacts.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">👥</span>
+        <span class="mobile-nav-label">Contacts</span>
+      </a>
+      <a href="pipeline.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">📈</span>
+        <span class="mobile-nav-label">Pipeline</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- SMS page functionality -->
+  <script src="js/sms.js"></script>
+
+  <!-- Sidebar functions (shared across pages) -->
+  <script>
+    // Sidebar toggle (desktop)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    // Open sidebar (mobile)
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close sidebar (mobile)
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Restore sidebar state on load
+    (function() {
+      const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (isCollapsed && window.innerWidth > 1024) {
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    })();
+  </script>
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+</body>
+</html>

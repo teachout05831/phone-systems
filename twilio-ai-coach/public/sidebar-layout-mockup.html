@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Outreach Hub - Sidebar Layout</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ==========================================
+       SIDEBAR LAYOUT SYSTEM
+       ========================================== */
+
+    :root {
+      --sidebar-width: 240px;
+      --sidebar-collapsed-width: 68px;
+      --header-height: 56px;
+      --mobile-nav-height: 64px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* ==========================================
+       SIDEBAR
+       ========================================== */
+
+    .sidebar {
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.2s ease, transform 0.2s ease;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .sidebar.collapsed .sidebar-logo-text,
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .sidebar-user-info,
+    .sidebar.collapsed .nav-badge {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: var(--spacing-md);
+    }
+
+    .sidebar.collapsed .nav-icon {
+      margin-right: 0;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: var(--header-height);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+    }
+
+    .sidebar-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo-text {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--gray-900);
+    }
+
+    .sidebar-toggle {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      transition: all var(--transition-fast);
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--gray-200);
+    }
+
+    .sidebar.collapsed .sidebar-toggle {
+      transform: rotate(180deg);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md) 0;
+    }
+
+    .nav-section {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .nav-section-title {
+      padding: var(--spacing-xs) var(--spacing-lg);
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gray-400);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      margin: 0 var(--spacing-sm);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: var(--spacing-md);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .nav-label {
+      flex: 1;
+    }
+
+    .nav-badge {
+      background: var(--danger);
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      margin-left: auto;
+    }
+
+    .nav-badge.success {
+      background: var(--success);
+    }
+
+    /* Sidebar User */
+    .sidebar-user {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .sidebar-user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-user-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user-status {
+      font-size: 0.75rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--radius-full);
+      background: currentColor;
+    }
+
+    /* ==========================================
+       MAIN CONTENT AREA
+       ========================================== */
+
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Top Header Bar */
+    .top-header {
+      height: var(--header-height);
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-lg);
+      flex-shrink: 0;
+    }
+
+    .top-header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+    }
+
+    .mobile-menu-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .page-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .top-header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .header-action-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      position: relative;
+    }
+
+    .header-action-btn:hover {
+      background: var(--gray-200);
+    }
+
+    .header-action-btn .badge-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: var(--radius-full);
+      border: 2px solid white;
+    }
+
+    /* Main Content */
+    .main-content-area {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--gray-50);
+    }
+
+    /* ==========================================
+       MOBILE BOTTOM NAV
+       ========================================== */
+
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--mobile-nav-height);
+      background: white;
+      border-top: 1px solid var(--gray-200);
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .mobile-nav-items {
+      display: flex;
+      height: 100%;
+    }
+
+    .mobile-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--gray-500);
+      font-size: 0.625rem;
+      font-weight: 500;
+      gap: 4px;
+      position: relative;
+    }
+
+    .mobile-nav-item.active {
+      color: var(--primary);
+    }
+
+    .mobile-nav-item .nav-icon {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    .mobile-nav-item .badge-dot {
+      position: absolute;
+      top: 8px;
+      right: calc(50% - 16px);
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: var(--radius-full);
+    }
+
+    /* Call FAB for mobile */
+    .call-fab {
+      display: none;
+      position: fixed;
+      bottom: calc(var(--mobile-nav-height) + 16px + env(safe-area-inset-bottom));
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      background: var(--success);
+      border-radius: var(--radius-full);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+      z-index: 99;
+    }
+
+    /* ==========================================
+       MOBILE SIDEBAR OVERLAY
+       ========================================== */
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 99;
+    }
+
+    /* ==========================================
+       MOBILE CALL INTERFACE
+       ========================================== */
+
+    .mobile-call-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      z-index: 200;
+      flex-direction: column;
+      color: white;
+    }
+
+    .mobile-call-screen.active {
+      display: flex;
+    }
+
+    .mobile-call-header {
+      padding: var(--spacing-lg);
+      padding-top: calc(var(--spacing-lg) + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile-call-back {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: var(--radius-full);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .mobile-call-status {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+
+    .mobile-call-more {
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .mobile-call-contact {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-xl);
+    }
+
+    .mobile-call-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .mobile-call-name {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .mobile-call-number {
+      font-size: 1rem;
+      opacity: 0.7;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .mobile-call-timer {
+      font-size: 2rem;
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* AI Coach Suggestion on mobile */
+    .mobile-ai-coach {
+      margin: 0 var(--spacing-lg);
+      padding: var(--spacing-md);
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: var(--radius-md);
+    }
+
+    .mobile-ai-coach-header {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #fbbf24;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .mobile-ai-coach-text {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    /* Mobile Call Actions */
+    .mobile-call-actions {
+      padding: var(--spacing-xl);
+      padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+    }
+
+    .mobile-call-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .mobile-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xs);
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .mobile-action-btn .icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .mobile-action-btn.active .icon-circle {
+      background: white;
+      color: #1a1a2e;
+    }
+
+    .mobile-action-btn .label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    .mobile-call-main-actions {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xl);
+    }
+
+    .mobile-end-call {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-full);
+      background: var(--danger);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .mobile-answer-call {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-full);
+      background: var(--success);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* ==========================================
+       MOBILE DIALER
+       ========================================== */
+
+    .mobile-dialer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: white;
+      z-index: 200;
+      flex-direction: column;
+    }
+
+    .mobile-dialer.active {
+      display: flex;
+    }
+
+    .mobile-dialer-header {
+      padding: var(--spacing-lg);
+      padding-top: calc(var(--spacing-lg) + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .mobile-dialer-close {
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .mobile-dialer-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .mobile-dialer-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: var(--spacing-xl);
+    }
+
+    .mobile-dialer-display {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .mobile-dialer-number {
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--gray-900);
+      letter-spacing: 0.05em;
+      min-height: 48px;
+    }
+
+    .mobile-dialer-name {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-top: var(--spacing-sm);
+    }
+
+    .mobile-dial-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+      max-width: 300px;
+      margin: 0 auto;
+      flex: 1;
+    }
+
+    .mobile-dial-btn {
+      aspect-ratio: 1;
+      border: none;
+      background: var(--gray-100);
+      border-radius: var(--radius-full);
+      font-size: 1.5rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-dial-btn:active {
+      background: var(--gray-200);
+    }
+
+    .mobile-dial-btn .sub {
+      font-size: 0.5rem;
+      color: var(--gray-500);
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+
+    .mobile-dial-btn.delete {
+      background: transparent;
+    }
+
+    .mobile-dial-btn.call {
+      background: var(--success);
+      color: white;
+    }
+
+    .mobile-dialer-actions {
+      padding: var(--spacing-xl);
+      padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+    }
+
+    .mobile-dial-call-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-full);
+      background: var(--success);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================
+       RESPONSIVE BREAKPOINTS
+       ========================================== */
+
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: var(--sidebar-collapsed-width);
+      }
+
+      .sidebar .sidebar-logo-text,
+      .sidebar .nav-label,
+      .sidebar .nav-section-title,
+      .sidebar .sidebar-user-info,
+      .sidebar .nav-badge {
+        display: none;
+      }
+
+      .sidebar .nav-item {
+        justify-content: center;
+        padding: var(--spacing-md);
+      }
+
+      .sidebar .nav-icon {
+        margin-right: 0;
+      }
+
+      .sidebar-toggle {
+        display: none;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 280px;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .sidebar .sidebar-logo-text,
+      .sidebar .nav-label,
+      .sidebar .nav-section-title,
+      .sidebar .sidebar-user-info,
+      .sidebar .nav-badge {
+        display: block;
+      }
+
+      .sidebar .nav-item {
+        justify-content: flex-start;
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+
+      .sidebar .nav-icon {
+        margin-right: var(--spacing-md);
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+      }
+
+      .mobile-menu-btn {
+        display: flex;
+      }
+
+      .mobile-bottom-nav {
+        display: block;
+      }
+
+      .call-fab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .main-content-area {
+        padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+      }
+
+      /* Hide desktop elements on mobile */
+      .top-header-right .desktop-only {
+        display: none;
+      }
+    }
+
+    /* ==========================================
+       DEMO CONTENT STYLES
+       ========================================== */
+
+    .demo-content {
+      padding: var(--spacing-lg);
+    }
+
+    .demo-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .demo-stat-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      border: 1px solid var(--gray-200);
+    }
+
+    .demo-stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .demo-stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .demo-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .demo-card-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .demo-card-body {
+      padding: var(--spacing-lg);
+    }
+
+    .demo-list-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .demo-list-item:hover {
+      background: var(--gray-50);
+    }
+
+    .demo-list-item-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .demo-list-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .demo-list-item-title {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .demo-list-item-subtitle {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .demo-list-item-meta {
+      text-align: right;
+    }
+
+    .demo-list-item-time {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    @media (max-width: 768px) {
+      .demo-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .demo-content {
+        padding: var(--spacing-md);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="sidebar-logo">
+          <div class="sidebar-logo-icon">OH</div>
+          <span class="sidebar-logo-text">Outreach Hub</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="nav-section">
+          <a href="#" class="nav-item active" onclick="setActivePage(this, 'Dashboard')">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Newsfeed')">
+            <span class="nav-icon">📰</span>
+            <span class="nav-label">Newsfeed</span>
+            <span class="nav-badge">3</span>
+          </a>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Activity')">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'SMS')">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">SMS</span>
+            <span class="nav-badge">3</span>
+          </a>
+          <a href="#" class="nav-item" onclick="openDialer()">
+            <span class="nav-icon">📞</span>
+            <span class="nav-label">Make Call</span>
+          </a>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Call History')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">History</span>
+          </a>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Callbacks')">
+            <span class="nav-icon">🔔</span>
+            <span class="nav-label">Callbacks</span>
+            <span class="nav-badge">5</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="nav-section">
+          <div class="nav-section-title">Team</div>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Supervisor')">
+            <span class="nav-icon">👥</span>
+            <span class="nav-label">Supervisor</span>
+            <span class="nav-badge success">3 live</span>
+          </a>
+          <a href="#" class="nav-item" onclick="setActivePage(this, 'Reports')">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Reports</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">JD</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">John Doe</div>
+          <div class="sidebar-user-status">
+            <span class="status-dot"></span>
+            Available
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn desktop-only" title="Search">🔍</button>
+          <button class="header-action-btn" title="Notifications">
+            🔔
+            <span class="badge-dot"></span>
+          </button>
+          <div class="connection-status connected">
+            <span class="connection-dot"></span>
+            <span class="desktop-only">Connected</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <div class="demo-content">
+          <!-- Stats -->
+          <div class="demo-stats-grid">
+            <div class="demo-stat-card">
+              <div class="demo-stat-value">47</div>
+              <div class="demo-stat-label">Total Calls</div>
+            </div>
+            <div class="demo-stat-card">
+              <div class="demo-stat-value">32</div>
+              <div class="demo-stat-label">Connected</div>
+            </div>
+            <div class="demo-stat-card">
+              <div class="demo-stat-value">8</div>
+              <div class="demo-stat-label">Booked</div>
+            </div>
+            <div class="demo-stat-card">
+              <div class="demo-stat-value">4:32</div>
+              <div class="demo-stat-label">Avg Duration</div>
+            </div>
+          </div>
+
+          <!-- Recent Calls -->
+          <div class="demo-card">
+            <div class="demo-card-header">Recent Calls</div>
+            <div class="demo-card-body" style="padding: 0;">
+              <div class="demo-list-item" onclick="showCallScreen()">
+                <div class="demo-list-item-avatar">SC</div>
+                <div class="demo-list-item-content">
+                  <div class="demo-list-item-title">Sarah Chen</div>
+                  <div class="demo-list-item-subtitle">+1 (555) 234-5678 • Booked</div>
+                </div>
+                <div class="demo-list-item-meta">
+                  <div class="demo-list-item-time">10:23 AM</div>
+                </div>
+              </div>
+              <div class="demo-list-item">
+                <div class="demo-list-item-avatar">MJ</div>
+                <div class="demo-list-item-content">
+                  <div class="demo-list-item-title">Michael Johnson</div>
+                  <div class="demo-list-item-subtitle">+1 (555) 876-5432 • Callback</div>
+                </div>
+                <div class="demo-list-item-meta">
+                  <div class="demo-list-item-time">9:45 AM</div>
+                </div>
+              </div>
+              <div class="demo-list-item">
+                <div class="demo-list-item-avatar">LR</div>
+                <div class="demo-list-item-content">
+                  <div class="demo-list-item-title">Lisa Rodriguez</div>
+                  <div class="demo-list-item-subtitle">+1 (555) 345-6789 • No Answer</div>
+                </div>
+                <div class="demo-list-item-meta">
+                  <div class="demo-list-item-time">9:12 AM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Callbacks Due -->
+          <div class="demo-card">
+            <div class="demo-card-header">Callbacks Due Today</div>
+            <div class="demo-card-body" style="padding: 0;">
+              <div class="demo-list-item">
+                <div class="demo-list-item-avatar" style="background: var(--warning-light); color: #92400e;">2pm</div>
+                <div class="demo-list-item-content">
+                  <div class="demo-list-item-title">Amanda Foster</div>
+                  <div class="demo-list-item-subtitle">Follow up on quote</div>
+                </div>
+                <button class="btn btn-sm btn-success" onclick="showCallScreen()">Call</button>
+              </div>
+              <div class="demo-list-item">
+                <div class="demo-list-item-avatar" style="background: var(--warning-light); color: #92400e;">4pm</div>
+                <div class="demo-list-item-content">
+                  <div class="demo-list-item-title">David Lee</div>
+                  <div class="demo-list-item-subtitle">Pricing discussion</div>
+                </div>
+                <button class="btn btn-sm btn-success" onclick="showCallScreen()">Call</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="#" class="mobile-nav-item active" onclick="setActiveMobileNav(this, 'Dashboard')">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="setActiveMobileNav(this, 'Newsfeed')">
+          <span class="nav-icon">📰</span>
+          <span>Feed</span>
+          <span class="badge-dot"></span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="setActiveMobileNav(this, 'History')">
+          <span class="nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="setActiveMobileNav(this, 'Callbacks')">
+          <span class="nav-icon">🔔</span>
+          <span>Callbacks</span>
+          <span class="badge-dot"></span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Call FAB (mobile) -->
+    <button class="call-fab" onclick="openDialer()">📞</button>
+  </div>
+
+  <!-- Mobile Dialer -->
+  <div class="mobile-dialer" id="mobileDialer">
+    <div class="mobile-dialer-header">
+      <button class="mobile-dialer-close" onclick="closeDialer()">✕</button>
+      <span class="mobile-dialer-title">New Call</span>
+      <div style="width: 40px;"></div>
+    </div>
+    <div class="mobile-dialer-body">
+      <div class="mobile-dialer-display">
+        <div class="mobile-dialer-number" id="dialerNumber"></div>
+        <div class="mobile-dialer-name" id="dialerName">Enter a number</div>
+      </div>
+      <div class="mobile-dial-pad">
+        <button class="mobile-dial-btn" onclick="dialDigit('1')">1<span class="sub"></span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('2')">2<span class="sub">ABC</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('3')">3<span class="sub">DEF</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('4')">4<span class="sub">GHI</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('5')">5<span class="sub">JKL</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('6')">6<span class="sub">MNO</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('7')">7<span class="sub">PQRS</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('8')">8<span class="sub">TUV</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('9')">9<span class="sub">WXYZ</span></button>
+        <button class="mobile-dial-btn" onclick="dialDigit('*')">*</button>
+        <button class="mobile-dial-btn" onclick="dialDigit('0')">0<span class="sub">+</span></button>
+        <button class="mobile-dial-btn delete" onclick="dialDelete()">⌫</button>
+      </div>
+    </div>
+    <div class="mobile-dialer-actions">
+      <button class="mobile-dial-call-btn" onclick="startCall()">📞</button>
+    </div>
+  </div>
+
+  <!-- Mobile Call Screen -->
+  <div class="mobile-call-screen" id="mobileCallScreen">
+    <div class="mobile-call-header">
+      <button class="mobile-call-back" onclick="minimizeCall()">◀</button>
+      <span class="mobile-call-status">Connected</span>
+      <button class="mobile-call-more">⋯</button>
+    </div>
+
+    <div class="mobile-call-contact">
+      <div class="mobile-call-avatar">SC</div>
+      <div class="mobile-call-name">Sarah Chen</div>
+      <div class="mobile-call-number">+1 (555) 234-5678</div>
+      <div class="mobile-call-timer" id="callTimer">3:42</div>
+    </div>
+
+    <!-- AI Coach -->
+    <div class="mobile-ai-coach">
+      <div class="mobile-ai-coach-header">AI Coach</div>
+      <div class="mobile-ai-coach-text">Customer mentioned budget concerns. Consider emphasizing ROI and payment plan options.</div>
+    </div>
+
+    <div class="mobile-call-actions">
+      <div class="mobile-call-actions-grid">
+        <button class="mobile-action-btn" onclick="toggleMute(this)">
+          <div class="icon-circle">🔇</div>
+          <span class="label">Mute</span>
+        </button>
+        <button class="mobile-action-btn" onclick="toggleHold(this)">
+          <div class="icon-circle">⏸️</div>
+          <span class="label">Hold</span>
+        </button>
+        <button class="mobile-action-btn">
+          <div class="icon-circle">🔊</div>
+          <span class="label">Speaker</span>
+        </button>
+        <button class="mobile-action-btn">
+          <div class="icon-circle">⌨️</div>
+          <span class="label">Keypad</span>
+        </button>
+        <button class="mobile-action-btn">
+          <div class="icon-circle">💬</div>
+          <span class="label">SMS</span>
+        </button>
+        <button class="mobile-action-btn">
+          <div class="icon-circle">📝</div>
+          <span class="label">Notes</span>
+        </button>
+      </div>
+      <div class="mobile-call-main-actions">
+        <button class="mobile-end-call" onclick="endCall()">📵</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar State
+    let sidebarCollapsed = false;
+    let dialerNumber = '';
+
+    // Toggle sidebar collapse (desktop)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarCollapsed = !sidebarCollapsed;
+      sidebar.classList.toggle('collapsed', sidebarCollapsed);
+    }
+
+    // Open sidebar (mobile)
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close sidebar (mobile)
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Set active page
+    function setActivePage(el, title) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('pageTitle').textContent = title;
+      closeSidebar();
+    }
+
+    // Set active mobile nav
+    function setActiveMobileNav(el, title) {
+      document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('pageTitle').textContent = title;
+    }
+
+    // Dialer
+    function openDialer() {
+      document.getElementById('mobileDialer').classList.add('active');
+      closeSidebar();
+    }
+
+    function closeDialer() {
+      document.getElementById('mobileDialer').classList.remove('active');
+      dialerNumber = '';
+      updateDialerDisplay();
+    }
+
+    function dialDigit(digit) {
+      if (dialerNumber.length < 15) {
+        dialerNumber += digit;
+        updateDialerDisplay();
+      }
+    }
+
+    function dialDelete() {
+      dialerNumber = dialerNumber.slice(0, -1);
+      updateDialerDisplay();
+    }
+
+    function updateDialerDisplay() {
+      const display = document.getElementById('dialerNumber');
+      const name = document.getElementById('dialerName');
+
+      if (dialerNumber.length === 0) {
+        display.textContent = '';
+        name.textContent = 'Enter a number';
+      } else {
+        display.textContent = formatPhoneNumber(dialerNumber);
+        name.textContent = dialerNumber.length >= 10 ? 'Ready to call' : '';
+      }
+    }
+
+    function formatPhoneNumber(num) {
+      if (num.length <= 3) return num;
+      if (num.length <= 6) return `(${num.slice(0, 3)}) ${num.slice(3)}`;
+      return `(${num.slice(0, 3)}) ${num.slice(3, 6)}-${num.slice(6, 10)}`;
+    }
+
+    function startCall() {
+      if (dialerNumber.length >= 10) {
+        closeDialer();
+        showCallScreen();
+      }
+    }
+
+    // Call Screen
+    function showCallScreen() {
+      document.getElementById('mobileCallScreen').classList.add('active');
+      startCallTimer();
+    }
+
+    function minimizeCall() {
+      document.getElementById('mobileCallScreen').classList.remove('active');
+    }
+
+    function endCall() {
+      document.getElementById('mobileCallScreen').classList.remove('active');
+      stopCallTimer();
+    }
+
+    // Call Timer
+    let callTimerInterval = null;
+    let callSeconds = 222; // 3:42 demo
+
+    function startCallTimer() {
+      callTimerInterval = setInterval(() => {
+        callSeconds++;
+        const mins = Math.floor(callSeconds / 60);
+        const secs = callSeconds % 60;
+        document.getElementById('callTimer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    function stopCallTimer() {
+      if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+      }
+    }
+
+    // Toggle actions
+    function toggleMute(btn) {
+      btn.classList.toggle('active');
+    }
+
+    function toggleHold(btn) {
+      btn.classList.toggle('active');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check screen size and adjust sidebar
+      if (window.innerWidth <= 1024 && window.innerWidth > 768) {
+        sidebarCollapsed = true;
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    });
+  </script>
+</body>
+</html>

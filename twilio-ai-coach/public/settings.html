@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Settings - AI Sales Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Supabase JS SDK (local) -->
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* Settings Page Styles */
+    .settings-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .settings-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .settings-header h2 {
+      margin: 0;
+      color: var(--gray-800);
+    }
+
+    .settings-header p {
+      margin: 4px 0 0;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Settings Tabs */
+    .settings-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-lg);
+      overflow-x: auto;
+    }
+
+    .settings-tab {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .settings-tab:hover {
+      color: var(--gray-700);
+    }
+
+    .settings-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Settings Sections */
+    .settings-section {
+      display: none;
+    }
+
+    .settings-section.active {
+      display: block;
+    }
+
+    /* Settings Card */
+    .settings-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+      overflow: hidden;
+    }
+
+    .settings-card-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .settings-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .settings-card-header p {
+      margin: 4px 0 0;
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .settings-card-body {
+      padding: var(--spacing-lg);
+    }
+
+    /* Settings Item */
+    .settings-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .settings-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .settings-item:first-child {
+      padding-top: 0;
+    }
+
+    .settings-item-info {
+      flex: 1;
+    }
+
+    .settings-item-label {
+      font-weight: 500;
+      color: var(--gray-800);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .settings-item-label .icon {
+      font-size: 1.125rem;
+    }
+
+    .settings-item-description {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Navigation Tabs List */
+    .nav-tabs-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nav-tab-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.2s ease;
+    }
+
+    .nav-tab-item:hover {
+      background: var(--gray-50);
+    }
+
+    .nav-tab-item:last-child {
+      border-bottom: none;
+    }
+
+    .nav-tab-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .nav-tab-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+    }
+
+    .nav-tab-details {
+      flex: 1;
+    }
+
+    .nav-tab-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .nav-tab-path {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      font-family: monospace;
+    }
+
+    .nav-tab-item.disabled {
+      opacity: 0.5;
+    }
+
+    .nav-tab-item.disabled .nav-tab-icon {
+      background: var(--gray-200);
+    }
+
+    /* Section Header */
+    .section-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    /* Default Landing Page */
+    .landing-page-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-sm);
+    }
+
+    .landing-page-option {
+      padding: var(--spacing-md);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .landing-page-option:hover {
+      border-color: var(--primary-light);
+      background: var(--gray-50);
+    }
+
+    .landing-page-option.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .landing-page-option .icon {
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .landing-page-option .label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    /* Pipeline Stages */
+    .pipeline-stages-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .pipeline-stage-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .pipeline-stage-item:last-child {
+      border-bottom: none;
+    }
+
+    .stage-drag-handle {
+      cursor: grab;
+      color: var(--gray-400);
+      padding: 4px;
+    }
+
+    .stage-drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .stage-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .stage-color-dot.new { background: var(--primary); }
+    .stage-color-dot.contacted { background: #8b5cf6; }
+    .stage-color-dot.qualified { background: var(--warning); }
+    .stage-color-dot.proposal { background: #06b6d4; }
+    .stage-color-dot.negotiation { background: #f97316; }
+    .stage-color-dot.won { background: var(--success); }
+    .stage-color-dot.lost { background: var(--danger); }
+
+    .stage-name {
+      flex: 1;
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .stage-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .add-stage-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      width: 100%;
+      padding: var(--spacing-md);
+      border: 2px dashed var(--gray-300);
+      background: transparent;
+      border-radius: var(--radius-md);
+      color: var(--gray-500);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      margin-top: var(--spacing-md);
+    }
+
+    .add-stage-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* Form Elements */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .form-group {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* Save Bar */
+    .save-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--gray-200);
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: none;
+      justify-content: flex-end;
+      gap: var(--spacing-sm);
+      z-index: 100;
+      box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .save-bar.active {
+      display: flex;
+    }
+
+    /* Alert */
+    .settings-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--warning-light);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .settings-alert-icon {
+      font-size: 1.25rem;
+    }
+
+    .settings-alert-content {
+      flex: 1;
+    }
+
+    .settings-alert-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 2px;
+    }
+
+    .settings-alert-text {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .settings-tabs {
+        gap: 0;
+      }
+
+      .settings-tab {
+        padding: 10px 16px;
+        font-size: 0.8125rem;
+      }
+
+      .settings-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .landing-page-options {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .save-bar {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
+    }
+
+    /* Sidebar toggle - ensure visibility */
+    .sidebar-toggle {
+      display: flex !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">Sales Coach</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span>◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+            <span class="sidebar-nav-badge">3</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+            <span class="sidebar-nav-badge" id="callbackBadge">0</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Team Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Team</div>
+          <a href="supervisor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👁️</span>
+            <span class="sidebar-nav-label">Supervisor</span>
+          </a>
+          <a href="supervisor-mockup.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Team Overview</span>
+          </a>
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="settings.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status" id="userStatus">
+            <span class="status-dot"></span>
+            <span id="connectionText">Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Settings</h1>
+        </div>
+        <div class="top-header-right">
+          <button class="header-action-btn" title="Notifications" id="notificationBtn">
+            🔔
+            <span class="badge-dot" id="notificationDot" style="display: none;"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content-area">
+        <div class="settings-container">
+          <!-- Header -->
+          <div class="settings-header">
+            <h2>Settings</h2>
+            <p>Customize your AI Sales Coach experience</p>
+          </div>
+
+          <!-- Settings Tabs -->
+          <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="navigation">Navigation</button>
+            <button class="settings-tab" data-tab="pipeline">Pipeline</button>
+            <button class="settings-tab" data-tab="phone">Phone</button>
+            <button class="settings-tab" data-tab="timetracking">Time Tracking</button>
+            <button class="settings-tab" data-tab="notifications">Notifications</button>
+            <button class="settings-tab" data-tab="integrations">Integrations</button>
+            <button class="settings-tab" data-tab="account">Account</button>
+          </div>
+
+          <!-- Navigation Settings -->
+          <div class="settings-section active" id="navigationSection">
+            <!-- Navigation Tabs Card -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Navigation Tabs</h3>
+                <p>Show or hide navigation tabs in the sidebar. Disabled tabs will be hidden from view.</p>
+              </div>
+              <div class="settings-card-body" style="padding: 0;">
+                <ul class="nav-tabs-list">
+                  <!-- Main Section -->
+                  <li class="section-header">Main</li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📊</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Dashboard</div>
+                        <div class="nav-tab-path">/dashboard</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked disabled>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📰</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Newsfeed</div>
+                        <div class="nav-tab-path">/newsfeed</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="newsfeed" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">⚡</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Activity</div>
+                        <div class="nav-tab-path">/activity</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="activity" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+
+                  <!-- Contacts Section -->
+                  <li class="section-header">Contacts</li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">👥</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">All Contacts</div>
+                        <div class="nav-tab-path">/contacts</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="contacts" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📥</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Import Contacts</div>
+                        <div class="nav-tab-path">/contacts-import</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="contacts-import" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+
+                  <!-- Communication Section -->
+                  <li class="section-header">Communication</li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">💬</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">SMS</div>
+                        <div class="nav-tab-path">/sms</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="sms" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📞</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Make Call</div>
+                        <div class="nav-tab-path">/call</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="call" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📋</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Call History</div>
+                        <div class="nav-tab-path">/history</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="history" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">🔔</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Callbacks</div>
+                        <div class="nav-tab-path">/callbacks</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="callbacks" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+
+                  <!-- Sales Section -->
+                  <li class="section-header">Sales</li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">📈</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Sales Pipeline</div>
+                        <div class="nav-tab-path">/pipeline</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="pipeline" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+
+                  <!-- Team Section -->
+                  <li class="section-header">Team</li>
+                  <li class="nav-tab-item">
+                    <div class="nav-tab-info">
+                      <div class="nav-tab-icon">👁️</div>
+                      <div class="nav-tab-details">
+                        <div class="nav-tab-name">Supervisor</div>
+                        <div class="nav-tab-path">/supervisor</div>
+                      </div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" checked data-tab="supervisor" onchange="toggleNavTab(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Default Landing Page -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Default Landing Page</h3>
+                <p>Choose which page to show when you first log in</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="landing-page-options">
+                  <div class="landing-page-option selected" data-page="dashboard" onclick="selectLandingPage(this)">
+                    <div class="icon">📊</div>
+                    <div class="label">Dashboard</div>
+                  </div>
+                  <div class="landing-page-option" data-page="call" onclick="selectLandingPage(this)">
+                    <div class="icon">📞</div>
+                    <div class="label">Make Call</div>
+                  </div>
+                  <div class="landing-page-option" data-page="contacts" onclick="selectLandingPage(this)">
+                    <div class="icon">👥</div>
+                    <div class="label">Contacts</div>
+                  </div>
+                  <div class="landing-page-option" data-page="pipeline" onclick="selectLandingPage(this)">
+                    <div class="icon">📈</div>
+                    <div class="label">Pipeline</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pipeline Settings -->
+          <div class="settings-section" id="pipelineSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Pipeline Stages</h3>
+                <p>Customize the stages in your sales pipeline. Drag to reorder.</p>
+              </div>
+              <div class="settings-card-body" style="padding: 0;">
+                <ul class="pipeline-stages-list">
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot new"></span>
+                    <span class="stage-name">New Lead</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="new_lead" checked onchange="togglePipelineStage(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot contacted"></span>
+                    <span class="stage-name">Contacted</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="contacted" checked onchange="togglePipelineStage(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot qualified"></span>
+                    <span class="stage-name">Qualified</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="qualified" checked onchange="togglePipelineStage(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot proposal"></span>
+                    <span class="stage-name">Proposal</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="proposal" checked onchange="togglePipelineStage(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot negotiation"></span>
+                    <span class="stage-name">Negotiation</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="negotiation" checked onchange="togglePipelineStage(this)">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot won"></span>
+                    <span class="stage-name">Won</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="won" checked disabled>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                  <li class="pipeline-stage-item">
+                    <span class="stage-drag-handle">⋮⋮</span>
+                    <span class="stage-color-dot lost"></span>
+                    <span class="stage-name">Lost</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" data-stage="lost" checked disabled>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </li>
+                </ul>
+                <div style="padding: var(--spacing-md);">
+                  <button class="add-stage-btn" onclick="addPipelineStage()">
+                    + Add Custom Stage
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Lead Priorities</h3>
+                <p>Configure lead priority labels and colors</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span style="color: var(--danger);">🔥</span> Hot
+                    </div>
+                    <div class="settings-item-description">High priority leads requiring immediate attention</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span style="color: var(--warning);">⚡</span> Warm
+                    </div>
+                    <div class="settings-item-description">Interested leads with moderate engagement</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span style="color: var(--primary);">❄️</span> Cold
+                    </div>
+                    <div class="settings-item-description">New or unengaged leads</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phone Settings -->
+          <div class="settings-section" id="phoneSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Call Forwarding</h3>
+                <p>Forward incoming calls to another number when no one is available</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: var(--spacing-md);">
+                  <div class="settings-item-info" style="width: 100%;">
+                    <div class="settings-item-label">
+                      <span class="icon">📱</span> Forwarding Number
+                    </div>
+                    <div class="settings-item-description">
+                      When incoming calls aren't answered in the browser, they will be forwarded to this number.
+                      Leave empty to disable forwarding.
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: var(--spacing-sm); width: 100%;">
+                    <input type="tel" class="input" id="forwardingNumber" placeholder="+1 (555) 123-4567" style="flex: 1;">
+                    <button class="btn btn-primary" onclick="saveForwardingNumber()">Save</button>
+                  </div>
+                  <div id="forwardingStatus" style="font-size: 0.8125rem; color: var(--gray-500);"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Incoming Calls</h3>
+                <p>Configure how incoming calls are handled</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">⏱️</span> Ring Timeout
+                    </div>
+                    <div class="settings-item-description">How long to ring before forwarding (if enabled) or hanging up</div>
+                  </div>
+                  <div style="font-weight: 500; color: var(--gray-700);">20 seconds</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Tracking Settings -->
+          <div class="settings-section" id="timetrackingSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Session Tracking</h3>
+                <p>Configure how your work sessions are tracked</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">&#9201;</span> Time Tracking
+                    </div>
+                    <div class="settings-item-description">
+                      Automatically track working sessions, talk time, and call metrics. Sessions auto-start when you make your first call.
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="timeTrackingEnabled" checked onchange="markSettingsChanged()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Break Detection</h3>
+                <p>Configure automatic break detection for sales reps</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">&#9749;</span> Break Detection
+                    </div>
+                    <div class="settings-item-description">
+                      When enabled, shows a "Are you on a break?" prompt after idle time exceeds the threshold below.
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="breakDetectionEnabled" onchange="markSettingsChanged()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">&#9202;</span> Idle Timeout
+                    </div>
+                    <div class="settings-item-description">
+                      Minutes of idle time before showing break detection prompt
+                    </div>
+                  </div>
+                  <select class="input" id="breakDetectionMinutes" style="width: 120px;" onchange="markSettingsChanged()">
+                    <option value="3">3 minutes</option>
+                    <option value="5" selected>5 minutes</option>
+                    <option value="10">10 minutes</option>
+                    <option value="15">15 minutes</option>
+                    <option value="20">20 minutes</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Daily Reports</h3>
+                <p>Configure automatic daily productivity reports</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">&#128202;</span> Report Time
+                    </div>
+                    <div class="settings-item-description">
+                      Time of day to generate and post daily rep stats to the news feed
+                    </div>
+                  </div>
+                  <input type="time" class="input" id="dailyReportTime" value="23:59" style="width: 120px;" onchange="markSettingsChanged()">
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-alert" style="background: var(--primary-light); margin-top: var(--spacing-md);">
+              <div class="settings-alert-icon">&#128161;</div>
+              <div class="settings-alert-content">
+                <div class="settings-alert-title">Manager Only Setting</div>
+                <div class="settings-alert-text">
+                  These settings apply to all sales reps in your company. Only managers and admins can change these settings.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications Settings -->
+          <div class="settings-section" id="notificationsSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Notification Preferences</h3>
+                <p>Choose what notifications you want to receive</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">📞</span> Incoming Calls
+                    </div>
+                    <div class="settings-item-description">Get notified when you receive a new call</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">🔔</span> Callback Reminders
+                    </div>
+                    <div class="settings-item-description">Get reminders for scheduled callbacks</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">🆕</span> New Leads
+                    </div>
+                    <div class="settings-item-description">Get notified when new leads are added</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">🏆</span> Deal Updates
+                    </div>
+                    <div class="settings-item-description">Get notified when deals move stages</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">📊</span> Daily Summary
+                    </div>
+                    <div class="settings-item-description">Receive a daily summary of your activity</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Sound Settings</h3>
+                <p>Configure notification sounds</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">🔊</span> Enable Sounds
+                    </div>
+                    <div class="settings-item-description">Play sounds for notifications</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: var(--spacing-md);">
+                  <label class="form-label">Notification Volume</label>
+                  <input type="range" min="0" max="100" value="75" style="width: 100%;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Integrations Settings -->
+          <div class="settings-section" id="integrationsSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Server Configuration</h3>
+                <p>Configure the backend server URL for Twilio calling and SMS features</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Backend Server URL</label>
+                  <input type="url" class="input" id="backendUrlInput" placeholder="http://localhost:8080">
+                  <div class="form-hint">The URL where your Twilio backend server is running (e.g., http://localhost:8080)</div>
+                </div>
+                <div style="margin-top: var(--spacing-md);">
+                  <button class="btn btn-primary" onclick="saveBackendUrl()">Save Server URL</button>
+                  <button class="btn btn-secondary" onclick="testBackendConnection()" style="margin-left: var(--spacing-sm);">Test Connection</button>
+                </div>
+                <div id="connectionStatus" style="margin-top: var(--spacing-md); display: none;"></div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Twilio Integration</h3>
+                <p>Status of your Twilio integration for calls and SMS</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">📞</span> Calling Features
+                    </div>
+                    <div class="settings-item-description" id="callingStatus">Requires backend server connection</div>
+                  </div>
+                  <span id="callingStatusBadge" class="status-badge" style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; background: var(--gray-200); color: var(--gray-600);">Not Connected</span>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">💬</span> SMS Features
+                    </div>
+                    <div class="settings-item-description" id="smsStatus">Requires backend server connection</div>
+                  </div>
+                  <span id="smsStatusBadge" class="status-badge" style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; background: var(--gray-200); color: var(--gray-600);">Not Connected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Settings -->
+          <div class="settings-section" id="accountSection">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Profile Information</h3>
+                <p>Update your personal information</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="input" id="profileFirstName" placeholder="First Name" onchange="markSettingsChanged()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="input" id="profileLastName" placeholder="Last Name" onchange="markSettingsChanged()">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="input" id="profileEmail" placeholder="Email" disabled>
+                  <div class="form-hint">Email cannot be changed here. Contact support to update.</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input type="tel" class="input" id="profilePhone" placeholder="+1 (555) 123-4567" onchange="markSettingsChanged()">
+                  <div class="form-hint">This is your personal phone number, not your Twilio number</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Regional Settings</h3>
+                <p>Configure your timezone and regional preferences</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Timezone</label>
+                  <select class="input" id="timezoneSelect" onchange="markSettingsChanged()">
+                    <option value="America/New_York">Eastern Time (ET) - New York</option>
+                    <option value="America/Chicago">Central Time (CT) - Chicago</option>
+                    <option value="America/Denver">Mountain Time (MT) - Denver</option>
+                    <option value="America/Phoenix">Arizona Time - Phoenix (No DST)</option>
+                    <option value="America/Los_Angeles">Pacific Time (PT) - Los Angeles</option>
+                    <option value="America/Anchorage">Alaska Time - Anchorage</option>
+                    <option value="Pacific/Honolulu">Hawaii Time - Honolulu (No DST)</option>
+                    <option value="America/Puerto_Rico">Atlantic Time - Puerto Rico</option>
+                    <option value="UTC">UTC (Coordinated Universal Time)</option>
+                    <option value="Europe/London">London (GMT/BST)</option>
+                    <option value="Europe/Paris">Paris (CET/CEST)</option>
+                    <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                    <option value="Asia/Dubai">Dubai (GST)</option>
+                    <option value="Asia/Singapore">Singapore (SGT)</option>
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
+                  </select>
+                  <div class="form-hint">All dates and times in the app will be shown in this timezone</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Appearance</h3>
+                <p>Customize how the app looks</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">🌙</span> Dark Mode
+                    </div>
+                    <div class="settings-item-description">Use dark theme (coming soon)</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" disabled>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-item">
+                  <div class="settings-item-info">
+                    <div class="settings-item-label">
+                      <span class="icon">📱</span> Compact Mode
+                    </div>
+                    <div class="settings-item-description">Reduce spacing and padding for more content</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Danger Zone</h3>
+                <p>Irreversible actions</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="settings-alert">
+                  <div class="settings-alert-icon">⚠️</div>
+                  <div class="settings-alert-content">
+                    <div class="settings-alert-title">Reset All Settings</div>
+                    <div class="settings-alert-text">This will reset all your preferences to default values. This action cannot be undone.</div>
+                  </div>
+                </div>
+                <button class="btn btn-danger" onclick="resetSettings()">Reset All Settings</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-items">
+        <a href="dashboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="contacts.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Contacts</span>
+        </a>
+        <a href="history.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📋</span>
+          <span>History</span>
+        </a>
+        <a href="pipeline.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📈</span>
+          <span>Pipeline</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Save Bar -->
+  <div class="save-bar" id="saveBar">
+    <button class="btn btn-secondary" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+  </div>
+
+  <script src="js/settings.js"></script>
+  <!-- Incoming calls support -->
+  <script src="js/twilio.min.js"></script>
+  <script src="js/incoming-calls.js"></script>
+
+  <!-- Inline overrides for ISSUE-004, ISSUE-005, ISSUE-006 -->
+  <script>
+    // ===========================================
+    // ISSUE-004 FIX: Use specific field selection instead of SELECT *
+    // ===========================================
+    window.loadUserSettings = async function() {
+      try {
+        const { user, error: authError } = await getCurrentUser()
+        if (authError || !user) return
+
+        // FIX: Select only needed fields, not '*'
+        const { data: settings, error } = await supabase
+          .from('user_settings')
+          .select('hidden_tabs, landing_page, notifications, sounds, appearance, pipeline_stages, timezone')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading settings:', error)
+          return
+        }
+
+        userSettings = settings || {}
+
+        // Apply saved settings to UI (use existing function if available)
+        if (typeof applySettingsToUI === 'function') {
+          applySettingsToUI(userSettings)
+        }
+
+      } catch (error) {
+        console.error('Error loading user settings:', error)
+      }
+    }
+
+    // ===========================================
+    // ISSUE-005 FIX: Add auth headers to call forwarding API calls
+    // ===========================================
+    window.loadForwardingNumber = async function() {
+      try {
+        // Get session for auth header
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          console.error('No session for forwarding number load')
+          return
+        }
+
+        const response = await fetch('/api/settings/forwarding', {
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json'
+          }
+        })
+        const data = await response.json()
+
+        const input = document.getElementById('forwardingNumber')
+        const status = document.getElementById('forwardingStatus')
+
+        if (input && data.forwardingNumber) {
+          input.value = formatPhoneNumber(data.forwardingNumber)
+          if (status) {
+            status.textContent = 'Forwarding is enabled'
+            status.style.color = 'var(--success)'
+          }
+        } else if (status) {
+          status.textContent = 'Forwarding is disabled'
+          status.style.color = 'var(--gray-500)'
+        }
+      } catch (error) {
+        console.error('Failed to load forwarding number:', error)
+      }
+    }
+
+    window.saveForwardingNumber = async function() {
+      const input = document.getElementById('forwardingNumber')
+      const status = document.getElementById('forwardingStatus')
+      const saveBtn = input?.closest('.settings-item')?.querySelector('.btn-primary')
+
+      if (!input) return
+
+      // Clean the phone number (remove formatting)
+      let phoneNumber = input.value.replace(/\D/g, '')
+
+      // Add + prefix if it looks like a full number
+      if (phoneNumber.length >= 10) {
+        if (!phoneNumber.startsWith('1') && phoneNumber.length === 10) {
+          phoneNumber = '1' + phoneNumber
+        }
+        phoneNumber = '+' + phoneNumber
+      } else if (phoneNumber.length === 0) {
+        phoneNumber = null // Disable forwarding
+      } else {
+        if (status) {
+          status.textContent = 'Please enter a valid phone number'
+          status.style.color = 'var(--danger)'
+        }
+        return
+      }
+
+      // Show loading state
+      if (saveBtn) {
+        saveBtn.disabled = true
+        saveBtn.textContent = 'Saving...'
+      }
+
+      try {
+        // Get session for auth header - FIX FOR ISSUE-005
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          if (status) {
+            status.textContent = 'You must be logged in to save settings'
+            status.style.color = 'var(--danger)'
+          }
+          return
+        }
+
+        const response = await fetch('/api/settings/forwarding', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ forwardingNumber: phoneNumber })
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          if (status) {
+            if (data.forwardingNumber) {
+              status.textContent = 'Forwarding saved and enabled'
+              status.style.color = 'var(--success)'
+              input.value = formatPhoneNumber(data.forwardingNumber)
+            } else {
+              status.textContent = 'Forwarding disabled'
+              status.style.color = 'var(--gray-500)'
+              input.value = ''
+            }
+          }
+        } else {
+          if (status) {
+            status.textContent = 'Failed to save forwarding number'
+            status.style.color = 'var(--danger)'
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save forwarding number:', error)
+        if (status) {
+          status.textContent = 'Error saving forwarding number'
+          status.style.color = 'var(--danger)'
+        }
+      } finally {
+        // Restore button state
+        if (saveBtn) {
+          saveBtn.disabled = false
+          saveBtn.textContent = 'Save'
+        }
+      }
+    }
+
+    // ===========================================
+    // ISSUE-006 FIX: Add loading state to settings save button
+    // ===========================================
+    window.saveSettings = async function() {
+      const saveBar = document.getElementById('saveBar')
+      const saveBtn = saveBar?.querySelector('.btn-primary')
+      const discardBtn = saveBar?.querySelector('.btn-secondary')
+
+      // Show loading state - FIX FOR ISSUE-006
+      if (saveBtn) {
+        saveBtn.disabled = true
+        saveBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Saving...</span>'
+      }
+      if (discardBtn) {
+        discardBtn.disabled = true
+      }
+
+      // Add spinner animation if not exists
+      if (!document.getElementById('settings-spinner-style')) {
+        const style = document.createElement('style')
+        style.id = 'settings-spinner-style'
+        style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
+        document.head.appendChild(style)
+      }
+
+      try {
+        const { user, error: authError } = await getCurrentUser()
+        if (authError || !user) {
+          showSettingsToast('You must be logged in to save settings', 'error')
+          return
+        }
+
+        // Collect settings from UI
+        const settings = collectSettingsFromUI()
+
+        // Validate settings (Ralph Wiggum pattern)
+        const validation = validateSettings(settings)
+        if (!validation.valid) {
+          showSettingsToast(validation.error, 'error')
+          return
+        }
+
+        // Update user profile
+        const profileResult = await updateUserProfile(settings.profile)
+        if (profileResult.error) {
+          showSettingsToast('Failed to save profile: ' + profileResult.error, 'error')
+          return
+        }
+
+        // Upsert user settings
+        const { error: settingsError } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            hidden_tabs: settings.hidden_tabs,
+            landing_page: settings.landing_page,
+            notifications: settings.notifications,
+            sounds: settings.sounds,
+            appearance: settings.appearance,
+            pipeline_stages: settings.pipeline_stages,
+            timezone: settings.timezone,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' })
+
+        // Also save timezone to localStorage for immediate use by other pages
+        if (settings.timezone) {
+          localStorage.setItem('userTimezone', settings.timezone)
+        }
+
+        if (settingsError) {
+          console.error('Error saving settings:', settingsError)
+          showSettingsToast('Failed to save settings. Please try again.', 'error')
+          return
+        }
+
+        hasChanges = false
+        saveBar.classList.remove('active')
+        showSettingsToast('Settings saved successfully!', 'success')
+
+      } catch (error) {
+        console.error('Error saving settings:', error)
+        showSettingsToast('Failed to save settings. Please try again.', 'error')
+      } finally {
+        // Restore button state
+        if (saveBtn) {
+          saveBtn.disabled = false
+          saveBtn.innerHTML = 'Save Changes'
+        }
+        if (discardBtn) {
+          discardBtn.disabled = false
+        }
+      }
+    }
+
+    // Toast notification helper (replaces alert)
+    function showSettingsToast(message, type) {
+      // Remove existing toast
+      const existingToast = document.getElementById('settings-toast')
+      if (existingToast) existingToast.remove()
+
+      // Create toast element
+      const toast = document.createElement('div')
+      toast.id = 'settings-toast'
+      toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;font-size:0.875rem;font-weight:500;z-index:9999;animation:slideIn 0.3s ease;max-width:350px;box-shadow:0 4px 12px rgba(0,0,0,0.15);'
+
+      if (type === 'success') {
+        toast.style.background = 'var(--success, #22c55e)'
+        toast.style.color = 'white'
+      } else if (type === 'error') {
+        toast.style.background = 'var(--danger, #ef4444)'
+        toast.style.color = 'white'
+      } else {
+        toast.style.background = 'var(--gray-800, #1e293b)'
+        toast.style.color = 'white'
+      }
+
+      toast.textContent = message
+      document.body.appendChild(toast)
+
+      // Add animation
+      if (!document.getElementById('toast-animation-style')) {
+        const style = document.createElement('style')
+        style.id = 'toast-animation-style'
+        style.textContent = '@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }'
+        document.head.appendChild(style)
+      }
+
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse'
+        setTimeout(() => toast.remove(), 300)
+      }, 4000)
+    }
+
+    // ===========================================
+    // PROFILE LOADING AND SAVING
+    // ===========================================
+
+    // Load user profile from database
+    window.loadUserProfile = async function() {
+      try {
+        const { user, error: authError } = await getCurrentUser()
+        if (authError || !user) {
+          console.error('Not authenticated for profile load')
+          return
+        }
+
+        console.log('Loading profile for user:', user.id)
+
+        // First, populate email from auth
+        document.getElementById('profileEmail').value = user.email || ''
+
+        // Try to load from profiles table (correct columns: full_name, phone_number)
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('full_name, phone_number')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (error) {
+          console.error('Error loading profile:', error)
+        }
+
+        console.log('Profile data:', profile)
+
+        // Use auth metadata as fallback
+        const authName = user.user_metadata?.full_name || ''
+
+        if (profile && profile.full_name) {
+          console.log('Using profile full_name:', profile.full_name)
+          // Split full_name into first and last
+          const nameParts = profile.full_name.trim().split(' ')
+          document.getElementById('profileFirstName').value = nameParts[0] || ''
+          document.getElementById('profileLastName').value = nameParts.slice(1).join(' ') || ''
+          document.getElementById('profilePhone').value = profile.phone_number || ''
+        } else if (authName) {
+          console.log('Using auth metadata full_name:', authName)
+          // Fall back to auth user metadata
+          const nameParts = authName.trim().split(' ')
+          document.getElementById('profileFirstName').value = nameParts[0] || ''
+          document.getElementById('profileLastName').value = nameParts.slice(1).join(' ') || ''
+        } else {
+          console.log('No profile name found anywhere')
+        }
+
+      } catch (error) {
+        console.error('Error loading user profile:', error)
+      }
+    }
+
+    // Save profile to database
+    window.saveUserProfile = async function() {
+      try {
+        const { user, error: authError } = await getCurrentUser()
+        if (authError || !user) {
+          showSettingsToast('Not authenticated', 'error')
+          return false
+        }
+
+        const firstName = document.getElementById('profileFirstName').value.trim()
+        const lastName = document.getElementById('profileLastName').value.trim()
+        const phoneNumber = document.getElementById('profilePhone').value.trim()
+        const fullName = `${firstName} ${lastName}`.trim()
+
+        console.log('Saving profile:', { fullName, phoneNumber })
+
+        // Update profiles table (correct columns: full_name, phone_number)
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: fullName,
+            phone_number: phoneNumber,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+
+        if (error) {
+          console.error('Error saving profile:', error)
+          showSettingsToast('Failed to save profile: ' + error.message, 'error')
+          return false
+        }
+
+        // Also update auth user metadata for sidebar display
+        const { error: authUpdateError } = await supabase.auth.updateUser({
+          data: { full_name: fullName }
+        })
+
+        if (authUpdateError) {
+          console.error('Error updating auth metadata:', authUpdateError)
+        }
+
+        console.log('Profile saved successfully')
+        showSettingsToast('Profile saved!', 'success')
+        return true
+
+      } catch (error) {
+        console.error('Error saving profile:', error)
+        showSettingsToast('Failed to save profile', 'error')
+        return false
+      }
+    }
+
+    // Override saveSettings to also save profile
+    const originalSaveSettings = window.saveSettings
+    window.saveSettings = async function() {
+      // Save profile first
+      const profileSaved = await saveUserProfile()
+
+      // Then call original saveSettings
+      if (typeof originalSaveSettings === 'function') {
+        await originalSaveSettings()
+      } else {
+        // If no original, just show success
+        if (profileSaved) {
+          showSettingsToast('Settings saved successfully!', 'success')
+          hasChanges = false
+          document.getElementById('saveBar')?.classList.remove('active')
+        }
+      }
+    }
+
+    // Load profile on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit for auth to initialize
+      setTimeout(() => {
+        loadUserProfile()
+      }, 500)
+    })
+  </script>
+</body>
+</html>

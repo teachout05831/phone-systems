@@ -1,0 +1,21 @@
+{
+  "name": "Sales Coach",
+  "version": "1.0.0",
+  "description": "Real-time coaching suggestions for sales reps during live calls",
+  "type": "assistant",
+  "llm": {
+    "model": "gpt-4o",
+    "temperature": 0.3,
+    "max_tokens": 150
+  },
+  "triggers": {
+    "on_transcript_update": true,
+    "min_words_before_coaching": 10,
+    "cooldown_seconds": 15
+  },
+  "retell_config": {
+    "agent_name": "sales-coach-v1",
+    "voice_id": null,
+    "language": "en-US"
+  }
+}

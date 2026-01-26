@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supervisor Dashboard - Design Mockup</title>
+  <style>
+    /* Base CSS Variables */
+    :root {
+      --primary: #3b82f6;
+      --primary-light: #dbeafe;
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --transition-fast: 150ms ease;
+      --supervisor-color: #f59e0b;
+      --supervisor-light: #fef3c7;
+    }
+
+    /* Base Reset & Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      line-height: 1.5;
+    }
+
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Styles */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      height: 73px;
+    }
+
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: var(--gray-900);
+      font-weight: 600;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .nav-link {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .nav-link.active {
+      background: var(--supervisor-light);
+      color: var(--supervisor-color);
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .connection-status.connected .connection-dot {
+      background: var(--success);
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--radius-full);
+      background: var(--gray-400);
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    /* Pulse Animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Supervisor Layout */
+    .supervisor-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 0;
+      height: calc(100vh - 73px);
+      overflow: hidden;
+    }
+
+    /* Left Panel - Team Overview */
+    .team-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Team Stats Bar */
+    .team-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg);
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .team-stat {
+      text-align: center;
+    }
+
+    .team-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .team-stat-label {
+      font-size: 0.625rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .team-stat-value.live {
+      color: var(--success);
+    }
+
+    /* Rep Cards Grid */
+    .reps-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-lg);
+      background: var(--gray-50);
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--spacing-md);
+      align-content: start;
+    }
+
+    .rep-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+
+    .rep-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .rep-card.on-call {
+      border-color: var(--success);
+      box-shadow: 0 0 0 2px var(--success-light);
+    }
+
+    .rep-card-header {
+      padding: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .rep-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-full);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      position: relative;
+    }
+
+    .rep-status-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: var(--radius-full);
+      border: 2px solid white;
+    }
+
+    .rep-status-dot.available { background: var(--success); }
+    .rep-status-dot.on-call { background: var(--success); animation: pulse 2s infinite; }
+    .rep-status-dot.away { background: var(--warning); }
+    .rep-status-dot.offline { background: var(--gray-400); }
+
+    .rep-info {
+      flex: 1;
+    }
+
+    .rep-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .rep-status {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .rep-status.on-call {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .rep-card-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: var(--spacing-sm);
+      background: var(--gray-50);
+      text-align: center;
+    }
+
+    .rep-mini-stat {
+      padding: var(--spacing-xs);
+    }
+
+    .rep-mini-stat-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .rep-mini-stat-label {
+      font-size: 0.5rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Active Call Section in Rep Card */
+    .active-call-section {
+      padding: var(--spacing-md);
+      background: linear-gradient(135deg, var(--success-light), #a7f3d0);
+      border-top: 1px solid var(--success);
+    }
+
+    .active-call-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .active-call-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #065f46;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: var(--radius-full);
+      animation: pulse 1.5s infinite;
+    }
+
+    .active-call-timer {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #065f46;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .active-call-info {
+      font-size: 0.875rem;
+      color: #065f46;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .active-call-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .listen-btn {
+      flex: 1;
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .listen-btn.primary {
+      background: #065f46;
+      color: white;
+    }
+
+    .listen-btn.secondary {
+      background: white;
+      color: #065f46;
+      border: 1px solid #065f46;
+    }
+
+    /* Right Panel - Live Listen View */
+    .listen-panel {
+      background: white;
+      border-left: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .listen-header {
+      background: linear-gradient(135deg, var(--supervisor-color), #d97706);
+      color: white;
+      padding: var(--spacing-lg);
+    }
+
+    .listen-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .listen-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .listen-badge .dot {
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: var(--radius-full);
+      animation: pulse 1.5s infinite;
+    }
+
+    .listen-badge .text {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .listen-timer {
+      font-size: 1.5rem;
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .listen-call-info {
+      display: flex;
+      gap: var(--spacing-lg);
+    }
+
+    .listen-party {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .listen-party-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .listen-party-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .listen-party-role {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .listen-party-name {
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    /* Supervisor Controls */
+    .supervisor-controls {
+      display: flex;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .supervisor-control-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .supervisor-control-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .supervisor-control-btn.active {
+      background: var(--supervisor-light);
+      border-color: var(--supervisor-color);
+    }
+
+    .supervisor-control-btn .icon {
+      font-size: 1.25rem;
+    }
+
+    .supervisor-control-btn .label {
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-transform: uppercase;
+    }
+
+    /* Live Transcript */
+    .live-transcript {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .transcript-entry {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .transcript-speaker {
+      width: 60px;
+      flex-shrink: 0;
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding-top: var(--spacing-xs);
+    }
+
+    .transcript-speaker.rep { color: var(--primary); }
+    .transcript-speaker.customer { color: var(--success); }
+
+    .transcript-bubble {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .transcript-bubble.rep {
+      background: var(--primary-light);
+      color: var(--gray-900);
+    }
+
+    .transcript-bubble.customer {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .transcript-time {
+      font-size: 0.5rem;
+      color: var(--gray-400);
+      margin-top: var(--spacing-xs);
+    }
+
+    .speaking-now {
+      opacity: 0.7;
+      border: 1px dashed var(--gray-300);
+    }
+
+    /* AI Coach Panel */
+    .ai-coach-panel {
+      border-top: 1px solid var(--gray-200);
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+    }
+
+    .ai-coach-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ai-coach-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #92400e;
+    }
+
+    .coach-suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .coach-suggestion {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #fbbf24;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.875rem;
+      color: #78350f;
+    }
+
+    .coach-suggestion .label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-xs);
+      color: #92400e;
+    }
+
+    /* Call Metrics */
+    .call-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .call-metric {
+      text-align: center;
+      padding: var(--spacing-sm);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+    }
+
+    .call-metric-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .call-metric-label {
+      font-size: 0.5rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Whisper Input */
+    .whisper-input-area {
+      padding: var(--spacing-md);
+      background: var(--supervisor-light);
+      border-top: 1px solid var(--supervisor-color);
+    }
+
+    .whisper-note {
+      font-size: 0.75rem;
+      color: #92400e;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .whisper-input-row {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .whisper-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--supervisor-color);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+    }
+
+    .whisper-send-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--supervisor-color);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Empty Listen State */
+    .listen-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-xl);
+      text-align: center;
+    }
+
+    .listen-empty-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+      opacity: 0.5;
+    }
+
+    .listen-empty-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .listen-empty-text {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    /* Leaderboard */
+    .leaderboard-section {
+      padding: var(--spacing-lg);
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .leaderboard-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-md);
+    }
+
+    .leaderboard-item:nth-child(1) {
+      background: linear-gradient(90deg, #fef3c7, transparent);
+    }
+
+    .leaderboard-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--gray-100);
+    }
+
+    .leaderboard-item:nth-child(1) .leaderboard-rank {
+      background: var(--supervisor-color);
+      color: white;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .leaderboard-score {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    @media (max-width: 1024px) {
+      .supervisor-grid {
+        grid-template-columns: 1fr;
+      }
+      .listen-panel {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <a href="/dashboard" class="logo">
+          <div class="logo-icon" style="background: var(--supervisor-color);">S</div>
+          <span>Supervisor View</span>
+        </a>
+        <nav class="nav">
+          <a href="/dashboard-mockup" class="nav-link">
+            <span>Rep Dashboard</span>
+          </a>
+          <a href="/supervisor-mockup" class="nav-link active">
+            <span>Supervisor</span>
+          </a>
+          <a href="/history" class="nav-link">
+            <span>Reports</span>
+          </a>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="connection-status connected">
+          <span class="connection-dot"></span>
+          <span>Connected</span>
+        </div>
+        <div class="user-menu">
+          <div class="user-avatar" style="background: var(--supervisor-light); color: var(--supervisor-color);">MG</div>
+          <span>Manager</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Supervisor Grid -->
+    <div class="supervisor-grid">
+      <!-- Left - Team Overview -->
+      <div class="team-panel">
+        <!-- Team Stats -->
+        <div class="team-stats-bar">
+          <div class="team-stat">
+            <div class="team-stat-value live">3</div>
+            <div class="team-stat-label">On Calls</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-value">5</div>
+            <div class="team-stat-label">Available</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-value">127</div>
+            <div class="team-stat-label">Total Calls</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-value">23</div>
+            <div class="team-stat-label">Booked</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-value">4:32</div>
+            <div class="team-stat-label">Avg Duration</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-value">76%</div>
+            <div class="team-stat-label">Connect Rate</div>
+          </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard-section">
+          <div class="leaderboard-title">Today's Leaderboard</div>
+          <div class="leaderboard-list">
+            <div class="leaderboard-item">
+              <div class="leaderboard-rank">1</div>
+              <div class="leaderboard-name">Sarah Chen</div>
+              <div class="leaderboard-score">8 booked</div>
+            </div>
+            <div class="leaderboard-item">
+              <div class="leaderboard-rank">2</div>
+              <div class="leaderboard-name">Mike Thompson</div>
+              <div class="leaderboard-score">6 booked</div>
+            </div>
+            <div class="leaderboard-item">
+              <div class="leaderboard-rank">3</div>
+              <div class="leaderboard-name">Jessica Lee</div>
+              <div class="leaderboard-score">5 booked</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rep Cards -->
+        <div class="reps-grid">
+          <!-- Rep On Call -->
+          <div class="rep-card on-call">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                SC
+                <div class="rep-status-dot on-call"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">Sarah Chen</div>
+                <div class="rep-status on-call">On call - 3:42</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">24</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">8</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">5:12</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">82%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+            <div class="active-call-section">
+              <div class="active-call-header">
+                <div class="active-call-badge">
+                  <div class="live-dot"></div>
+                  <span>LIVE CALL</span>
+                </div>
+                <div class="active-call-timer">3:42</div>
+              </div>
+              <div class="active-call-info">
+                With: Michael Johnson (+1 555-234-5678)
+              </div>
+              <div class="active-call-actions">
+                <button class="listen-btn primary" onclick="startListening('sarah')">Listen</button>
+                <button class="listen-btn secondary">Whisper</button>
+                <button class="listen-btn secondary">Barge</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rep On Call -->
+          <div class="rep-card on-call">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                MT
+                <div class="rep-status-dot on-call"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">Mike Thompson</div>
+                <div class="rep-status on-call">On call - 1:15</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">19</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">6</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">4:45</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">78%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+            <div class="active-call-section">
+              <div class="active-call-header">
+                <div class="active-call-badge">
+                  <div class="live-dot"></div>
+                  <span>LIVE CALL</span>
+                </div>
+                <div class="active-call-timer">1:15</div>
+              </div>
+              <div class="active-call-info">
+                With: Lisa Rodriguez (+1 555-876-5432)
+              </div>
+              <div class="active-call-actions">
+                <button class="listen-btn primary">Listen</button>
+                <button class="listen-btn secondary">Whisper</button>
+                <button class="listen-btn secondary">Barge</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rep Available -->
+          <div class="rep-card">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                JL
+                <div class="rep-status-dot available"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">Jessica Lee</div>
+                <div class="rep-status">Available</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">21</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">5</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">4:02</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">74%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rep On Call -->
+          <div class="rep-card on-call">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                DK
+                <div class="rep-status-dot on-call"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">David Kim</div>
+                <div class="rep-status on-call">On call - 7:23</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">18</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">4</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">6:30</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">71%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+            <div class="active-call-section">
+              <div class="active-call-header">
+                <div class="active-call-badge">
+                  <div class="live-dot"></div>
+                  <span>LIVE CALL</span>
+                </div>
+                <div class="active-call-timer">7:23</div>
+              </div>
+              <div class="active-call-info">
+                With: Robert Williams (+1 555-345-6789)
+              </div>
+              <div class="active-call-actions">
+                <button class="listen-btn primary">Listen</button>
+                <button class="listen-btn secondary">Whisper</button>
+                <button class="listen-btn secondary">Barge</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- More Reps -->
+          <div class="rep-card">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                AP
+                <div class="rep-status-dot available"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">Amanda Peters</div>
+                <div class="rep-status">Available - Last call 5m ago</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">15</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">3</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">3:45</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">68%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rep-card">
+            <div class="rep-card-header">
+              <div class="rep-avatar">
+                RB
+                <div class="rep-status-dot away"></div>
+              </div>
+              <div class="rep-info">
+                <div class="rep-name">Ryan Brooks</div>
+                <div class="rep-status">On break - returns 2:30pm</div>
+              </div>
+            </div>
+            <div class="rep-card-stats">
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">12</div>
+                <div class="rep-mini-stat-label">Calls</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">2</div>
+                <div class="rep-mini-stat-label">Booked</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">3:15</div>
+                <div class="rep-mini-stat-label">Avg</div>
+              </div>
+              <div class="rep-mini-stat">
+                <div class="rep-mini-stat-value">65%</div>
+                <div class="rep-mini-stat-label">Connect</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right - Live Listen Panel -->
+      <div class="listen-panel" id="listenPanel">
+        <!-- Listen Header -->
+        <div class="listen-header">
+          <div class="listen-header-top">
+            <div class="listen-badge">
+              <div class="dot"></div>
+              <span class="text">LISTENING LIVE</span>
+            </div>
+            <div class="listen-timer">3:42</div>
+          </div>
+          <div class="listen-call-info">
+            <div class="listen-party">
+              <div class="listen-party-avatar">SC</div>
+              <div class="listen-party-info">
+                <div class="listen-party-role">Rep</div>
+                <div class="listen-party-name">Sarah Chen</div>
+              </div>
+            </div>
+            <div class="listen-party">
+              <div class="listen-party-avatar">MJ</div>
+              <div class="listen-party-info">
+                <div class="listen-party-role">Customer</div>
+                <div class="listen-party-name">Michael Johnson</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supervisor Controls -->
+        <div class="supervisor-controls">
+          <button class="supervisor-control-btn active">
+            <span class="icon">🎧</span>
+            <span class="label">Listen Only</span>
+          </button>
+          <button class="supervisor-control-btn">
+            <span class="icon">🤫</span>
+            <span class="label">Whisper</span>
+          </button>
+          <button class="supervisor-control-btn">
+            <span class="icon">📢</span>
+            <span class="label">Barge In</span>
+          </button>
+          <button class="supervisor-control-btn" style="color: var(--danger);">
+            <span class="icon">⏹️</span>
+            <span class="label">Stop</span>
+          </button>
+        </div>
+
+        <!-- Call Metrics -->
+        <div class="call-metrics">
+          <div class="call-metric">
+            <div class="call-metric-value">42%</div>
+            <div class="call-metric-label">Rep Talk</div>
+          </div>
+          <div class="call-metric">
+            <div class="call-metric-value">58%</div>
+            <div class="call-metric-label">Cust Talk</div>
+          </div>
+          <div class="call-metric">
+            <div class="call-metric-value" style="color: var(--success);">Positive</div>
+            <div class="call-metric-label">Sentiment</div>
+          </div>
+        </div>
+
+        <!-- Live Transcript -->
+        <div class="live-transcript">
+          <div class="transcript-entry">
+            <div class="transcript-speaker rep">Rep</div>
+            <div class="transcript-bubble rep">
+              Hi Michael, thanks for taking my call. I saw you were interested in our website builder services?
+              <div class="transcript-time">3:42 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker customer">Customer</div>
+            <div class="transcript-bubble customer">
+              Yes, we've been looking to update our company website. The current one is pretty outdated.
+              <div class="transcript-time">3:28 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker rep">Rep</div>
+            <div class="transcript-bubble rep">
+              I completely understand. A lot of our clients come to us in similar situations. Can you tell me a bit about what you're looking for in a new website?
+              <div class="transcript-time">3:15 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker customer">Customer</div>
+            <div class="transcript-bubble customer">
+              Well, we mainly need something that looks modern and professional. We're a small accounting firm, so we want to build trust with potential clients.
+              <div class="transcript-time">2:58 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker rep">Rep</div>
+            <div class="transcript-bubble rep">
+              That makes total sense. Professional services really benefit from a clean, trustworthy online presence. We've worked with several accounting firms and have some great templates specifically designed for that.
+              <div class="transcript-time">2:35 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker customer">Customer</div>
+            <div class="transcript-bubble customer">
+              That sounds good. What about pricing? We're a small team, so budget is a consideration.
+              <div class="transcript-time">2:10 ago</div>
+            </div>
+          </div>
+
+          <div class="transcript-entry">
+            <div class="transcript-speaker customer">Customer</div>
+            <div class="transcript-bubble customer speaking-now">
+              Also, do you offer any kind of ongoing support after the website is built?
+              <div class="transcript-time">Speaking now...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Coach Suggestions -->
+        <div class="ai-coach-panel">
+          <div class="ai-coach-header">
+            <div class="ai-coach-title">
+              <span>🤖</span>
+              AI Coach Suggestions
+            </div>
+          </div>
+          <div class="coach-suggestions">
+            <div class="coach-suggestion">
+              <div class="label">Objection Detected: Price</div>
+              Customer mentioned budget concerns. Consider emphasizing ROI and offering payment plans.
+            </div>
+            <div class="coach-suggestion">
+              <div class="label">Opportunity</div>
+              Great chance to mention the maintenance package - addresses their support question.
+            </div>
+          </div>
+        </div>
+
+        <!-- Whisper Input (shown when whisper mode active) -->
+        <div class="whisper-input-area" style="display: none;" id="whisperInput">
+          <div class="whisper-note">Only Sarah will hear your message</div>
+          <div class="whisper-input-row">
+            <input type="text" class="whisper-input" placeholder="Type a message to whisper...">
+            <button class="whisper-send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo: Toggle whisper input
+    document.querySelectorAll('.supervisor-control-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.supervisor-control-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const whisperInput = document.getElementById('whisperInput');
+        if (this.querySelector('.label').textContent === 'Whisper') {
+          whisperInput.style.display = 'block';
+        } else {
+          whisperInput.style.display = 'none';
+        }
+      });
+    });
+
+    // Demo: Click listen to activate panel
+    function startListening(rep) {
+      document.getElementById('listenPanel').style.background = 'white';
+    }
+  </script>
+</body>
+</html>

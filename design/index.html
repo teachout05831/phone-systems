@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outreach System - Design Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a24;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+      --accent-red: #ef4444;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+      --border-color: #2a2a3a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+      position: relative;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff, var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-secondary);
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    /* Card Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    /* Design Card */
+    .design-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .design-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-purple);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px rgba(139, 92, 246, 0.1);
+    }
+
+    .card-preview {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-preview.flow {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2));
+    }
+
+    .card-preview.system {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(6, 182, 212, 0.2));
+    }
+
+    .card-preview.dashboard {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2));
+    }
+
+    .card-preview.supervisor {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+    }
+
+    .card-preview.gameplan {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(249, 115, 22, 0.2));
+    }
+
+    .card-preview.research {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2));
+    }
+
+    .card-preview.docs {
+      background: linear-gradient(135deg, rgba(100, 116, 139, 0.2), rgba(71, 85, 105, 0.2));
+    }
+
+    .card-preview::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, var(--bg-card));
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-badge.html {
+      background: rgba(249, 115, 22, 0.2);
+      color: var(--accent-orange);
+    }
+
+    .card-badge.md {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--text-secondary);
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card-tag {
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Quick Links */
+    .quick-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .quick-link {
+      padding: 12px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quick-link:hover {
+      background: var(--bg-secondary);
+      border-color: var(--accent-blue);
+      color: var(--text-primary);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent-blue);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 20px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">AI</div>
+        <span class="logo-text">Outreach System</span>
+      </div>
+      <h1>Design Hub</h1>
+      <p>All design documents, system flows, mockups, and research in one place</p>
+    </header>
+
+    <!-- System Design Section -->
+    <section class="section">
+      <h2 class="section-title">System Design & Architecture</h2>
+      <div class="card-grid">
+        <!-- System Flow -->
+        <a href="system-flow.html" class="design-card">
+          <div class="card-preview flow">
+            <span>🔄</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Complete System Flow
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              End-to-end visualization of how the entire system works - from user login to call completion, data storage, and real-time updates.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">User Journey</span>
+              <span class="card-tag">Data Flow</span>
+              <span class="card-tag">Call Flow</span>
+              <span class="card-tag">WebSockets</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Twilio System Design -->
+        <a href="twilio-system-design.html" class="design-card">
+          <div class="card-preview system">
+            <span>📞</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Multi-User Twilio Design
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              How Twilio integrates into the multi-user dashboard - role-based views, call tracking, supervisor monitoring, and data flow.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">User Roles</span>
+              <span class="card-tag">Twilio Integration</span>
+              <span class="card-tag">Call Tracking</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Twilio Design MD -->
+        <a href="TWILIO-MULTI-USER-SYSTEM-DESIGN.md" class="design-card">
+          <div class="card-preview docs">
+            <span>📄</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              System Design Document
+              <span class="card-badge md">MD</span>
+            </div>
+            <p class="card-desc">
+              Detailed markdown documentation covering architecture, database schema, API endpoints, and implementation phases.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">Database Schema</span>
+              <span class="card-tag">API Routes</span>
+              <span class="card-tag">Implementation Plan</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- UI Mockups Section -->
+    <section class="section">
+      <h2 class="section-title">UI Mockups</h2>
+      <div class="card-grid">
+        <!-- Dashboard Mockup -->
+        <a href="dashboard-mockup.html" class="design-card">
+          <div class="card-preview dashboard">
+            <span>📊</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Dashboard Mockup
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              Visual mockup of the main dashboard showing stats cards, call lists, quick dial, and recent activity.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">Stats Cards</span>
+              <span class="card-tag">Call List</span>
+              <span class="card-tag">Quick Actions</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Supervisor Mockup -->
+        <a href="supervisor-mockup.html" class="design-card">
+          <div class="card-preview supervisor">
+            <span>👁️</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Supervisor Mockup
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              Visual mockup of the supervisor panel with live call monitoring, team stats, and Listen/Whisper/Barge controls.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">Live Monitoring</span>
+              <span class="card-tag">Team Stats</span>
+              <span class="card-tag">Call Controls</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Planning Section -->
+    <section class="section">
+      <h2 class="section-title">Planning & Research</h2>
+      <div class="card-grid">
+        <!-- Gameplan -->
+        <a href="../planning/gameplan.html" class="design-card">
+          <div class="card-preview gameplan">
+            <span>🎯</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Project Gameplan
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              Overall project strategy, milestones, and implementation roadmap for the outreach system.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">Roadmap</span>
+              <span class="card-tag">Milestones</span>
+              <span class="card-tag">Strategy</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Research Hub -->
+        <a href="../planning/research/index.html" class="design-card">
+          <div class="card-preview research">
+            <span>🔬</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">
+              Research Hub
+              <span class="card-badge html">HTML</span>
+            </div>
+            <p class="card-desc">
+              Collection of research documents covering telephony, compliance, marketing, tools, and best practices.
+            </p>
+            <div class="card-tags">
+              <span class="card-tag">Telephony</span>
+              <span class="card-tag">Compliance</span>
+              <span class="card-tag">Marketing</span>
+              <span class="card-tag">Tools</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+      <a href="../twilio-ai-coach/public/dashboard.html" class="quick-link">
+        <span>📊</span> Live Dashboard
+      </a>
+      <a href="../twilio-ai-coach/public/call.html" class="quick-link">
+        <span>📞</span> Call Interface
+      </a>
+      <a href="../twilio-ai-coach/public/history.html" class="quick-link">
+        <span>📋</span> Call History
+      </a>
+      <a href="../twilio-ai-coach/public/callbacks.html" class="quick-link">
+        <span>🔔</span> Callbacks
+      </a>
+      <a href="../twilio-ai-coach/public/supervisor.html" class="quick-link">
+        <span>👁️</span> Supervisor
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Outreach System Design Documentation</p>
+      <div class="footer-links">
+        <a href="../planning/README.md">Planning Docs</a>
+        <a href="../planning/backlog.md">Backlog</a>
+        <a href="../planning/decisions-log.md">Decisions Log</a>
+        <a href="../README.md">Main README</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
