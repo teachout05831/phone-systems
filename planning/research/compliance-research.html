@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Research - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .law-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .law-card h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .law-card .region {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .law-card.usa { border-color: #3498db; }
+        .law-card.eu { border-color: #9b59b6; }
+        .law-card.calling { border-color: #f39c12; }
+
+        .info-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-table td {
+            padding: 12px 0;
+            vertical-align: top;
+        }
+
+        .info-table td:first-child {
+            color: #e74c3c;
+            font-weight: 600;
+            width: 180px;
+        }
+
+        .info-table td:last-child {
+            color: #aaa;
+        }
+
+        .penalty-box {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .penalty-box strong {
+            color: #e74c3c;
+        }
+
+        .note-box {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .note-box strong {
+            color: #3498db;
+        }
+
+        .checklist-section {
+            margin-top: 20px;
+        }
+
+        .checklist-section h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #aaa;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .checklist li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e74c3c;
+            border-radius: 3px;
+        }
+
+        .highlight-box {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #e74c3c;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box h4 {
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .warning-box p, .warning-box ul {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .warning-box ul {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .warning-box li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .warning-box li::before {
+            content: "!";
+            position: absolute;
+            left: 0;
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-no { background: #28a745; color: #fff; }
+        .status-yes { background: #dc3545; color: #fff; }
+        .status-often { background: #ffc107; color: #000; }
+
+        .sources-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sources-section h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .sources-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .sources-section li a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .sources-section li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+
+        .disclaimer {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Research</a>
+
+        <header>
+            <h1>Compliance Research</h1>
+            <p class="subtitle">Legal Requirements for Cold Outreach - Email, Calling & Social</p>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="section">
+            <h2 class="section-title">Overview</h2>
+            <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                Understanding legal requirements and best practices for cold outreach is critical before scaling.
+                This document covers the major regulations for email, calling, and social media outreach
+                across different jurisdictions.
+            </p>
+
+            <div class="warning-box">
+                <h4>Critical: Know Before You Scale</h4>
+                <ul>
+                    <li>CAN-SPAM violations can cost up to <strong>$51,744 per email</strong></li>
+                    <li>GDPR fines can reach <strong>4% of annual global revenue</strong></li>
+                    <li>B2B cold outreach IS allowed, but you must follow the rules</li>
+                    <li>Keep separate lists for EU vs non-EU contacts</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- CAN-SPAM Section -->
+        <section class="section">
+            <h2 class="section-title">CAN-SPAM Act (United States)</h2>
+
+            <div class="law-card usa">
+                <h3>CAN-SPAM Requirements</h3>
+                <p class="region">United States - Federal Law</p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Physical Address</td>
+                        <td>Must include valid physical postal address in every email</td>
+                    </tr>
+                    <tr>
+                        <td>Unsubscribe Link</td>
+                        <td>Must have working unsubscribe mechanism</td>
+                    </tr>
+                    <tr>
+                        <td>Accurate Sender Info</td>
+                        <td>"From" name and email must be accurate, not misleading</td>
+                    </tr>
+                    <tr>
+                        <td>Honor Opt-Outs</td>
+                        <td>Process opt-out requests within 10 business days</td>
+                    </tr>
+                    <tr>
+                        <td>No Deceptive Subjects</td>
+                        <td>Subject line must reflect email content</td>
+                    </tr>
+                    <tr>
+                        <td>Identify as Ad</td>
+                        <td>If it's an advertisement, must be clear (commercial email)</td>
+                    </tr>
+                </table>
+
+                <div class="penalty-box">
+                    <strong>Penalties: Up to $51,744 per email violation</strong>
+                </div>
+
+                <div class="note-box">
+                    <strong>Notes:</strong> Applies to commercial email (promotional content). B2B cold email is generally allowed under CAN-SPAM if you follow rules. Transactional emails have different (lighter) requirements.
+                </div>
+            </div>
+        </section>
+
+        <!-- GDPR Section -->
+        <section class="section">
+            <h2 class="section-title">GDPR (European Union)</h2>
+
+            <div class="law-card eu">
+                <h3>GDPR Requirements</h3>
+                <p class="region">European Union + UK</p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Legitimate Interest</td>
+                        <td>Must have valid legal basis (legitimate interest for B2B cold outreach)</td>
+                    </tr>
+                    <tr>
+                        <td>Document Data Sources</td>
+                        <td>Know and record where you got contact data</td>
+                    </tr>
+                    <tr>
+                        <td>Easy Opt-Out</td>
+                        <td>Simple way to unsubscribe/opt-out</td>
+                    </tr>
+                    <tr>
+                        <td>Data Minimization</td>
+                        <td>Only collect/store data you need</td>
+                    </tr>
+                    <tr>
+                        <td>Right to Access</td>
+                        <td>Recipients can request their data</td>
+                    </tr>
+                    <tr>
+                        <td>Right to Deletion</td>
+                        <td>Must delete data upon request</td>
+                    </tr>
+                </table>
+
+                <div class="penalty-box">
+                    <strong>Penalties: Up to 4% of annual global revenue or 20M euros (whichever is higher)</strong>
+                </div>
+
+                <div class="note-box">
+                    <strong>B2B Cold Email Notes:</strong>
+                    <ul style="margin-top: 10px; list-style: none;">
+                        <li style="padding: 5px 0;">- "Legitimate interest" allows B2B outreach WITHOUT explicit consent</li>
+                        <li style="padding: 5px 0;">- You're contacting them because their business could benefit</li>
+                        <li style="padding: 5px 0;">- Still must offer easy opt-out and honor requests</li>
+                        <li style="padding: 5px 0;">- Keep separate lists for EU vs non-EU contacts</li>
+                        <li style="padding: 5px 0;">- Document your legitimate interest reasoning</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Email Compliance Checklist -->
+        <section class="section">
+            <h2 class="section-title">Email Deliverability & Compliance Checklist</h2>
+
+            <div class="checklist-section">
+                <h4>Before Sending:</h4>
+                <ul class="checklist">
+                    <li>Verify all email addresses (keep bounce rate < 2%)</li>
+                    <li>Warm up new domains before volume sending</li>
+                    <li>Set up SPF, DKIM, DMARC records</li>
+                    <li>Use custom domain (not @gmail.com)</li>
+                </ul>
+            </div>
+
+            <div class="checklist-section">
+                <h4>In Every Email:</h4>
+                <ul class="checklist">
+                    <li>Include physical business address</li>
+                    <li>Include working unsubscribe link</li>
+                    <li>Use accurate "From" name and email</li>
+                    <li>Subject line matches content</li>
+                    <li>Clear identification of who you are</li>
+                </ul>
+            </div>
+
+            <div class="checklist-section">
+                <h4>After Sending:</h4>
+                <ul class="checklist">
+                    <li>Process unsubscribes immediately (don't wait 10 days)</li>
+                    <li>Track and investigate bounces</li>
+                    <li>Monitor spam complaints</li>
+                    <li>Keep unsubscribe list updated</li>
+                </ul>
+            </div>
+
+            <div class="checklist-section">
+                <h4>For International Outreach:</h4>
+                <ul class="checklist">
+                    <li>Separate EU contacts from US contacts</li>
+                    <li>Apply GDPR standards to EU contacts</li>
+                    <li>Document data sources for all contacts</li>
+                    <li>Consider stricter local laws (CASL for Canada, etc.)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Cold Calling Section -->
+        <section class="section">
+            <h2 class="section-title">Cold Calling Compliance</h2>
+
+            <div class="law-card calling">
+                <h3>Do Not Call (DNC) Registry</h3>
+                <p class="region">United States</p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Check Numbers</td>
+                        <td>Check numbers against National DNC Registry</td>
+                    </tr>
+                    <tr>
+                        <td>Internal List</td>
+                        <td>Maintain internal DNC list of people who've asked not to be called</td>
+                    </tr>
+                    <tr>
+                        <td>B2B Exception</td>
+                        <td>B2B calls to business numbers are generally exempt from DNC</td>
+                    </tr>
+                    <tr>
+                        <td>Cell Phones</td>
+                        <td>Calling personal cell phones of business owners = check DNC</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="law-card calling">
+                <h3>TCPA (Telephone Consumer Protection Act)</h3>
+                <p class="region">United States</p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Auto-Dialers</td>
+                        <td>No auto-dialers to cell phones without consent</td>
+                    </tr>
+                    <tr>
+                        <td>Pre-Recorded</td>
+                        <td>No pre-recorded messages to cell phones without consent</td>
+                    </tr>
+                    <tr>
+                        <td>DNC Requests</td>
+                        <td>Honor do-not-call requests</td>
+                    </tr>
+                    <tr>
+                        <td>Calling Hours</td>
+                        <td>8am - 9pm recipient's local time</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="warning-box">
+                <h4>State-Specific Laws</h4>
+                <p>Some states have additional restrictions. Key ones:</p>
+                <ul>
+                    <li><strong>California (CCPA)</strong> - additional privacy requirements</li>
+                    <li><strong>Florida</strong> - stricter calling restrictions</li>
+                    <li><strong>Various states</strong> - registration requirements for telemarketing</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- LinkedIn/Social Section -->
+        <section class="section">
+            <h2 class="section-title">LinkedIn / Social Compliance</h2>
+
+            <div class="law-card" style="border-color: #0077b5;">
+                <h3>LinkedIn Terms of Service</h3>
+                <p class="region">Platform Policy</p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Automation</td>
+                        <td>No automation tools that violate LinkedIn TOS</td>
+                    </tr>
+                    <tr>
+                        <td>Scraping</td>
+                        <td>No scraping of LinkedIn data</td>
+                    </tr>
+                    <tr>
+                        <td>Limits</td>
+                        <td>Connection limits enforced by LinkedIn</td>
+                    </tr>
+                    <tr>
+                        <td>Risk</td>
+                        <td>Risk of account restriction/ban</td>
+                    </tr>
+                </table>
+
+                <div class="highlight-box" style="background: rgba(0, 119, 181, 0.1); border-color: rgba(0, 119, 181, 0.3);">
+                    <h4 style="color: #0077b5;">Risk Mitigation</h4>
+                    <ul>
+                        <li>Use tools that operate "safely" within LinkedIn limits</li>
+                        <li>Warm up accounts slowly</li>
+                        <li>Don't send too many connection requests per day</li>
+                        <li>Personalize messages (don't look automated)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Privacy Reference -->
+        <section class="section">
+            <h2 class="section-title">Data Privacy Quick Reference</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Law</th>
+                        <th>Consent for B2B?</th>
+                        <th>Key Requirement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>USA</strong></td>
+                        <td>CAN-SPAM</td>
+                        <td><span class="status-badge status-no">No (follow rules)</span></td>
+                        <td>Unsubscribe + address</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EU</strong></td>
+                        <td>GDPR</td>
+                        <td><span class="status-badge status-no">No (legitimate interest)</span></td>
+                        <td>Document data source</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Canada</strong></td>
+                        <td>CASL</td>
+                        <td><span class="status-badge status-often">Often yes</span></td>
+                        <td>Express or implied consent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UK</strong></td>
+                        <td>UK GDPR</td>
+                        <td><span class="status-badge status-no">No (legitimate interest)</span></td>
+                        <td>Similar to EU GDPR</td>
+                    </tr>
+                    <tr>
+                        <td><strong>California</strong></td>
+                        <td>CCPA</td>
+                        <td><span class="status-badge status-no">No</span></td>
+                        <td>Opt-out of data sale</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Master Checklist -->
+        <section class="section">
+            <h2 class="section-title">Master Checklist Before Scaling Outreach</h2>
+
+            <div class="checklist-section">
+                <ul class="checklist">
+                    <li>Physical address ready for email footer</li>
+                    <li>Unsubscribe mechanism working</li>
+                    <li>SPF, DKIM, DMARC configured</li>
+                    <li>Email verification process in place</li>
+                    <li>Separate lists for EU contacts</li>
+                    <li>Data source documentation process</li>
+                    <li>DNC list checking for cold calls</li>
+                    <li>Opt-out tracking system</li>
+                    <li>Privacy policy on website</li>
+                    <li>Team trained on compliance</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sources -->
+        <section class="sources-section">
+            <h3>Official Resources</h3>
+            <ul>
+                <li><a href="https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business" target="_blank">FTC CAN-SPAM Guide</a></li>
+                <li><a href="https://gdpr.eu/" target="_blank">GDPR Official Text</a></li>
+                <li><a href="https://www.donotcall.gov/" target="_blank">National DNC Registry</a></li>
+            </ul>
+        </section>
+
+        <div class="disclaimer">
+            <strong>Disclaimer:</strong> This is not legal advice. Consult with a lawyer for specific compliance questions.
+        </div>
+
+        <footer>
+            <p>Compliance Research Document | Outreach System</p>
+            <p>Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing & Ads Research - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #9b59b6;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #9b59b6;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .platform-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #9b59b6;
+        }
+
+        .platform-card h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .platform-card .platform-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .platform-card.facebook { border-color: #4267B2; }
+        .platform-card.facebook .platform-color { background: #4267B2; }
+
+        .platform-card.google { border-color: #EA4335; }
+        .platform-card.google .platform-color { background: #EA4335; }
+
+        .platform-card.tiktok { border-color: #000; }
+        .platform-card.tiktok .platform-color { background: #fff; }
+
+        .platform-card.linkedin { border-color: #0077b5; }
+        .platform-card.linkedin .platform-color { background: #0077b5; }
+
+        .info-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-table td {
+            padding: 10px 0;
+            vertical-align: top;
+        }
+
+        .info-table td:first-child {
+            color: #9b59b6;
+            font-weight: 600;
+            width: 140px;
+        }
+
+        .info-table td:last-child {
+            color: #aaa;
+        }
+
+        .metrics-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .metrics-list li {
+            background: rgba(138, 43, 226, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .api-link:hover {
+            text-decoration: underline;
+        }
+
+        .highlight-box {
+            background: rgba(138, 43, 226, 0.15);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #9b59b6;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #9b59b6;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background: rgba(138, 43, 226, 0.2);
+            color: #9b59b6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-easy { background: #28a745; color: #fff; }
+        .status-medium { background: #ffc107; color: #000; }
+        .status-complex { background: #dc3545; color: #fff; }
+
+        .attribution-section {
+            margin-top: 30px;
+        }
+
+        .model-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .model-card h4 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .model-card p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .model-card .best-for {
+            color: #28a745;
+            font-size: 0.85rem;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box h4 {
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .warning-box p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .sources-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sources-section h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .sources-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .sources-section li a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .sources-section li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../gameplan.html" class="back-link">&larr; Back to Game Plan</a>
+
+        <header>
+            <h1>Marketing & Paid Ads Research</h1>
+            <p class="subtitle">Ad Platform APIs, Attribution Models, and Dashboard Best Practices</p>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="section">
+            <h2 class="section-title">Research Overview</h2>
+            <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                This document covers research on integrating paid advertising platforms into the Outreach System.
+                The goal is to create a <strong style="color: #fff;">unified marketing command center</strong> that pulls data from
+                multiple ad platforms, tracks lead attribution, and provides cross-channel analytics.
+            </p>
+
+            <div class="highlight-box">
+                <h4>Key Insight: What to Build vs. What NOT to Build</h4>
+                <ul>
+                    <li><strong>BUILD:</strong> Unified lead database, source attribution, cross-platform dashboard, CPL calculator, ROAS tracking</li>
+                    <li><strong>DON'T BUILD:</strong> Ad creation, audience management, bid optimization, creative testing - use native platforms for these</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Facebook/Meta Section -->
+        <section class="section">
+            <h2 class="section-title">Ad Platform API Research</h2>
+
+            <div class="platform-grid">
+                <!-- Facebook -->
+                <div class="platform-card facebook">
+                    <h3><span class="platform-color"></span> Facebook/Meta Marketing API</h3>
+                    <table class="info-table">
+                        <tr>
+                            <td>Data Volume</td>
+                            <td>537 metrics, 243 dimensions available</td>
+                        </tr>
+                        <tr>
+                            <td>Auth Method</td>
+                            <td>OAuth 2.0, requires App Review for production</td>
+                        </tr>
+                        <tr>
+                            <td>Rate Limits</td>
+                            <td>Based on ad spend tier, typically 200 calls/hour</td>
+                        </tr>
+                        <tr>
+                            <td>Data Delay</td>
+                            <td>Near real-time, some metrics delayed 24-48hrs</td>
+                        </tr>
+                    </table>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Key Metrics Available:</h4>
+                    <ul class="metrics-list">
+                        <li>Impressions</li>
+                        <li>Reach</li>
+                        <li>Clicks</li>
+                        <li>Spend</li>
+                        <li>CPM</li>
+                        <li>CPC</li>
+                        <li>CTR</li>
+                        <li>Conversions</li>
+                        <li>ROAS</li>
+                        <li>Frequency</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Breakdowns:</h4>
+                    <ul class="metrics-list">
+                        <li>Age</li>
+                        <li>Gender</li>
+                        <li>Placement</li>
+                        <li>Device</li>
+                        <li>Geography</li>
+                        <li>Platform</li>
+                    </ul>
+
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <h4>Important: Jan 2026 API Change</h4>
+                        <p>Meta removed support for 7-day view-through (7d_view) and 28-day view-through (28d_view) attribution windows in the Ads Insights API.</p>
+                    </div>
+
+                    <a href="https://developers.facebook.com/docs/marketing-apis/" class="api-link" target="_blank">Meta Marketing API Docs &rarr;</a>
+                </div>
+
+                <!-- Google -->
+                <div class="platform-card google">
+                    <h3><span class="platform-color"></span> Google Ads API</h3>
+                    <table class="info-table">
+                        <tr>
+                            <td>Requirements</td>
+                            <td>Developer token + Manager account required</td>
+                        </tr>
+                        <tr>
+                            <td>Auth Method</td>
+                            <td>OAuth 2.0</td>
+                        </tr>
+                        <tr>
+                            <td>Campaign Types</td>
+                            <td>Search, Display, Video, Shopping, Performance Max</td>
+                        </tr>
+                        <tr>
+                            <td>Data Freshness</td>
+                            <td>Previous day data available by 3am PT</td>
+                        </tr>
+                    </table>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Key Metrics Available:</h4>
+                    <ul class="metrics-list">
+                        <li>Clicks</li>
+                        <li>Impressions</li>
+                        <li>CTR</li>
+                        <li>Avg CPC</li>
+                        <li>Cost</li>
+                        <li>Conversions</li>
+                        <li>Conv. Rate</li>
+                        <li>Search Terms</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Insights Available:</h4>
+                    <ul class="metrics-list">
+                        <li>Device</li>
+                        <li>Demographics</li>
+                        <li>Locations</li>
+                        <li>Keywords</li>
+                        <li>Ad Schedule</li>
+                        <li>Audiences</li>
+                    </ul>
+
+                    <a href="https://developers.google.com/google-ads/api/docs/start" class="api-link" target="_blank">Google Ads API Docs &rarr;</a>
+                </div>
+
+                <!-- TikTok -->
+                <div class="platform-card tiktok">
+                    <h3><span class="platform-color"></span> TikTok Marketing API</h3>
+                    <table class="info-table">
+                        <tr>
+                            <td>Data Volume</td>
+                            <td>387 metrics, 152 dimensions available</td>
+                        </tr>
+                        <tr>
+                            <td>Requirements</td>
+                            <td>TikTok Business account, developer app registration</td>
+                        </tr>
+                        <tr>
+                            <td>Report Types</td>
+                            <td>Basic, Audience, Playable Material, Catalog</td>
+                        </tr>
+                        <tr>
+                            <td>API Types</td>
+                            <td>Marketing API, Organic API, Business Messaging API</td>
+                        </tr>
+                    </table>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Key Metrics Available:</h4>
+                    <ul class="metrics-list">
+                        <li>Spend</li>
+                        <li>Impressions</li>
+                        <li>Clicks</li>
+                        <li>CTR</li>
+                        <li>CPC</li>
+                        <li>Conversions</li>
+                        <li>Video Views</li>
+                        <li>Video Completions</li>
+                    </ul>
+
+                    <a href="https://business-api.tiktok.com/portal/docs" class="api-link" target="_blank">TikTok Business API Docs &rarr;</a>
+                </div>
+
+                <!-- LinkedIn -->
+                <div class="platform-card linkedin">
+                    <h3><span class="platform-color"></span> LinkedIn Marketing API</h3>
+                    <table class="info-table">
+                        <tr>
+                            <td>Special Feature</td>
+                            <td>Professional demographics data (job title, company, industry)</td>
+                        </tr>
+                        <tr>
+                            <td>Lead Gen</td>
+                            <td>Lead Gen Forms sync available via API</td>
+                        </tr>
+                        <tr>
+                            <td>Auth Method</td>
+                            <td>OAuth 2.0, requires Marketing Developer Platform access</td>
+                        </tr>
+                        <tr>
+                            <td>Conversions API</td>
+                            <td>Direct server-to-LinkedIn connection for offline conversions</td>
+                        </tr>
+                    </table>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Key Metrics Available:</h4>
+                    <ul class="metrics-list">
+                        <li>Impressions</li>
+                        <li>Clicks</li>
+                        <li>Engagement Rate</li>
+                        <li>Conversions</li>
+                        <li>CPC</li>
+                        <li>CPM</li>
+                        <li>Social Actions</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Professional Demographics:</h4>
+                    <ul class="metrics-list">
+                        <li>Job Title</li>
+                        <li>Company</li>
+                        <li>Industry</li>
+                        <li>Seniority</li>
+                        <li>Company Size</li>
+                    </ul>
+
+                    <a href="https://developer.linkedin.com/product-catalog/marketing" class="api-link" target="_blank">LinkedIn Marketing API Docs &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Comparison -->
+        <section class="section">
+            <h2 class="section-title">Platform Comparison</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Setup Complexity</th>
+                        <th>Data Richness</th>
+                        <th>Lead Gen Forms</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Facebook/Meta</strong></td>
+                        <td><span class="status-badge status-medium">Medium</span></td>
+                        <td>537 metrics</td>
+                        <td>Yes - webhook sync</td>
+                        <td>B2C, broad audiences, retargeting</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Google Ads</strong></td>
+                        <td><span class="status-badge status-medium">Medium</span></td>
+                        <td>Extensive</td>
+                        <td>Via form extensions</td>
+                        <td>Intent-based, search traffic</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TikTok</strong></td>
+                        <td><span class="status-badge status-easy">Easy</span></td>
+                        <td>387 metrics</td>
+                        <td>Yes</td>
+                        <td>Younger demos, video-first</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LinkedIn</strong></td>
+                        <td><span class="status-badge status-complex">Complex</span></td>
+                        <td>Moderate</td>
+                        <td>Yes - native sync</td>
+                        <td>B2B, professional targeting</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Attribution Models -->
+        <section class="section attribution-section">
+            <h2 class="section-title">Attribution Models Research</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                Attribution determines how credit for conversions is assigned to different marketing touchpoints.
+                75% of marketers now use multi-channel attribution according to industry surveys.
+            </p>
+
+            <div class="platform-grid">
+                <div class="model-card">
+                    <h4>First-Touch Attribution</h4>
+                    <p>100% credit to the first interaction that brought the lead. Simple to implement, good for understanding awareness channels.</p>
+                    <div class="best-for">Best for: Top-of-funnel analysis, brand awareness campaigns</div>
+                </div>
+
+                <div class="model-card">
+                    <h4>Last-Touch Attribution</h4>
+                    <p>100% credit to the final interaction before conversion. Default in most platforms, easy to understand.</p>
+                    <div class="best-for">Best for: Direct response campaigns, simple funnels</div>
+                </div>
+
+                <div class="model-card">
+                    <h4>Linear Attribution</h4>
+                    <p>Equal credit to all touchpoints in the customer journey. Fair but may undervalue key moments.</p>
+                    <div class="best-for">Best for: Long sales cycles, multiple touchpoint journeys</div>
+                </div>
+
+                <div class="model-card">
+                    <h4>Time-Decay Attribution</h4>
+                    <p>More credit to touchpoints closer to conversion. Recognizes recency importance.</p>
+                    <div class="best-for">Best for: Short consideration cycles, promotional campaigns</div>
+                </div>
+
+                <div class="model-card">
+                    <h4>Position-Based (U-Shaped)</h4>
+                    <p>40% to first touch, 40% to last touch, 20% split among middle interactions.</p>
+                    <div class="best-for">Best for: Lead generation focus, values both discovery and conversion</div>
+                </div>
+
+                <div class="model-card">
+                    <h4>Data-Driven Attribution</h4>
+                    <p>Machine learning assigns credit based on historical data patterns. Requires 15,000+ conversions over 90 days.</p>
+                    <div class="best-for">Best for: Advanced teams with high conversion volume</div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 25px;">
+                <h4>Recommendation: Start Simple</h4>
+                <ul>
+                    <li>Begin with <strong>First-Touch</strong> attribution - it's easiest to implement and explains where leads originate</li>
+                    <li>Add <strong>Last-Touch</strong> as secondary view to understand what closes deals</li>
+                    <li>Move to <strong>Position-Based</strong> once you have 6+ months of data</li>
+                    <li>Only consider <strong>Data-Driven</strong> if you have 500+ conversions/month</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Key Metrics Section -->
+        <section class="section">
+            <h2 class="section-title">Marketing Dashboard - Must-Have Metrics</h2>
+
+            <div class="platform-grid">
+                <div class="highlight-box">
+                    <h4>Executive Level (CMO View)</h4>
+                    <ul>
+                        <li>Total Marketing Spend (all platforms)</li>
+                        <li>Total Leads Generated</li>
+                        <li>Blended Cost Per Lead (CPL)</li>
+                        <li>Marketing-Attributed Revenue</li>
+                        <li>Overall ROAS</li>
+                        <li>Pipeline Contribution %</li>
+                    </ul>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>Channel Performance</h4>
+                    <ul>
+                        <li>Spend by Platform</li>
+                        <li>Leads by Platform</li>
+                        <li>CPL by Platform (comparison)</li>
+                        <li>Conversion Rate by Source</li>
+                        <li>Best Performing Campaign</li>
+                        <li>Worst Performing Campaign</li>
+                    </ul>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>Lead Quality Metrics</h4>
+                    <ul>
+                        <li>Lead-to-Opportunity Rate</li>
+                        <li>Lead-to-Customer Rate</li>
+                        <li>Average Deal Size by Source</li>
+                        <li>Time-to-Close by Source</li>
+                        <li>Customer Lifetime Value by Source</li>
+                    </ul>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>Funnel Metrics</h4>
+                    <ul>
+                        <li>Impressions to Click Rate</li>
+                        <li>Click to Lead Rate</li>
+                        <li>Lead to MQL Rate</li>
+                        <li>MQL to SQL Rate</li>
+                        <li>SQL to Customer Rate</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Implementation Approach -->
+        <section class="section">
+            <h2 class="section-title">Recommended Implementation Approach</h2>
+
+            <div class="model-card">
+                <h4>1. Data Architecture</h4>
+                <p>Pull data via APIs on a schedule (hourly for active campaigns, daily for historical). Store in Supabase with proper indexing for fast queries. Don't try to manage ads from the system - just view and analyze.</p>
+            </div>
+
+            <div class="model-card">
+                <h4>2. Sync Strategy</h4>
+                <p>Use webhooks where available (FB Lead Forms, LinkedIn Lead Gen). For metrics, batch pull during off-peak hours. Cache aggressively - ad metrics don't change retroactively.</p>
+            </div>
+
+            <div class="model-card">
+                <h4>3. Lead Matching</h4>
+                <p>Match incoming leads to ad data using UTM parameters, click IDs (fbclid, gclid), and email matching. Build deduplication logic to prevent counting same lead twice across platforms.</p>
+            </div>
+
+            <div class="model-card">
+                <h4>4. Platform Priority</h4>
+                <p><strong>Phase 1:</strong> Facebook + Google (covers 80%+ of ad spend typically)<br>
+                <strong>Phase 2:</strong> TikTok + LinkedIn (add based on actual usage)<br>
+                <strong>Phase 3:</strong> Custom webhooks for other sources</p>
+            </div>
+        </section>
+
+        <!-- Sources -->
+        <section class="sources-section">
+            <h3>Research Sources</h3>
+            <ul>
+                <li><a href="https://developers.facebook.com/docs/marketing-apis/" target="_blank">Meta Marketing API Documentation</a></li>
+                <li><a href="https://developers.google.com/google-ads/api/docs/start" target="_blank">Google Ads API Documentation</a></li>
+                <li><a href="https://business-api.tiktok.com/portal/docs" target="_blank">TikTok Business API Portal</a></li>
+                <li><a href="https://developer.linkedin.com/product-catalog/marketing" target="_blank">LinkedIn Marketing API</a></li>
+                <li><a href="https://supermetrics.com/docs/integration-facebook-ads-fields" target="_blank">Supermetrics - Facebook Ads Metrics Reference</a></li>
+                <li><a href="https://www.hockeystack.com/blog-posts/marketing-attribution-dashboard" target="_blank">HockeyStack - Attribution Dashboard Guide</a></li>
+                <li><a href="https://databox.com/marketing-attribution-dashboard" target="_blank">Databox - Marketing Attribution Best Practices</a></li>
+                <li><a href="https://funnel.io/blog/marketing-dashboard-tools" target="_blank">Funnel.io - Marketing Dashboard Tools 2026</a></li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Marketing Research Document | Outreach System</p>
+            <p>Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

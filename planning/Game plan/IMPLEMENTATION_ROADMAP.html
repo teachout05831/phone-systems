@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outreach System - Implementation Roadmap</title>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--gray-800), var(--gray-900));
+      color: white;
+      border-radius: 1rem;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--gray-300);
+      font-size: 1.1rem;
+    }
+
+    .last-updated {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--gray-400);
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .status-dot.done { background: var(--success); }
+    .status-dot.in-progress { background: var(--warning); }
+    .status-dot.planned { background: var(--primary); }
+    .status-dot.future { background: var(--gray-300); }
+
+    /* Phase Sections */
+    .phase {
+      background: white;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .phase-header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .phase-header h2 {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .phase-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .phase-badge.done { background: #d1fae5; color: #065f46; }
+    .phase-badge.in-progress { background: #fef3c7; color: #92400e; }
+    .phase-badge.planned { background: #dbeafe; color: #1e40af; }
+    .phase-badge.future { background: var(--gray-100); color: var(--gray-600); }
+
+    .phase-content {
+      padding: 0 2rem 2rem;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    .feature-card {
+      border: 1px solid var(--gray-200);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .feature-card.done { border-left: 4px solid var(--success); }
+    .feature-card.in-progress { border-left: 4px solid var(--warning); }
+    .feature-card.planned { border-left: 4px solid var(--primary); }
+    .feature-card.future { border-left: 4px solid var(--gray-300); }
+
+    .feature-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .feature-status {
+      font-size: 0.625rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .feature-status.done { background: #d1fae5; color: #065f46; }
+    .feature-status.in-progress { background: #fef3c7; color: #92400e; }
+    .feature-status.planned { background: #dbeafe; color: #1e40af; }
+    .feature-status.future { background: var(--gray-100); color: var(--gray-600); }
+
+    .feature-description {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-files {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .feature-files code {
+      background: var(--gray-100);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-family: 'Monaco', 'Consolas', monospace;
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .architecture h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .arch-diagram {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .arch-box {
+      border: 2px solid var(--gray-200);
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+
+    .arch-box h4 {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .arch-box ul {
+      list-style: none;
+      font-size: 0.875rem;
+    }
+
+    .arch-box li {
+      padding: 0.25rem 0;
+    }
+
+    .arch-box.highlight {
+      border-color: var(--warning);
+      background: #fffbeb;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--gray-400);
+    }
+
+    /* Tech Stack */
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tech-tag {
+      background: var(--gray-100);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Tables */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .comparison-table th {
+      background: var(--gray-50);
+      font-weight: 600;
+    }
+
+    .check { color: var(--success); }
+    .cross { color: var(--danger); }
+    .pending { color: var(--warning); }
+
+    /* Notes Section */
+    .notes {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .notes h3 {
+      color: #92400e;
+      margin-bottom: 0.5rem;
+    }
+
+    .notes ul {
+      margin-left: 1.5rem;
+      color: #78350f;
+    }
+
+    @media (max-width: 768px) {
+      .arch-diagram {
+        grid-template-columns: 1fr;
+      }
+      .arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Outreach System Implementation Roadmap</h1>
+      <p>Complete feature implementation plan for the multi-company sales outreach platform</p>
+      <div class="last-updated">Last Updated: January 21, 2026</div>
+    </header>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="status-dot done"></div>
+        <span>Complete</span>
+      </div>
+      <div class="legend-item">
+        <div class="status-dot in-progress"></div>
+        <span>In Progress</span>
+      </div>
+      <div class="legend-item">
+        <div class="status-dot planned"></div>
+        <span>Planned (This Sprint)</span>
+      </div>
+      <div class="legend-item">
+        <div class="status-dot future"></div>
+        <span>Future</span>
+      </div>
+    </div>
+
+    <!-- Architecture Overview -->
+    <div class="architecture">
+      <h2>System Architecture</h2>
+      <div class="arch-diagram">
+        <div class="arch-box">
+          <h4>Frontend (Next.js)</h4>
+          <ul>
+            <li>Dashboard UI</li>
+            <li>Contacts Management</li>
+            <li>Call Interface</li>
+            <li>Real-time Updates</li>
+          </ul>
+        </div>
+        <div class="arrow">→</div>
+        <div class="arch-box highlight">
+          <h4>Backend (Next.js API + WebSocket)</h4>
+          <ul>
+            <li>Supabase Auth</li>
+            <li>Twilio Voice</li>
+            <li>Deepgram Transcription</li>
+            <li>Claude AI Coaching</li>
+          </ul>
+        </div>
+        <div class="arrow">→</div>
+        <div class="arch-box">
+          <h4>External Services</h4>
+          <ul>
+            <li>Retell AI (Auto-calls)</li>
+            <li>Twilio (Live calls)</li>
+            <li>Supabase (Database)</li>
+            <li>Anthropic (AI)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">Next.js 16</span>
+        <span class="tech-tag">React 19</span>
+        <span class="tech-tag">TypeScript</span>
+        <span class="tech-tag">Tailwind CSS 4</span>
+        <span class="tech-tag">Supabase</span>
+        <span class="tech-tag">Twilio</span>
+        <span class="tech-tag">Deepgram</span>
+        <span class="tech-tag">Claude AI</span>
+        <span class="tech-tag">Retell AI</span>
+      </div>
+    </div>
+
+    <!-- Phase 1: Foundation (DONE) -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 1: Foundation
+          <span class="phase-badge done">Complete</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Supabase Database Schema</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              Complete database schema with companies, contacts, calls, callbacks, transcripts, and activity log tables. Full RLS policies for multi-tenancy.
+            </div>
+            <div class="feature-files">
+              <code>web/supabase/migrations/00001_initial_schema.sql</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Authentication System</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              Supabase Auth with email/password login, signup, session management, and protected routes via middleware.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(auth)/login</code> <code>web/src/middleware.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Company Onboarding</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              New users can create a company and become the owner. Automatic slug generation and membership creation.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/onboarding/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Dashboard Layout</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              Main dashboard with company overview, navigation header, user profile display, and logout functionality.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/layout.tsx</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2: Contacts & Retell AI (DONE) -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 2: Contacts & AI Calling (Retell)
+          <span class="phase-badge done">Complete</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Contacts List</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              View all contacts for your company with status badges, search capability, and quick actions.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/contacts/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Add New Contact</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              Form to add contacts with phone, email, business name, lead source, and notes.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/contacts/new/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Contact Detail Page</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              View contact info, call history, stats, and AI notes. Actions for calling, editing, deleting.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/contacts/[id]/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Retell AI Outbound Calls</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              "Call with Ralph" button triggers AI agent to call the contact. Fully automated conversation.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/api/calls/outbound/route.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card done">
+            <div class="feature-header">
+              <span class="feature-title">Retell Webhooks</span>
+              <span class="feature-status done">Done</span>
+            </div>
+            <div class="feature-description">
+              Handle call_started, call_ended, call_analyzed, and transcript_ready events from Retell.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/api/webhooks/retell/route.ts</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3: Live Rep Calling (IN PROGRESS) -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 3: Live Rep Calling with AI Coaching
+          <span class="phase-badge in-progress">In Progress</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <p style="margin-bottom: 1rem; color: var(--gray-600);">
+          Adding Twilio browser softphone so live reps can make calls directly from the dashboard with real-time AI coaching assistance.
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Twilio Token Endpoint</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              API route to generate Twilio capability tokens for browser-based calling. Validates user session.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/api/twilio/token/route.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">TwiML Voice Endpoints</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Handle outbound and inbound call routing, media streaming setup, and recording configuration.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/api/twilio/voice/route.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">WebSocket Server</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Real-time WebSocket connection for streaming transcripts and AI coaching to browser clients.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/api/ws/route.ts</code> or custom server
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Deepgram Integration</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Real-time speech-to-text transcription from Twilio media streams using Deepgram Nova-2.
+            </div>
+            <div class="feature-files">
+              <code>web/src/lib/deepgram.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">AI Coaching Service</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Claude AI analyzes conversation in real-time and provides coaching suggestions to reps.
+            </div>
+            <div class="feature-files">
+              <code>web/src/lib/ai-coaching.ts</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Browser Phone Component</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              React component using Twilio Device SDK for making/receiving calls from the browser.
+            </div>
+            <div class="feature-files">
+              <code>web/src/components/calls/browser-phone.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Live Call UI</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              During-call interface with timer, mute/hold buttons, live transcript, and AI coaching panel.
+            </div>
+            <div class="feature-files">
+              <code>web/src/components/calls/live-call-ui.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Call Page</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Dedicated page for active calls with full-screen transcript, coaching, and contact context.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/call/page.tsx</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Calling Modes Comparison</h3>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Retell AI (Ralph)</th>
+              <th>Live Rep (Twilio)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Who handles call?</td>
+              <td>AI Agent</td>
+              <td>Human Rep</td>
+            </tr>
+            <tr>
+              <td>Real-time coaching</td>
+              <td class="cross">✗ Not needed</td>
+              <td class="check">✓ Yes</td>
+            </tr>
+            <tr>
+              <td>Live transcript</td>
+              <td class="cross">✗ After call</td>
+              <td class="check">✓ Real-time</td>
+            </tr>
+            <tr>
+              <td>Browser audio</td>
+              <td class="cross">✗ No</td>
+              <td class="check">✓ Yes</td>
+            </tr>
+            <tr>
+              <td>Call recording</td>
+              <td class="check">✓ Yes</td>
+              <td class="check">✓ Yes</td>
+            </tr>
+            <tr>
+              <td>AI Summary</td>
+              <td class="check">✓ Yes</td>
+              <td class="check">✓ Yes</td>
+            </tr>
+            <tr>
+              <td>Best for</td>
+              <td>High volume, qualification</td>
+              <td>Complex sales, closing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Phase 4: Call Management -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 4: Call Management & History
+          <span class="phase-badge planned">Planned</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Call History Page</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              View all calls with filters by date, outcome, rep. Search by phone number or contact name.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/calls/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Call Detail Page</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              View call recording, full transcript, AI summary, and add notes. Edit outcome if needed.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/calls/[id]/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Callbacks System</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              Schedule callbacks, track attempts, set reminders. Auto-schedule from missed calls.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/callbacks/page.tsx</code>
+            </div>
+          </div>
+
+          <div class="feature-card planned">
+            <div class="feature-header">
+              <span class="feature-title">Missed Calls Queue</span>
+              <span class="feature-status planned">Planned</span>
+            </div>
+            <div class="feature-description">
+              View missed calls, click to call back, track callback attempts and outcomes.
+            </div>
+            <div class="feature-files">
+              <code>web/src/app/(dashboard)/missed/page.tsx</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 5: Supervisor Features -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 5: Supervisor & Team Features
+          <span class="phase-badge future">Future</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Live Call Monitoring</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Supervisors see all active calls, can listen in, see real-time transcripts and AI coaching.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Whisper Mode</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Supervisor can speak to rep without customer hearing. Coaching during live calls.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Barge In</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Supervisor can join call as third party. Both customer and rep can hear.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Team Dashboard</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Overview of team performance, call stats, leaderboards, and activity feed.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Rep Performance</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Individual rep stats, call quality scores, coaching recommendations.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 6: Multi-Channel -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 6: Multi-Channel Communication
+          <span class="phase-badge future">Future</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">SMS Messaging</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Send and receive SMS via Twilio. Threaded conversations per contact.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">SMS Templates</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Pre-written templates for common messages. Quick-select during conversations.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Unified Timeline</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              See all interactions (calls, SMS, notes) in chronological timeline per contact.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Email Integration</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Connect email accounts, send/receive emails, track opens and clicks.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7: Company & Settings -->
+    <div class="phase">
+      <div class="phase-header">
+        <h2>
+          Phase 7: Company Management & Settings
+          <span class="phase-badge future">Future</span>
+        </h2>
+      </div>
+      <div class="phase-content">
+        <div class="feature-grid">
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Company Settings</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Configure company profile, Twilio credentials, callback rules, working hours.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Team Management</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Invite team members, assign roles (admin, supervisor, rep), manage permissions.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Company Switching</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Users in multiple companies can switch between them without logging out.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">AI Agent Config</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Configure Retell AI agents per company. Custom prompts, voices, behaviors.
+            </div>
+          </div>
+
+          <div class="feature-card future">
+            <div class="feature-header">
+              <span class="feature-title">Bulk Contact Import</span>
+              <span class="feature-status future">Future</span>
+            </div>
+            <div class="feature-description">
+              Upload CSV files to import contacts in bulk. Field mapping and validation.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="notes">
+      <h3>Implementation Notes</h3>
+      <ul>
+        <li><strong>Priority:</strong> Phase 3 (Live Rep Calling) is the current focus</li>
+        <li><strong>Architecture:</strong> Building in web/ folder (Next.js) - single unified platform</li>
+        <li><strong>Database:</strong> All data persists in Supabase with RLS for multi-tenancy</li>
+        <li><strong>Real-time:</strong> WebSocket needed for live transcription and AI coaching</li>
+        <li><strong>Reference:</strong> twilio-ai-coach/ folder contains working patterns to port</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

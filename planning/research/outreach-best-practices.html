@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outreach Best Practices - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #f39c12;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(243, 156, 18, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f39c12;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .stat-card .source {
+            color: #666;
+            font-size: 0.7rem;
+            margin-top: 5px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .tip-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #f39c12;
+        }
+
+        .tip-card h4 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .tip-card p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .tip-card .impact {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .sequence-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .sequence-timeline::before {
+            content: "";
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(243, 156, 18, 0.3);
+        }
+
+        .sequence-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .sequence-item::before {
+            content: "";
+            position: absolute;
+            left: -24px;
+            top: 25px;
+            width: 12px;
+            height: 12px;
+            background: #f39c12;
+            border-radius: 50%;
+        }
+
+        .sequence-item .email-num {
+            color: #f39c12;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .sequence-item .timing {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .sequence-item h4 {
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .sequence-item p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .highlight-box {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #f39c12;
+        }
+
+        .warning-box {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box h4 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .warning-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .warning-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .warning-box li::before {
+            content: "X";
+            position: absolute;
+            left: 0;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .channel-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .channel-card h4 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .channel-card .lift {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .multi-channel-sequence {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin: 15px 0;
+        }
+
+        .multi-channel-sequence .day {
+            color: #f39c12;
+        }
+
+        .multi-channel-sequence .channel {
+            color: #00d4ff;
+        }
+
+        .personalization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .personalization-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 3px solid #f39c12;
+        }
+
+        .personalization-card .level {
+            color: #f39c12;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .personalization-card h4 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .personalization-card p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .example-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .example-box .label {
+            color: #27ae60;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .example-box.bad .label {
+            color: #e74c3c;
+        }
+
+        .example-box p {
+            color: #aaa;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .framework-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .framework-box h4 {
+            color: #f39c12;
+            margin-bottom: 15px;
+        }
+
+        .framework-box .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .framework-box .step-num {
+            background: #f39c12;
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .framework-box .step-text {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .metric-card .metric-name {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .benchmark {
+            color: #27ae60;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .action {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .sources-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sources-section h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Research</a>
+
+        <header>
+            <h1>Cold Outreach Best Practices</h1>
+            <p class="subtitle">Research-Backed Strategies for Email, Follow-ups & Multi-Channel Outreach</p>
+        </header>
+
+        <!-- Key Statistics Section -->
+        <section class="section">
+            <h2 class="section-title">Key Statistics</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="value">$36</div>
+                    <div class="label">ROI per $1 spent</div>
+                    <div class="source">Industry avg</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">4.1%</div>
+                    <div class="label">Average Response Rate</div>
+                    <div class="source">Cold email benchmarks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">40-50%</div>
+                    <div class="label">Top Campaign Response</div>
+                    <div class="source">Best performers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">300%</div>
+                    <div class="label">LinkedIn vs Email</div>
+                    <div class="source">LinkedIn data</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">287%</div>
+                    <div class="label">Multi-Channel Lift</div>
+                    <div class="source">Multi-touch studies</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">+35%</div>
+                    <div class="label">AI Personalization</div>
+                    <div class="source">Reply rate increase</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Email Benchmarks Section -->
+        <section class="section">
+            <h2 class="section-title">Email Outreach Benchmarks</h2>
+
+            <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1rem;">Response Rates by Campaign Size</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Campaign Size</th>
+                        <th>Average Response Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&lt; 50 recipients</td>
+                        <td><strong style="color: #27ae60;">5.8%</strong></td>
+                    </tr>
+                    <tr>
+                        <td>50-200 recipients</td>
+                        <td>4.2%</td>
+                    </tr>
+                    <tr>
+                        <td>200-1000 recipients</td>
+                        <td>3.1%</td>
+                    </tr>
+                    <tr>
+                        <td>1000+ recipients</td>
+                        <td style="color: #e74c3c;">1.8%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box" style="margin-top: 20px;">
+                <h4>Takeaway</h4>
+                <ul>
+                    <li>Smaller, more targeted campaigns significantly outperform mass blasts</li>
+                </ul>
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Subject Line Tips</h3>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <h4>Company Name</h4>
+                    <p>Include company name in subject line</p>
+                    <span class="impact">+22% open rate</span>
+                </div>
+                <div class="tip-card">
+                    <h4>Numbers</h4>
+                    <p>Use numbers in subject line</p>
+                    <span class="impact">+113% opens</span>
+                </div>
+                <div class="tip-card">
+                    <h4>Personalization</h4>
+                    <p>Personalized subject lines</p>
+                    <span class="impact">+26% open rate</span>
+                </div>
+                <div class="tip-card">
+                    <h4>Length</h4>
+                    <p>Keep it short (6-10 words)</p>
+                    <span class="impact">Best performance</span>
+                </div>
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Email Body Best Practices</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Best Practice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Length</td>
+                        <td>50-125 words optimal</td>
+                    </tr>
+                    <tr>
+                        <td>Personalization</td>
+                        <td>First line about THEM, not you</td>
+                    </tr>
+                    <tr>
+                        <td>CTA</td>
+                        <td>ONE clear call-to-action</td>
+                    </tr>
+                    <tr>
+                        <td>Formatting</td>
+                        <td>Short paragraphs, white space</td>
+                    </tr>
+                    <tr>
+                        <td>Links</td>
+                        <td>Minimize (can hurt deliverability)</td>
+                    </tr>
+                    <tr>
+                        <td>Images</td>
+                        <td>Avoid in cold email</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Timing & Deliverability</h3>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <h4>Best Days</h4>
+                    <p>Tuesday, Wednesday, Thursday</p>
+                </div>
+                <div class="tip-card">
+                    <h4>Best Times</h4>
+                    <p>10 AM or 1 PM (recipient's local time)</p>
+                </div>
+                <div class="tip-card">
+                    <h4>Custom Domain</h4>
+                    <p>2x reply rate vs Gmail</p>
+                </div>
+                <div class="tip-card">
+                    <h4>Warm-up Period</h4>
+                    <p>2-4 weeks for new domains</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Follow-Up Sequence Section -->
+        <section class="section">
+            <h2 class="section-title">Follow-Up Sequence</h2>
+
+            <div class="highlight-box">
+                <h4>Key Stat: 60% of replies come after the first follow-up!</h4>
+            </div>
+
+            <h3 style="color: #fff; margin: 20px 0 15px; font-size: 1.1rem;">Recommended 5-Email Sequence</h3>
+
+            <div class="sequence-timeline">
+                <div class="sequence-item">
+                    <div class="email-num">Email #1</div>
+                    <div class="timing">Day 1</div>
+                    <h4>Initial Outreach</h4>
+                    <p>Introduce value proposition. Personalized hook about them, problem you solve, what you offer, clear CTA.</p>
+                </div>
+
+                <div class="sequence-item">
+                    <div class="email-num">Email #2</div>
+                    <div class="timing">Days 3-4</div>
+                    <h4>Quick Reminder</h4>
+                    <p>Short bump of previous email. "Just wanted to bump this to the top of your inbox. Did you get a chance to look at [previous topic]?"</p>
+                </div>
+
+                <div class="sequence-item">
+                    <div class="email-num">Email #3</div>
+                    <div class="timing">Days 7-10</div>
+                    <h4>New Angle</h4>
+                    <p>Different value prop or insight. "I was thinking about [their specific situation] and wanted to share [new insight/resource/angle]."</p>
+                </div>
+
+                <div class="sequence-item">
+                    <div class="email-num">Email #4</div>
+                    <div class="timing">Days 14-17</div>
+                    <h4>Social Proof</h4>
+                    <p>Case study or testimonial. "[Company similar to them] was in a similar situation and [specific result they got]."</p>
+                </div>
+
+                <div class="sequence-item">
+                    <div class="email-num">Email #5</div>
+                    <div class="timing">Days 21-30</div>
+                    <h4>Breakup Email</h4>
+                    <p>Create urgency, last chance. "I don't want to keep filling up your inbox, so this will be my last email. If [problem] isn't a priority right now, totally understand."</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Follow-Up Tips</h4>
+                <ul>
+                    <li>Keep follow-ups shorter than initial email</li>
+                    <li>Reference previous email ("Wanted to follow up on...")</li>
+                    <li>Add new value or angle each time</li>
+                    <li>Breakup email often gets highest response rate</li>
+                    <li>Don't be needy - provide value</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Multi-Channel Strategy Section -->
+        <section class="section">
+            <h2 class="section-title">Multi-Channel Strategy</h2>
+
+            <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1rem;">Channel Combination Results</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Response Lift</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Email only</td>
+                        <td>Baseline</td>
+                    </tr>
+                    <tr>
+                        <td>Email + LinkedIn</td>
+                        <td><span class="lift" style="color: #27ae60;">+50% response</span></td>
+                    </tr>
+                    <tr>
+                        <td>Email + LinkedIn + Call</td>
+                        <td><span class="lift" style="color: #27ae60;">+287% engagement</span></td>
+                    </tr>
+                    <tr>
+                        <td>Email + Retargeting Ads</td>
+                        <td><span class="lift" style="color: #27ae60;">+25% conversion</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Multi-Channel Sequence Example</h3>
+            <div class="multi-channel-sequence">
+                <span class="day">Day 1:</span> <span class="channel">Email</span> - Initial outreach<br>
+                <span class="day">Day 2:</span> <span class="channel">LinkedIn</span> - View profile<br>
+                <span class="day">Day 3:</span> <span class="channel">LinkedIn</span> - Connect request<br>
+                <span class="day">Day 5:</span> <span class="channel">Email</span> - Follow-up #1<br>
+                <span class="day">Day 7:</span> <span class="channel">LinkedIn</span> - Message (if connected)<br>
+                <span class="day">Day 10:</span> <span class="channel">Email</span> - Follow-up #2 (new angle)<br>
+                <span class="day">Day 14:</span> <span class="channel">Call</span> - If no response<br>
+                <span class="day">Day 17:</span> <span class="channel">Email</span> - Social proof<br>
+                <span class="day">Day 21:</span> <span class="channel">Email + LinkedIn</span> - Final message
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Channel-Specific Tips</h3>
+            <div class="tips-grid">
+                <div class="channel-card">
+                    <h4>LinkedIn</h4>
+                    <ul style="list-style: none; color: #888; font-size: 0.9rem;">
+                        <li style="padding: 5px 0;">- Warm up by engaging with their content first</li>
+                        <li style="padding: 5px 0;">- Keep connection requests short (&lt; 300 chars)</li>
+                        <li style="padding: 5px 0;">- Personalize based on profile/content</li>
+                        <li style="padding: 5px 0;">- Don't pitch in connection request</li>
+                    </ul>
+                </div>
+
+                <div class="channel-card">
+                    <h4>Cold Calling</h4>
+                    <ul style="list-style: none; color: #888; font-size: 0.9rem;">
+                        <li style="padding: 5px 0;">- Best after email opens/engagement</li>
+                        <li style="padding: 5px 0;">- Morning calls (9-11 AM) often better</li>
+                        <li style="padding: 5px 0;">- Have a script but sound natural</li>
+                        <li style="padding: 5px 0;">- Voicemail should be &lt; 30 seconds</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Personalization Section -->
+        <section class="section">
+            <h2 class="section-title">Personalization Strategies</h2>
+
+            <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1rem;">Levels of Personalization</h3>
+            <div class="personalization-grid">
+                <div class="personalization-card">
+                    <div class="level">LOW EFFORT / LOW IMPACT</div>
+                    <h4>None</h4>
+                    <p>Mass email template. Generic messaging to everyone.</p>
+                </div>
+                <div class="personalization-card">
+                    <div class="level">MEDIUM EFFORT / MEDIUM IMPACT</div>
+                    <h4>Basic</h4>
+                    <p>{{first_name}}, {{company}} merge fields.</p>
+                </div>
+                <div class="personalization-card">
+                    <div class="level">HIGH EFFORT / HIGH IMPACT</div>
+                    <h4>Research-Based</h4>
+                    <p>Reference their content, news, specific challenges.</p>
+                </div>
+                <div class="personalization-card">
+                    <div class="level">VERY HIGH EFFORT / VERY HIGH IMPACT</div>
+                    <h4>Video/Custom</h4>
+                    <p>Personalized Loom video for each prospect.</p>
+                </div>
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Quick Personalization Ideas</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li>Reference recent company news</li>
+                    <li>Mention mutual connection</li>
+                    <li>Comment on their LinkedIn post</li>
+                    <li>Reference their content/podcast/video</li>
+                    <li>Note their company's specific challenge</li>
+                    <li>Mention their tech stack</li>
+                </ul>
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">Examples</h3>
+            <div class="example-box">
+                <div class="label">GOOD</div>
+                <p>"Saw your recent post about [topic] - great point about [specific detail]. Made me think..."</p>
+            </div>
+
+            <div class="example-box bad">
+                <div class="label">BAD</div>
+                <p>"Hi {{first_name}}, I hope this email finds you well..."</p>
+            </div>
+        </section>
+
+        <!-- Message Framework Section -->
+        <section class="section">
+            <h2 class="section-title">Message Templates Framework</h2>
+
+            <div class="framework-box">
+                <h4>The AIDA Formula</h4>
+                <div class="step">
+                    <div class="step-num">A</div>
+                    <div class="step-text"><strong>Attention:</strong> Hook them with relevance to THEM</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">I</div>
+                    <div class="step-text"><strong>Interest:</strong> Show you understand their problem</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">D</div>
+                    <div class="step-text"><strong>Desire:</strong> Present your solution/value</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">A</div>
+                    <div class="step-text"><strong>Action:</strong> Clear, simple CTA</div>
+                </div>
+            </div>
+
+            <div class="framework-box">
+                <h4>Cold Email Structure</h4>
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">Personalized hook (about them)</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text">Problem you solve / why you're reaching out</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text">What you offer (brief)</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-text">CTA (question, not ask)</div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="label">TEMPLATE EXAMPLE</div>
+                <p>[Personalization - something about them or their company]<br><br>
+                I noticed [observation about their situation].<br><br>
+                We help [who] do [what] so they can [benefit].<br><br>
+                Would it make sense to chat about [specific topic]?</p>
+            </div>
+        </section>
+
+        <!-- Red Flags Section -->
+        <section class="section">
+            <h2 class="section-title">Red Flags to Avoid</h2>
+
+            <div class="warning-box">
+                <h4>Don't Do This</h4>
+                <ul>
+                    <li><strong>"I hope this email finds you well"</strong> - Overused, shows no effort</li>
+                    <li><strong>Attach files in cold email</strong> - Hurts deliverability</li>
+                    <li><strong>Multiple CTAs</strong> - Confuses recipient</li>
+                    <li><strong>Long paragraphs</strong> - Won't get read</li>
+                    <li><strong>Talking about yourself first</strong> - They don't care yet</li>
+                    <li><strong>Being pushy</strong> - Creates resistance</li>
+                    <li><strong>Sending too frequently</strong> - Annoying</li>
+                    <li><strong>Generic templates</strong> - Low response</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Metrics Section -->
+        <section class="section">
+            <h2 class="section-title">Metrics to Track</h2>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-name">Open Rate</div>
+                    <div class="benchmark">Benchmark: 40-60%</div>
+                    <div class="action">If below: Fix subject line, sender name</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Reply Rate</div>
+                    <div class="benchmark">Benchmark: 4-8%</div>
+                    <div class="action">If below: Fix email content, targeting</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Bounce Rate</div>
+                    <div class="benchmark">Benchmark: &lt; 2%</div>
+                    <div class="action">If above: Clean your list</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Unsubscribe Rate</div>
+                    <div class="benchmark">Benchmark: &lt; 0.5%</div>
+                    <div class="action">If above: Check targeting, frequency</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-name">Spam Complaints</div>
+                    <div class="benchmark">Benchmark: &lt; 0.1%</div>
+                    <div class="action">If above: Major issue - stop and fix</div>
+                </div>
+            </div>
+
+            <h3 style="color: #fff; margin: 30px 0 15px; font-size: 1.1rem;">A/B Testing Priority</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Priority</th>
+                        <th>Impact Potential</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Subject line</td>
+                        <td><strong style="color: #e74c3c;">High</strong></td>
+                        <td>Highest</td>
+                    </tr>
+                    <tr>
+                        <td>Opening line</td>
+                        <td><strong style="color: #e74c3c;">High</strong></td>
+                        <td>High</td>
+                    </tr>
+                    <tr>
+                        <td>CTA</td>
+                        <td><strong style="color: #f39c12;">Medium</strong></td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Send time</td>
+                        <td><strong style="color: #f39c12;">Medium</strong></td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Email length</td>
+                        <td><strong style="color: #27ae60;">Low</strong></td>
+                        <td>Low</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box" style="margin-top: 20px;">
+                <h4>Minimum Test Size</h4>
+                <ul>
+                    <li>Need at least 100-200 recipients per variant</li>
+                    <li>Run test for full sequence (not just first email)</li>
+                    <li>Track reply rate, not just open rate</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>
+            <p>Outreach Best Practices Document | Outreach System</p>
+            <p>Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

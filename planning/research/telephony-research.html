@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telephony & Call Transcription Research - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #27ae60;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(39, 174, 96, 0.3);
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .platform-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .platform-card h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .platform-card .type {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .platform-card.recommended {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .platform-card.enterprise {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .platform-card.developer {
+            border-color: #9b59b6;
+            background: rgba(155, 89, 182, 0.1);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .tag-recommended { background: #27ae60; color: #fff; }
+        .tag-enterprise { background: #3498db; color: #fff; }
+        .tag-developer { background: #9b59b6; color: #fff; }
+        .tag-best { background: #f39c12; color: #000; }
+
+        .info-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-table td {
+            padding: 10px 0;
+            vertical-align: top;
+        }
+
+        .info-table td:first-child {
+            color: #27ae60;
+            font-weight: 600;
+            width: 120px;
+        }
+
+        .info-table td:last-child {
+            color: #aaa;
+        }
+
+        .features-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .features-list li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #aaa;
+        }
+
+        .features-list li::before {
+            content: "+";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .limitations-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .limitations-list li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #888;
+        }
+
+        .limitations-list li::before {
+            content: "-";
+            position: absolute;
+            left: 0;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .price-tag {
+            display: inline-block;
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .api-link:hover {
+            text-decoration: underline;
+        }
+
+        .highlight-box {
+            background: rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        .comparison-table th {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-easy { background: #28a745; color: #fff; }
+        .status-medium { background: #ffc107; color: #000; }
+        .status-complex { background: #dc3545; color: #fff; }
+
+        .option-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .option-card h4 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .option-card p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .transcription-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .transcription-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 3px solid #27ae60;
+        }
+
+        .transcription-card h4 {
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .transcription-card .type {
+            color: #27ae60;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .transcription-card p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .intel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .intel-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .intel-card h4 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .intel-card .pricing {
+            color: #27ae60;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .intel-card p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .sources-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sources-section h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .sources-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .sources-section li a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .sources-section li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Research</a>
+
+        <header>
+            <h1>Telephony & Call Transcription Research</h1>
+            <p class="subtitle">VoIP Providers, Call Recording, Live Transcription & Rep Accountability</p>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="section">
+            <h2 class="section-title">Research Overview</h2>
+            <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                Research on VoIP providers with APIs for call recording, transcription, and live features
+                for the rep accountability system. Goal: See transcripts appear in real-time and potentially
+                hear calls live in the dashboard.
+            </p>
+
+            <div class="highlight-box">
+                <h4>Top 3 Recommendations</h4>
+                <ul>
+                    <li><strong>Dialpad</strong> - Best for live transcription (built into ALL plans)</li>
+                    <li><strong>RingCentral</strong> - Enterprise-grade with extension filtering</li>
+                    <li><strong>Twilio</strong> - Maximum flexibility (developer-heavy)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Detailed Providers Section -->
+        <section class="section">
+            <h2 class="section-title">Detailed Provider Breakdown</h2>
+
+            <div class="platform-grid">
+                <!-- Dialpad -->
+                <div class="platform-card recommended">
+                    <span class="tag tag-recommended">RECOMMENDED</span>
+                    <h3>Dialpad</h3>
+                    <p class="type">AI-Native Business Phone System</p>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Features:</h4>
+                    <ul class="features-list">
+                        <li>Real-time transcription built into ALL plans</li>
+                        <li>Sentiment analysis & suggested actions</li>
+                        <li>WebSocket API for live frontend updates</li>
+                        <li>Call summaries, action items, key moments</li>
+                        <li>Webhook events for call lifecycle</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Limitations:</h4>
+                    <ul class="limitations-list">
+                        <li>No raw audio streaming to your app</li>
+                    </ul>
+
+                    <div class="price-tag">$15-25/user/month</div>
+
+                    <div style="margin-top: 15px;">
+                        <a href="https://www.dialpad.com/developers/" class="api-link" target="_blank">Developer Portal &rarr;</a><br>
+                        <a href="https://developers.dialpad.com/docs/call-events" class="api-link" target="_blank">Call Events Docs &rarr;</a><br>
+                        <a href="https://developers.dialpad.com/reference/transcriptsget" class="api-link" target="_blank">Transcript API &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- RingCentral -->
+                <div class="platform-card enterprise">
+                    <span class="tag tag-enterprise">ENTERPRISE-GRADE</span>
+                    <h3>RingCentral</h3>
+                    <p class="type">Enterprise Communications Platform</p>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Features:</h4>
+                    <ul class="features-list">
+                        <li>Audio Streaming API for live audio</li>
+                        <li>RingSense API for post-call AI insights</li>
+                        <li>Filter calls by extension/line number</li>
+                        <li>Comprehensive call log API</li>
+                        <li>CRM integrations built-in</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Limitations:</h4>
+                    <ul class="limitations-list">
+                        <li>Live transcription requires manual setup</li>
+                        <li>Higher tier plans needed for full features</li>
+                    </ul>
+
+                    <div class="price-tag">$20-45/user/month</div>
+
+                    <div class="highlight-box" style="margin-top: 15px; background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.3);">
+                        <h4 style="color: #3498db;">Extension Filtering</h4>
+                        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 10px;">You CAN filter calls by extension/line:</p>
+                        <div class="code-block">
+                            <code>/account/~/extension/{extensionId}/call-log</code><br>
+                            <code>?extensionNumber=104</code> - Filter by extension<br>
+                            <code>view=Detailed</code> - See which extension handled each call
+                        </div>
+                        <p style="color: #888; font-size: 0.85rem;">If cold calling is on ext 101 and support on 102, you can pull only ext 101 calls.</p>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <a href="https://developers.ringcentral.com/api-products" class="api-link" target="_blank">API Products &rarr;</a><br>
+                        <a href="https://developers.ringcentral.com/ringsense-api" class="api-link" target="_blank">RingSense API &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Twilio -->
+                <div class="platform-card developer">
+                    <span class="tag tag-developer">MAXIMUM FLEXIBILITY</span>
+                    <h3>Twilio</h3>
+                    <p class="type">Programmable Communications API</p>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Features:</h4>
+                    <ul class="features-list">
+                        <li>Media Streams for real-time WebSocket audio</li>
+                        <li>Bidirectional audio (listen AND play)</li>
+                        <li>&lt;Transcription&gt; TwiML for live transcription</li>
+                        <li>Full control - build exactly what you need</li>
+                        <li>Pay-as-you-go pricing</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Limitations:</h4>
+                    <ul class="limitations-list">
+                        <li>Requires significant development work</li>
+                        <li>Need external transcription service for best results</li>
+                    </ul>
+
+                    <div class="price-tag">~$0.014/min outbound, $0.0085/min inbound + extras</div>
+
+                    <div style="margin-top: 15px;">
+                        <a href="https://www.twilio.com/docs/voice/media-streams" class="api-link" target="_blank">Media Streams &rarr;</a><br>
+                        <a href="https://www.twilio.com/docs/voice/twiml/transcription" class="api-link" target="_blank">Transcription TwiML &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Aircall -->
+                <div class="platform-card">
+                    <h3>Aircall</h3>
+                    <p class="type">Call Center Phone System</p>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Features:</h4>
+                    <ul class="features-list">
+                        <li>200+ native CRM integrations</li>
+                        <li>Good webhook events for call lifecycle</li>
+                        <li>6+ months call recording storage</li>
+                        <li>Multi-language transcription (6 languages)</li>
+                    </ul>
+
+                    <h4 style="color: #aaa; margin: 15px 0 10px; font-size: 0.9rem;">Limitations:</h4>
+                    <ul class="limitations-list">
+                        <li>Transcription requires AI add-on ($$$)</li>
+                        <li>Post-call only - no real-time</li>
+                        <li>3-user minimum, $30+/user</li>
+                    </ul>
+
+                    <div class="price-tag">$30+/user/month (3-user min)</div>
+
+                    <div style="margin-top: 15px;">
+                        <a href="https://developer.aircall.io/" class="api-link" target="_blank">Developer Portal &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Comparison -->
+        <section class="section">
+            <h2 class="section-title">Feature Comparison Matrix</h2>
+
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Dialpad</th>
+                            <th>RingCentral</th>
+                            <th>Twilio</th>
+                            <th>Aircall</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Real-Time Transcription</strong></td>
+                            <td>Built-in</td>
+                            <td>Manual setup</td>
+                            <td>Build your own</td>
+                            <td>Post-call only</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Live Audio Streaming</strong></td>
+                            <td>Via webhooks</td>
+                            <td>Audio Streaming API</td>
+                            <td>Media Streams</td>
+                            <td>Not available</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Filter by Line/Extension</strong></td>
+                            <td>Yes</td>
+                            <td>Excellent</td>
+                            <td>Build your own</td>
+                            <td>Via tags/users</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AI Sentiment Analysis</strong></td>
+                            <td>Included</td>
+                            <td>RingSense</td>
+                            <td>Add external</td>
+                            <td>Paid add-on</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API Quality</strong></td>
+                            <td>Good</td>
+                            <td>Excellent</td>
+                            <td>Excellent</td>
+                            <td>Good</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ease of Integration</strong></td>
+                            <td><span class="status-badge status-easy">Easy</span></td>
+                            <td><span class="status-badge status-medium">Medium</span></td>
+                            <td><span class="status-badge status-complex">Complex</span></td>
+                            <td><span class="status-badge status-easy">Easy</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Starting Price</strong></td>
+                            <td>$15/user/mo</td>
+                            <td>$20/user/mo</td>
+                            <td>Pay-per-use</td>
+                            <td>$30/user/mo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Live Listening Vision -->
+        <section class="section">
+            <h2 class="section-title">Live Listening + Transcript Vision</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                For seeing transcripts appear in real-time AND potentially hearing the call live:
+            </p>
+
+            <div class="option-card">
+                <h4>Option 1: Dialpad (Easiest)</h4>
+                <p>Subscribe to real-time events, transcripts stream in as call happens. No raw audio, but live text appears.</p>
+                <span class="status-badge status-easy" style="margin-top: 10px;">Easiest Path</span>
+            </div>
+
+            <div class="option-card">
+                <h4>Option 2: Twilio Custom (Most Powerful)</h4>
+                <p>Use &lt;Stream&gt; for bidirectional WebSocket audio. Pipe to your app for playback AND to transcription service for live text.</p>
+                <span class="status-badge status-complex" style="margin-top: 10px;">Most Powerful</span>
+            </div>
+
+            <div class="option-card">
+                <h4>Option 3: RingCentral</h4>
+                <p>Stream live audio to your server via Audio Streaming API, then forward to Google/Watson for live transcription.</p>
+                <span class="status-badge status-medium" style="margin-top: 10px;">Good Balance</span>
+            </div>
+        </section>
+
+        <!-- Standalone Transcription -->
+        <section class="section">
+            <h2 class="section-title">Standalone Transcription Services</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                If you need to add transcription to any audio source:
+            </p>
+
+            <div class="transcription-grid">
+                <div class="transcription-card">
+                    <h4>Deepgram</h4>
+                    <p class="type">Real-Time Speech API</p>
+                    <p>Fast, accurate, WebSocket streaming, pay-per-minute. Best for real-time use cases.</p>
+                </div>
+
+                <div class="transcription-card">
+                    <h4>AssemblyAI</h4>
+                    <p class="type">AI Transcription + Analysis</p>
+                    <p>Transcription plus sentiment, topics, entity detection. Great for AI features.</p>
+                </div>
+
+                <div class="transcription-card">
+                    <h4>OpenAI Whisper</h4>
+                    <p class="type">Open Source / API</p>
+                    <p>Very accurate, multi-language, better for batch than real-time. Can self-host.</p>
+                </div>
+
+                <div class="transcription-card">
+                    <h4>Google Speech-to-Text</h4>
+                    <p class="type">Enterprise Grade</p>
+                    <p>125+ languages, speaker diarization, integrates with RingCentral.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conversation Intelligence -->
+        <section class="section">
+            <h2 class="section-title">Conversation Intelligence Platforms</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                All-in-one platforms for call recording, transcription, and AI coaching:
+            </p>
+
+            <div class="intel-grid">
+                <div class="intel-card">
+                    <h4>Gong</h4>
+                    <p class="pricing">~$5,000/year base + $1,400/user/year</p>
+                    <p>Market leader, enterprise pricing. Revenue intelligence.</p>
+                </div>
+
+                <div class="intel-card">
+                    <h4>Chorus (ZoomInfo)</h4>
+                    <p class="pricing">Mid-market pricing</p>
+                    <p>50-60% cheaper than Gong. Conversation intelligence.</p>
+                </div>
+
+                <div class="intel-card">
+                    <h4>Fireflies.ai</h4>
+                    <p class="pricing">Free tier available</p>
+                    <p>Budget friendly, basic features. Meeting transcription.</p>
+                </div>
+
+                <div class="intel-card">
+                    <h4>Avoma</h4>
+                    <p class="pricing">Contact for pricing</p>
+                    <p>End-to-end meeting automation. Meeting lifecycle.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Research Notes -->
+        <section class="section">
+            <h2 class="section-title">Research Notes & Next Steps</h2>
+
+            <div class="highlight-box">
+                <h4>Recommended Path Forward</h4>
+                <ul>
+                    <li><strong>Dialpad</strong> offers the fastest path to live transcription with minimal development</li>
+                    <li><strong>RingCentral</strong> is best if you need robust extension/line filtering for multiple business purposes</li>
+                    <li><strong>Twilio</strong> gives maximum flexibility but requires significant development work</li>
+                    <li>Consider starting with <strong>Dialpad for MVP</strong>, then evaluate Twilio for custom features later</li>
+                    <li>For conversation intelligence (AI coaching), evaluate Gong/Chorus only if budget allows ($5K+/year)</li>
+                    <li><strong>Deepgram</strong> or <strong>AssemblyAI</strong> can add transcription to any audio source if needed</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sources -->
+        <section class="sources-section">
+            <h3>API Documentation</h3>
+            <ul>
+                <li><a href="https://www.dialpad.com/developers/" target="_blank">Dialpad Developer Portal</a></li>
+                <li><a href="https://developers.ringcentral.com/" target="_blank">RingCentral Developers</a></li>
+                <li><a href="https://www.twilio.com/docs/voice" target="_blank">Twilio Voice Documentation</a></li>
+                <li><a href="https://developer.aircall.io/" target="_blank">Aircall Developer Portal</a></li>
+                <li><a href="https://deepgram.com/docs" target="_blank">Deepgram Documentation</a></li>
+                <li><a href="https://www.assemblyai.com/docs" target="_blank">AssemblyAI Documentation</a></li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Telephony Research Document | Outreach System</p>
+            <p>Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

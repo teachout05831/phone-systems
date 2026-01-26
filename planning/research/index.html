@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Documentation - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .research-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .research-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .research-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .research-card.marketing {
+            border-color: rgba(138, 43, 226, 0.3);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(75, 0, 130, 0.05));
+        }
+
+        .research-card.marketing:hover {
+            border-color: rgba(138, 43, 226, 0.5);
+        }
+
+        .research-card.tools {
+            border-color: rgba(0, 212, 255, 0.3);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 150, 200, 0.05));
+        }
+
+        .research-card.tools:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .research-card.tools h3 {
+            color: #00d4ff;
+        }
+
+        .research-card.telephony {
+            border-color: rgba(39, 174, 96, 0.3);
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(30, 130, 70, 0.05));
+        }
+
+        .research-card.telephony:hover {
+            border-color: rgba(39, 174, 96, 0.5);
+        }
+
+        .research-card.telephony h3 {
+            color: #27ae60;
+        }
+
+        .research-card.compliance {
+            border-color: rgba(231, 76, 60, 0.3);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(180, 50, 40, 0.05));
+        }
+
+        .research-card.compliance:hover {
+            border-color: rgba(231, 76, 60, 0.5);
+        }
+
+        .research-card.compliance h3 {
+            color: #e74c3c;
+        }
+
+        .research-card.outreach {
+            border-color: rgba(243, 156, 18, 0.3);
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.1), rgba(200, 120, 10, 0.05));
+        }
+
+        .research-card.outreach:hover {
+            border-color: rgba(243, 156, 18, 0.5);
+        }
+
+        .research-card.outreach h3 {
+            color: #f39c12;
+        }
+
+        .research-card.target {
+            border-color: rgba(233, 30, 99, 0.3);
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(180, 20, 70, 0.05));
+        }
+
+        .research-card.target:hover {
+            border-color: rgba(233, 30, 99, 0.5);
+        }
+
+        .research-card.target h3 {
+            color: #e91e63;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .research-card h3 {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .research-card.marketing h3 {
+            color: #9b59b6;
+        }
+
+        .research-card p {
+            color: #888;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .card-tag {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-html { background: #e44d26; color: #fff; }
+        .tag-md { background: #083fa1; color: #fff; }
+        .tag-new { background: #28a745; color: #fff; }
+
+        .section-divider {
+            margin: 40px 0;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .section-divider span {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 0 20px;
+        }
+
+        .section-divider::before {
+            content: "";
+            display: block;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: -10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../gameplan.html" class="back-link">&larr; Back to Game Plan</a>
+
+        <header>
+            <h1>Research Documentation</h1>
+            <p class="subtitle">Deep-dive research on tools, APIs, compliance, and best practices</p>
+        </header>
+
+        <div class="research-grid">
+            <!-- Marketing Research - Featured -->
+            <a href="marketing-research.html" class="research-card marketing">
+                <div class="card-icon">📊</div>
+                <h3>Marketing & Paid Ads</h3>
+                <p>Ad platform APIs (Facebook, Google, TikTok, LinkedIn), attribution models, dashboard metrics, and implementation approach.</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+
+            <!-- Tools Research -->
+            <a href="tools-research.html" class="research-card tools">
+                <div class="card-icon">🛠️</div>
+                <h3>Tools Research</h3>
+                <p>Email finding, outreach automation, social media tools, scraping, and lead generation platforms.</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+
+            <!-- Telephony Research -->
+            <a href="telephony-research.html" class="research-card telephony">
+                <div class="card-icon">📞</div>
+                <h3>Telephony & Call Transcription</h3>
+                <p>RingCentral, Twilio, call recording, transcription services (Deepgram, AssemblyAI, Whisper).</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+
+            <!-- Compliance Research -->
+            <a href="compliance-research.html" class="research-card compliance">
+                <div class="card-icon">⚖️</div>
+                <h3>Compliance</h3>
+                <p>CAN-SPAM, GDPR, TCPA, and other regulations for email, calling, and data handling.</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+
+            <!-- Outreach Best Practices -->
+            <a href="outreach-best-practices.html" class="research-card outreach">
+                <div class="card-icon">📧</div>
+                <h3>Outreach Best Practices</h3>
+                <p>Email deliverability, cold outreach strategies, follow-up sequences, and response optimization.</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+
+            <!-- Target Audience -->
+            <a href="target-audience-website-builder.html" class="research-card target">
+                <div class="card-icon">🎯</div>
+                <h3>Website Builder Target Audience</h3>
+                <p>Target personas, discovery channels, and messaging angles for website builder services.</p>
+                <span class="card-tag tag-html">HTML</span>
+                <span class="card-tag tag-new">NEW</span>
+            </a>
+        </div>
+
+        <footer>
+            <p>Outreach System - Research Documentation</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Builder Target Audience - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #e91e63;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #e91e63;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(233, 30, 99, 0.3);
+        }
+
+        .segment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .segment-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #e91e63;
+        }
+
+        .segment-card.primary {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .segment-card.testing {
+            border-color: #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .segment-card h3 {
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .segment-card .status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status-primary { background: #27ae60; color: #fff; }
+        .status-testing { background: #f39c12; color: #000; }
+
+        .segment-card .profile {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .pain-points {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .pain-points li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .pain-points li::before {
+            content: "!";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background: rgba(233, 30, 99, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e91e63;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .info-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-table td {
+            padding: 12px 0;
+            vertical-align: top;
+        }
+
+        .info-table td:first-child {
+            color: #e91e63;
+            font-weight: 600;
+            width: 140px;
+        }
+
+        .info-table td:last-child {
+            color: #aaa;
+        }
+
+        .highlight-box {
+            background: rgba(233, 30, 99, 0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #e91e63;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #e91e63;
+        }
+
+        .offer-card {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(156, 39, 176, 0.1));
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .offer-card h3 {
+            color: #e91e63;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .offer-card .hook {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .offer-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .offer-component {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .offer-component .num {
+            color: #e91e63;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .offer-component .label {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .value-prop {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .value-prop li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #aaa;
+        }
+
+        .value-prop li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .qualification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .qualification-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .qualification-card h4 {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .qualification-card.must-have {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .qualification-card.nice-have {
+            border-left: 4px solid #27ae60;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #aaa;
+        }
+
+        .checklist li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e91e63;
+            border-radius: 3px;
+        }
+
+        .messaging-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .messaging-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #e91e63;
+        }
+
+        .messaging-card h4 {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .messaging-card .message {
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-style: italic;
+            padding: 10px;
+            background: rgba(233, 30, 99, 0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .channels-checklist {
+            list-style: none;
+        }
+
+        .channels-checklist li {
+            padding: 10px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #aaa;
+        }
+
+        .channels-checklist li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e91e63;
+            border-radius: 3px;
+        }
+
+        .funnel-flow {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .funnel-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .funnel-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .funnel-step .step-box {
+            background: rgba(233, 30, 99, 0.2);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: #fff;
+            font-size: 0.9rem;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .funnel-step .arrow {
+            color: #e91e63;
+            margin: 0 15px;
+            font-size: 1.2rem;
+        }
+
+        .volume-goal {
+            background: rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .volume-goal .number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .volume-goal .label {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .notes-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .notes-box h4 {
+            color: #888;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .notes-box ul {
+            list-style: none;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .notes-box li {
+            padding: 5px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .notes-box li::before {
+            content: "-";
+            position: absolute;
+            left: 0;
+            color: #666;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Research</a>
+
+        <header>
+            <h1>Website Builder Target Audience</h1>
+            <p class="subtitle">Target Personas, Discovery Channels & Messaging Angles</p>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="section">
+            <h2 class="section-title">Overview</h2>
+            <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                Service-based companies needing website solutions, brought in through a "Grand Slam" free preview offer.
+                Focus on segments that are easier to target, reach, and convert.
+            </p>
+
+            <div class="volume-goal">
+                <div class="number">50 - 200</div>
+                <div class="label">Target Customers per Campaign/Batch</div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Focus Criteria</h4>
+                <ul>
+                    <li><strong>Easier to target:</strong> Identifiable characteristics</li>
+                    <li><strong>Easier to reach:</strong> Accessible contact methods</li>
+                    <li><strong>Easier to convert:</strong> Motivated to change</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Primary Target Segments -->
+        <section class="section">
+            <h2 class="section-title">Primary Target Segments</h2>
+
+            <div class="segment-grid">
+                <!-- Segment 1: No Website -->
+                <div class="segment-card testing">
+                    <h3>Segment 1: No Website</h3>
+                    <span class="status status-testing">TESTING VIABILITY</span>
+                    <p class="profile">Service-based businesses currently operating without a website</p>
+
+                    <h4 style="color: #fff; margin: 20px 0 10px; font-size: 0.95rem;">Pain Points</h4>
+                    <ul class="pain-points">
+                        <li>Missing online presence</li>
+                        <li>Losing customers to competitors with websites</li>
+                        <li>Don't know where to start</li>
+                        <li>Perceive website development as expensive/complicated</li>
+                    </ul>
+                </div>
+
+                <!-- Segment 2: Outdated Website -->
+                <div class="segment-card primary">
+                    <h3>Segment 2: Outdated Website</h3>
+                    <span class="status status-primary">PRIMARY FOCUS</span>
+                    <p class="profile">Service-based businesses with existing websites that are visibly outdated</p>
+                    <p style="color: #27ae60; font-size: 0.85rem; margin-bottom: 15px;"><strong>Awareness Level:</strong> They know their website needs updating</p>
+
+                    <h4 style="color: #fff; margin: 20px 0 10px; font-size: 0.95rem;">Pain Points</h4>
+                    <ul class="pain-points">
+                        <li>Website doesn't reflect current business/brand</li>
+                        <li>Poor mobile experience</li>
+                        <li>Outdated design hurting credibility</li>
+                        <li>Not generating leads effectively</li>
+                        <li>Embarrassed to send prospects to their site</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Business Characteristics -->
+        <section class="section">
+            <h2 class="section-title">Business Characteristics</h2>
+
+            <table class="info-table">
+                <tr>
+                    <td>Business Type</td>
+                    <td>Service-based companies</td>
+                </tr>
+                <tr>
+                    <td>Revenue Range</td>
+                    <td>Under $1M (smaller operations)</td>
+                </tr>
+                <tr>
+                    <td>Team Size</td>
+                    <td>Small teams, likely owner-operated</td>
+                </tr>
+                <tr>
+                    <td>Tech Savviness</td>
+                    <td>Low to moderate</td>
+                </tr>
+                <tr>
+                    <td>Budget Mindset</td>
+                    <td>Cost-conscious, value-focused</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Grand Slam Offer -->
+        <section class="section">
+            <h2 class="section-title">Grand Slam Offer Structure</h2>
+
+            <div class="offer-card">
+                <h3>The Hook</h3>
+                <div class="hook">"Free preview of your brand new website - no money required"</div>
+
+                <div class="offer-components">
+                    <div class="offer-component">
+                        <div class="num">1</div>
+                        <div class="label">Free Website Preview</div>
+                    </div>
+                    <div class="offer-component">
+                        <div class="num">2</div>
+                        <div class="label">Free Website Build</div>
+                    </div>
+                    <div class="offer-component">
+                        <div class="num">3</div>
+                        <div class="label">Software Subscription</div>
+                    </div>
+                    <div class="offer-component">
+                        <div class="num">4</div>
+                        <div class="label">Merchant Setup</div>
+                    </div>
+                </div>
+
+                <h4 style="color: #fff; margin: 20px 0 10px;">How It Works</h4>
+                <ul class="value-prop">
+                    <li><strong>Free Website Preview</strong> - They see their new site before any commitment</li>
+                    <li><strong>Free Website Build</strong> - If they sign up for software subscription</li>
+                    <li><strong>Software Subscription</strong> - Monthly recurring model (TKR Classroom platform)</li>
+                    <li><strong>Credit Card Merchant Setup</strong> - Integrated payment processing</li>
+                </ul>
+
+                <div class="highlight-box" style="background: rgba(39, 174, 96, 0.1); border-color: rgba(39, 174, 96, 0.3); margin-top: 20px;">
+                    <h4 style="color: #27ae60;">Value Proposition</h4>
+                    <ul>
+                        <li>Zero upfront cost for website</li>
+                        <li>Professional website included with software subscription</li>
+                        <li>All-in-one solution (website + software + payments)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Qualification Criteria -->
+        <section class="section">
+            <h2 class="section-title">Qualification Criteria</h2>
+
+            <div class="qualification-grid">
+                <div class="qualification-card must-have">
+                    <h4>Must Have</h4>
+                    <ul class="checklist">
+                        <li>Service-based business</li>
+                        <li>Either no website OR outdated website</li>
+                        <li>Willing to use subscription software</li>
+                        <li>Needs payment processing solution</li>
+                    </ul>
+                </div>
+
+                <div class="qualification-card nice-have">
+                    <h4>Nice to Have</h4>
+                    <ul class="checklist">
+                        <li>Under $1M revenue</li>
+                        <li>Actively looking to grow online presence</li>
+                        <li>Frustrated with current tech stack</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Messaging Angles -->
+        <section class="section">
+            <h2 class="section-title">Messaging Angles</h2>
+
+            <div class="messaging-grid">
+                <div class="messaging-card">
+                    <h4>For "No Website" Segment</h4>
+                    <div class="message">"Your competitors have websites. Your customers expect one."</div>
+                    <div class="message">"See your business online - free preview, no commitment"</div>
+                    <div class="message">"We build it, you approve it, simple as that"</div>
+                </div>
+
+                <div class="messaging-card">
+                    <h4>For "Outdated Website" Segment</h4>
+                    <div class="message">"Your website is your first impression - is it working for you?"</div>
+                    <div class="message">"See your website transformed - free preview"</div>
+                    <div class="message">"Modern website, zero upfront cost"</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Channels to Test -->
+        <section class="section">
+            <h2 class="section-title">Channels to Test</h2>
+
+            <ul class="channels-checklist">
+                <li>Cold email outreach</li>
+                <li>Social media (Facebook/LinkedIn)</li>
+                <li>Local business directories</li>
+                <li>Google Maps scraping (businesses without websites)</li>
+                <li>Industry-specific lists</li>
+            </ul>
+        </section>
+
+        <!-- Conversion Path -->
+        <section class="section">
+            <h2 class="section-title">Conversion Path</h2>
+
+            <div class="funnel-flow">
+                <div class="funnel-step">
+                    <div class="step-box">Free Website Preview</div>
+                    <span class="arrow">&rarr;</span>
+                    <div class="step-box">Approve Design</div>
+                    <span class="arrow">&rarr;</span>
+                    <div class="step-box">Sign Up for Software</div>
+                </div>
+                <div class="funnel-step" style="padding-left: 60px;">
+                    <span class="arrow">&rarr;</span>
+                    <div class="step-box">Merchant Account Setup</div>
+                    <span class="arrow">&rarr;</span>
+                    <div class="step-box">Monthly Subscription</div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Key Insight</h4>
+                <ul>
+                    <li>Free preview removes risk - decision becomes easy</li>
+                    <li>They see value before committing anything</li>
+                    <li>Subscription model provides recurring revenue</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Notes -->
+        <section class="section">
+            <h2 class="section-title">Notes</h2>
+
+            <div class="notes-box">
+                <h4>Implementation Notes</h4>
+                <ul>
+                    <li>Web services component removed from initial offer (keep it simple)</li>
+                    <li>Segment 1 (no website) needs validation testing before full investment</li>
+                    <li>Focus on making the decision easy: free preview removes risk</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>
+            <p>Website Builder Target Audience | Outreach System</p>
+            <p>Profile Created: January 2026 | Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

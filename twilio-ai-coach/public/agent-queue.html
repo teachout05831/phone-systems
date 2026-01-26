@@ -762,6 +762,69 @@
     </div>
   </div>
 
+  <!-- Agent Selector Modal -->
+  <div class="modal-overlay" id="agentSelectorModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Select AI Agent</h3>
+        <button class="modal-close" onclick="closeAgentSelector()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="dispatchContactInfo" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+        <div id="agentList" class="agent-list">
+          <!-- Agents loaded dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAgentSelector()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmDispatch()">🚀 Dispatch Call</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .agent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .agent-option {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .agent-option:hover {
+      border-color: var(--primary-color);
+      background: var(--bg-secondary);
+    }
+    .agent-option.selected {
+      border-color: var(--primary-color);
+      background: rgba(59, 130, 246, 0.1);
+    }
+    .agent-option input[type="radio"] {
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+    }
+    .agent-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .agent-info strong {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+    .agent-info span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+
   <script src="js/agent-queue.js"></script>
   <!-- Incoming calls support -->
   <script src="js/twilio.min.js"></script>

@@ -398,12 +398,88 @@ async function addSelectedToQueue() {
 /**
  * Dispatch a queue item (trigger AI call)
  */
+// Store available agents
+let availableAgents = [];
+let pendingDispatchItem = null;
+
+// Load available AI agents
+async function loadAIAgents() {
+  try {
+    const response = await fetch('/api/ai-agents');
+    const data = await response.json();
+    availableAgents = data.agents || [];
+  } catch (error) {
+    console.error('Error loading AI agents:', error);
+    availableAgents = [];
+  }
+}
+
+// Show agent selector modal
+function showAgentSelector(item) {
+  pendingDispatchItem = item;
+
+  const modal = document.getElementById('agentSelectorModal');
+  const agentList = document.getElementById('agentList');
+  const contactInfo = document.getElementById('dispatchContactInfo');
+
+  if (contactInfo) {
+    contactInfo.textContent = `Calling: ${item.contactName} (${item.phone})`;
+  }
+
+  if (agentList && availableAgents.length > 0) {
+    agentList.innerHTML = availableAgents.map((agent, index) => `
+      <label class="agent-option ${index === 0 ? 'selected' : ''}">
+        <input type="radio" name="selectedAgent" value="${agent.id}" ${index === 0 ? 'checked' : ''}>
+        <div class="agent-info">
+          <strong>${agent.name}</strong>
+          <span>${agent.description}</span>
+        </div>
+      </label>
+    `).join('');
+
+    // Add click handlers
+    agentList.querySelectorAll('.agent-option').forEach(option => {
+      option.addEventListener('click', () => {
+        agentList.querySelectorAll('.agent-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        option.querySelector('input').checked = true;
+      });
+    });
+  }
+
+  if (modal) modal.classList.add('active');
+}
+
+function closeAgentSelector() {
+  const modal = document.getElementById('agentSelectorModal');
+  if (modal) modal.classList.remove('active');
+  pendingDispatchItem = null;
+}
+
+async function confirmDispatch() {
+  if (!pendingDispatchItem) return;
+
+  const selectedAgent = document.querySelector('input[name="selectedAgent"]:checked');
+  const agentId = selectedAgent ? selectedAgent.value : null;
+
+  closeAgentSelector();
+  await dispatchWithAgent(pendingDispatchItem, agentId);
+}
+
 async function dispatchItem(queueId) {
   const item = queueItems.find(q => q.queueId === queueId);
   if (!item) return;
 
-  if (!confirm(`Dispatch AI agent to call ${item.contactName}?`)) return;
+  // Load agents if not loaded
+  if (availableAgents.length === 0) {
+    await loadAIAgents();
+  }
 
+  // Show agent selector modal
+  showAgentSelector(item);
+}
+
+async function dispatchWithAgent(item, agentId) {
   try {
     // Security: Get company_id to verify ownership
     const { companyId, error: membershipError } = await getCompanyMembership();
@@ -412,23 +488,41 @@ async function dispatchItem(queueId) {
       return;
     }
 
-    // Security: Filter by both id AND company_id to prevent unauthorized updates
+    // Call the AI agent API
+    const response = await fetch('/api/ai-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phoneNumber: item.phone,
+        agentId: agentId,
+        contactName: item.contactName,
+        queueId: item.queueId
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('AI call error:', result);
+      alert(`Failed to dispatch: ${result.error || 'Unknown error'}`);
+      return;
+    }
+
+    // Update queue status
     const { error } = await supabase
       .from('ai_queue')
       .update({
         status: 'in_progress',
         updated_at: new Date().toISOString()
       })
-      .eq('id', queueId)
+      .eq('id', item.queueId)
       .eq('company_id', companyId);
 
     if (error) {
-      console.error('Error dispatching:', error);
-      alert('Failed to dispatch call');
-      return;
+      console.error('Error updating queue:', error);
     }
 
-    alert(`AI agent dispatching to call ${item.contactName}...`);
+    alert(result.message || `AI agent dispatching to call ${item.contactName}...`);
 
     // Refresh data
     await Promise.all([loadQueueItems(), loadQueueStats()]);

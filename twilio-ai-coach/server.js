@@ -912,6 +912,92 @@ app.post('/end-call', async (req, res) => {
   }
 });
 
+// ============ RETELL AI ENDPOINTS ============
+
+// Get available AI agents
+app.get('/api/ai-agents', (req, res) => {
+  const agents = [
+    {
+      id: process.env.RETELL_AGENT_ID || 'default',
+      name: 'Default Agent',
+      description: 'Standard outbound sales agent',
+      type: 'outbound-caller'
+    },
+    {
+      id: 'agent_closer',
+      name: 'The Closer',
+      description: 'Sales conversion specialist for warm leads',
+      type: 'closer'
+    },
+    {
+      id: 'agent_ralph',
+      name: 'Ralph Wiggum',
+      description: 'Friendly initial contact agent',
+      type: 'ralph-wiggum'
+    }
+  ];
+  res.json({ agents });
+});
+
+// Dispatch AI agent to make a call
+app.post('/api/ai-call', async (req, res) => {
+  const { phoneNumber, agentId, contactName, queueId } = req.body;
+
+  if (!phoneNumber) {
+    return res.status(400).json({ error: 'Phone number is required' });
+  }
+
+  const selectedAgentId = agentId || process.env.RETELL_AGENT_ID;
+
+  if (!selectedAgentId) {
+    return res.status(400).json({ error: 'No AI agent configured' });
+  }
+
+  try {
+    console.log(`Dispatching AI agent ${selectedAgentId} to call ${phoneNumber}`);
+
+    // Call Retell API to create an outbound call
+    const retellResponse = await fetch('https://api.retellai.com/v2/create-phone-call', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        agent_id: selectedAgentId,
+        to_number: phoneNumber,
+        from_number: process.env.TWILIO_PHONE_NUMBER,
+        metadata: {
+          contact_name: contactName || 'Unknown',
+          queue_id: queueId || null
+        }
+      })
+    });
+
+    if (!retellResponse.ok) {
+      const errorData = await retellResponse.json();
+      console.error('Retell API error:', errorData);
+      return res.status(retellResponse.status).json({
+        error: 'Failed to dispatch AI call',
+        details: errorData
+      });
+    }
+
+    const callData = await retellResponse.json();
+    console.log('AI call dispatched successfully:', callData);
+
+    res.json({
+      success: true,
+      callId: callData.call_id,
+      message: `AI agent calling ${contactName || phoneNumber}...`
+    });
+
+  } catch (error) {
+    console.error('Error dispatching AI call:', error);
+    res.status(500).json({ error: 'Failed to dispatch AI call', details: error.message });
+  }
+});
+
 // ============ REAL-TIME CALL ENDPOINTS (for supervisor monitoring) ============
 // These endpoints return data about ACTIVE calls only (in-memory)
 // Historical data is queried from Supabase via Next.js

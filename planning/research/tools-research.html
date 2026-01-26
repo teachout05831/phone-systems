@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools Research - Outreach System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .platform-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .platform-card h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .platform-card.recommended {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .platform-card.in-stack {
+            border-color: #9b59b6;
+            background: rgba(155, 89, 182, 0.1);
+        }
+
+        .platform-card.budget {
+            border-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .info-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-table td {
+            padding: 10px 0;
+            vertical-align: top;
+        }
+
+        .info-table td:first-child {
+            color: #00d4ff;
+            font-weight: 600;
+            width: 120px;
+        }
+
+        .info-table td:last-child {
+            color: #aaa;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .tag-recommended { background: #28a745; color: #fff; }
+        .tag-in-stack { background: #9b59b6; color: #fff; }
+        .tag-budget { background: #ffc107; color: #000; }
+        .tag-best { background: #00d4ff; color: #000; }
+
+        .best-for {
+            color: #28a745;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .highlight-box {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+
+        .highlight-box li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .highlight-box li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #00d4ff;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .stack-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .stack-card h4 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .stack-card .price {
+            color: #28a745;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .stack-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stack-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
+
+        .stack-table td:last-child {
+            text-align: right;
+            color: #28a745;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .api-link:hover {
+            text-decoration: underline;
+        }
+
+        .sources-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sources-section h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .sources-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .sources-section li a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .sources-section li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Research</a>
+
+        <header>
+            <h1>Outreach Tools Research</h1>
+            <p class="subtitle">Email Finding, Outreach Automation, Social Media, Scraping & Lead Generation</p>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="section">
+            <h2 class="section-title">Research Overview</h2>
+            <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                Comprehensive research on tools for email finding, outreach automation, social media outreach,
+                scraping, and lead generation across all channels. This covers the full stack needed for
+                both TKOR Classroom and Website Builder outreach campaigns.
+            </p>
+
+            <div class="highlight-box">
+                <h4>Quick Recommendations</h4>
+                <ul>
+                    <li><strong>All-in-One Lead + Email:</strong> Apollo.io</li>
+                    <li><strong>Email Deliverability:</strong> Instantly.ai (already in stack)</li>
+                    <li><strong>YouTube Creators:</strong> Modash</li>
+                    <li><strong>LinkedIn Automation:</strong> Linked Helper (budget) or Expandi (premium)</li>
+                    <li><strong>Local Business Scraping:</strong> Outscraper</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Email Finding Section -->
+        <section class="section">
+            <h2 class="section-title">Email Finding & Outreach Platforms</h2>
+
+            <div class="platform-grid">
+                <!-- Apollo.io -->
+                <div class="platform-card recommended">
+                    <span class="tag tag-recommended">RECOMMENDED</span>
+                    <h3>Apollo.io</h3>
+                    <p style="color: #888; margin-bottom: 15px;">All-in-One Sales Intelligence</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>270M+ contacts, 35M companies</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Advanced filters (revenue, tech stack, intent signals), email sequences, LinkedIn integration, Chrome extension</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Free: 100 credits | Basic: $49/mo | Pro: $79/mo</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Best all-in-one solution for finding leads AND sending emails. Great filtering options.</div>
+                    <a href="https://www.apollo.io" class="api-link" target="_blank">apollo.io &rarr;</a>
+                </div>
+
+                <!-- Instantly.ai -->
+                <div class="platform-card in-stack">
+                    <span class="tag tag-in-stack">IN OUR STACK</span>
+                    <h3>Instantly.ai</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Cold Email Deliverability Focus</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Unlimited email accounts, inbox warm-up, sending rotation, campaign analytics</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Starting at $30/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Already in our stack. Great for deliverability but requires external lead source.</div>
+                    <a href="https://instantly.ai" class="api-link" target="_blank">instantly.ai &rarr;</a>
+                </div>
+
+                <!-- Hunter.io -->
+                <div class="platform-card">
+                    <h3>Hunter.io</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Email Finder & Verifier</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>100M+ email addresses indexed</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Domain search, email verifier (9.2 validation score), Chrome extension</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Free: 25 searches/mo | Starter: $49/mo | Growth: $99/mo</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Simple email finding for SMBs. Limited outreach features.</div>
+                    <a href="https://hunter.io" class="api-link" target="_blank">hunter.io &rarr;</a>
+                </div>
+
+                <!-- Saleshandy -->
+                <div class="platform-card budget">
+                    <span class="tag tag-budget">BUDGET OPTION</span>
+                    <h3>Saleshandy</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Cold Email at Scale</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>700M+ B2B contacts</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Unlimited email accounts, AI sequences, deliverability tools</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Starting at $25/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Budget option for high-volume sending.</div>
+                    <a href="https://www.saleshandy.com" class="api-link" target="_blank">saleshandy.com &rarr;</a>
+                </div>
+
+                <!-- Lemlist -->
+                <div class="platform-card">
+                    <h3>Lemlist</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Multichannel Outreach</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>450M+ verified contacts</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Email + LinkedIn + Calls, image/video personalization, 35+ filtering criteria</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Starting at $59/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Premium multichannel campaigns with personalization.</div>
+                    <a href="https://www.lemlist.com" class="api-link" target="_blank">lemlist.com &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- YouTube Discovery Section -->
+        <section class="section">
+            <h2 class="section-title">YouTube & Creator Discovery Tools</h2>
+
+            <div class="platform-grid">
+                <!-- Modash -->
+                <div class="platform-card recommended">
+                    <span class="tag tag-best">BEST FOR YOUTUBE</span>
+                    <h3>Modash</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Influencer Discovery Platform</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>11M+ YouTube creators</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Subscriber/engagement filters, audience demographics, direct email export, multi-platform (IG, TikTok, YouTube)</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>From $99/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Finding educational content creators for TKOR Classroom.</div>
+                    <a href="https://www.modash.io" class="api-link" target="_blank">modash.io &rarr;</a>
+                </div>
+
+                <!-- Influencers.club -->
+                <div class="platform-card">
+                    <h3>Influencers.club</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Creator Database</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>100M+ creators</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>40+ data points per creator, brand collaboration history, email extraction</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Subscription-based (contact for pricing)</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Comprehensive creator research with collaboration history.</div>
+                    <a href="https://influencers.club" class="api-link" target="_blank">influencers.club &rarr;</a>
+                </div>
+
+                <!-- Feedspot -->
+                <div class="platform-card">
+                    <h3>Feedspot</h3>
+                    <p style="color: #888; margin-bottom: 15px;">EdTech Influencer Lists</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>100K+ X/Twitter influencers</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>Curated EdTech influencer lists, email contacts, bulk export</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Education-focused influencer discovery.</div>
+                </div>
+
+                <!-- Apify -->
+                <div class="platform-card">
+                    <h3>Apify YouTube Scraper</h3>
+                    <p style="color: #888; margin-bottom: 15px;">API-Based Extraction</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Fast email extraction from YouTube channels, handles reCAPTCHA, works with channel IDs/handles</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Pay-per-use (cost-effective)</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Technical teams wanting direct YouTube scraping.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LinkedIn Section -->
+        <section class="section">
+            <h2 class="section-title">LinkedIn Automation Tools</h2>
+
+            <div class="platform-grid">
+                <!-- Linked Helper -->
+                <div class="platform-card budget">
+                    <span class="tag tag-budget">BUDGET PICK</span>
+                    <h3>Linked Helper</h3>
+                    <p style="color: #888; margin-bottom: 15px;">LinkedIn Automation</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Connection requests, message sequences, data extraction, works with all LinkedIn account types</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Standard: $15/mo | Pro: $45/mo</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Budget-friendly LinkedIn automation.</div>
+                </div>
+
+                <!-- Expandi -->
+                <div class="platform-card">
+                    <h3>Expandi</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Premium LinkedIn</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Users</td>
+                            <td>12,500+ businesses</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>AI features, safety focus, detailed analytics, cloud-based</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>$99/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Premium users who need safety and analytics.</div>
+                </div>
+
+                <!-- HeyReach -->
+                <div class="platform-card">
+                    <h3>HeyReach</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Agency-Focused</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Unlimited accounts, automatic rotation, agency features</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Contact for pricing</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Agencies managing multiple LinkedIn profiles.</div>
+                </div>
+
+                <!-- La Growth Machine -->
+                <div class="platform-card">
+                    <h3>La Growth Machine</h3>
+                    <p style="color: #888; margin-bottom: 15px;">True Multichannel</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Users</td>
+                            <td>25K+ users</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>LinkedIn + Email + Twitter in one workflow</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Integrated multichannel sequences.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Twitter/X Section -->
+        <section class="section">
+            <h2 class="section-title">Twitter/X Outreach Tools</h2>
+
+            <div class="platform-grid">
+                <!-- HypeAuditor -->
+                <div class="platform-card">
+                    <h3>HypeAuditor</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Twitter Discovery</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Wide range of search filters, CSV export, influencer network management, engagement metrics</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Subscription-based</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- NinjaOutreach -->
+                <div class="platform-card budget">
+                    <span class="tag tag-budget">BUDGET OPTION</span>
+                    <h3>NinjaOutreach</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Multi-Platform Influencers</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Multi-platform database, automated outreach, location/niche filters</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>From $49/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Budget-friendly influencer campaigns.</div>
+                </div>
+
+                <!-- Upfluence -->
+                <div class="platform-card">
+                    <h3>Upfluence</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Free Twitter Search</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Free Twitter influencer search, geographic targeting, brand amplification</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Free basic / Paid premium</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Starting Twitter research at no cost.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Website Scraping Section -->
+        <section class="section">
+            <h2 class="section-title">Website & Business Scraping Tools</h2>
+
+            <div class="platform-grid">
+                <!-- Outscraper -->
+                <div class="platform-card recommended">
+                    <span class="tag tag-best">BEST FOR LOCAL</span>
+                    <h3>Outscraper</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Google Maps Scraping</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Extract business contacts from Google Maps, bulk extraction, API access</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Free tier available | Pay-per-use</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Finding local businesses for Website Builder targeting.</div>
+                </div>
+
+                <!-- Skrapp.io -->
+                <div class="platform-card">
+                    <h3>Skrapp.io</h3>
+                    <p style="color: #888; margin-bottom: 15px;">B2B Email Finder</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>200M+ profiles</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>97%+ accuracy, LinkedIn integration</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Starting at $19/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Affordable B2B email finding.</div>
+                </div>
+
+                <!-- AeroLeads -->
+                <div class="platform-card">
+                    <h3>AeroLeads</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Multi-Source Scraping</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Database</td>
+                            <td>750M+ verified records from LinkedIn, Crunchbase, AngelList</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Contact for pricing</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instagram Section -->
+        <section class="section">
+            <h2 class="section-title">Instagram DM Tools</h2>
+
+            <div class="platform-grid">
+                <!-- LinkDM -->
+                <div class="platform-card recommended">
+                    <span class="tag tag-recommended">SAFE CHOICE</span>
+                    <h3>LinkDM</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Meta-Certified</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Meta API-compliant, comment-to-DM automation, safe for accounts</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Free tier | Pro: $19/month</td>
+                        </tr>
+                    </table>
+                    <div class="best-for">Staying within Instagram TOS.</div>
+                </div>
+
+                <!-- Cold DMs -->
+                <div class="platform-card">
+                    <h3>Cold DMs</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Lead Scraping + DMs</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Lead scraping, 10-step sequences, auto follow-ups</td>
+                        </tr>
+                        <tr>
+                            <td>Risk</td>
+                            <td>Higher risk - more aggressive outreach</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Wave -->
+                <div class="platform-card">
+                    <h3>Wave</h3>
+                    <p style="color: #888; margin-bottom: 15px;">IG Outreach</p>
+                    <table class="info-table">
+                        <tr>
+                            <td>Features</td>
+                            <td>Prospect finder, personalized messaging, warm-up features</td>
+                        </tr>
+                        <tr>
+                            <td>Pricing</td>
+                            <td>Contact for pricing</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Suggested Stacks Section -->
+        <section class="section">
+            <h2 class="section-title">Suggested Tool Stack Budgets</h2>
+
+            <div class="platform-grid">
+                <div class="stack-card">
+                    <h4>TKOR Classroom Stack</h4>
+                    <div class="price">~$223/month</div>
+                    <table class="stack-table">
+                        <tr>
+                            <td>Apollo.io (Basic)</td>
+                            <td>Lead finding & email</td>
+                            <td>$49/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Modash</td>
+                            <td>YouTube creator discovery</td>
+                            <td>$99/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Linked Helper Pro</td>
+                            <td>LinkedIn automation</td>
+                            <td>$45/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Instantly.ai</td>
+                            <td>Email deliverability</td>
+                            <td>$30/mo</td>
+                        </tr>
+                        <tr>
+                            <td>HubSpot CRM</td>
+                            <td>Lead management</td>
+                            <td>Free</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="stack-card">
+                    <h4>Website Builder Stack</h4>
+                    <div class="price">~$227/month</div>
+                    <table class="stack-table">
+                        <tr>
+                            <td>Hunter.io (Starter)</td>
+                            <td>Email finding</td>
+                            <td>$49/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Outscraper</td>
+                            <td>Google Maps scraping</td>
+                            <td>~$40/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Saleshandy</td>
+                            <td>Cold email</td>
+                            <td>$25/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Expandi</td>
+                            <td>LinkedIn</td>
+                            <td>$99/mo</td>
+                        </tr>
+                        <tr>
+                            <td>Pipedrive CRM</td>
+                            <td>Lead management</td>
+                            <td>$14/mo</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Combined Budget Estimate</h4>
+                <ul>
+                    <li>~$400-450/month (with some tool overlap)</li>
+                    <li>Start with one stack, expand as needed</li>
+                    <li>Many tools offer free trials - test before committing</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Decision Matrix Section -->
+        <section class="section">
+            <h2 class="section-title">Decision Matrix</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Need</th>
+                        <th>Best Option</th>
+                        <th>Runner Up</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>All-in-one lead + email</td>
+                        <td><strong>Apollo.io</strong></td>
+                        <td>Lemlist</td>
+                    </tr>
+                    <tr>
+                        <td>Email deliverability</td>
+                        <td><strong>Instantly.ai</strong></td>
+                        <td>Saleshandy</td>
+                    </tr>
+                    <tr>
+                        <td>YouTube creators</td>
+                        <td><strong>Modash</strong></td>
+                        <td>Influencers.club</td>
+                    </tr>
+                    <tr>
+                        <td>LinkedIn automation</td>
+                        <td><strong>Linked Helper</strong> (budget) / <strong>Expandi</strong> (premium)</td>
+                        <td>La Growth Machine</td>
+                    </tr>
+                    <tr>
+                        <td>Local business scraping</td>
+                        <td><strong>Outscraper</strong></td>
+                        <td>AeroLeads</td>
+                    </tr>
+                    <tr>
+                        <td>Twitter influencers</td>
+                        <td><strong>Upfluence</strong> (free) / <strong>HypeAuditor</strong></td>
+                        <td>NinjaOutreach</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Sources -->
+        <section class="sources-section">
+            <h3>Tool Websites</h3>
+            <ul>
+                <li><a href="https://www.apollo.io" target="_blank">Apollo.io</a></li>
+                <li><a href="https://instantly.ai" target="_blank">Instantly.ai</a></li>
+                <li><a href="https://www.modash.io" target="_blank">Modash</a></li>
+                <li><a href="https://hunter.io" target="_blank">Hunter.io</a></li>
+                <li><a href="https://www.saleshandy.com" target="_blank">Saleshandy</a></li>
+                <li><a href="https://www.lemlist.com" target="_blank">Lemlist</a></li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Tools Research Document | Outreach System</p>
+            <p>Last Updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+</html>
