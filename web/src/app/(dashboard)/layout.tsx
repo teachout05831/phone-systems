@@ -31,8 +31,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <header className="border-b border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
             <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="text-xl font-bold text-zinc-900 dark:text-white">
-                Outreach System
+              <Link href="/dashboard" className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
+                Dial<span className="text-orange-500">Pro</span>
               </Link>
               <nav className="flex items-center gap-4">
                 <Link
