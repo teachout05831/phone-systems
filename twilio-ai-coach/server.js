@@ -71,8 +71,10 @@ app.get('/health', async (req, res) => {
     supabase: { status: 'ok' },
     twilio: { status: 'ok' },
     deepgram: { status: 'ok' },
+    elevenlabs: { status: 'ok' },
     anthropic: { status: 'ok' },
     environment: { status: 'ok' },
+    transcriptionProvider: { status: 'ok', active: transcriptionProvider },
   };
 
   // Check required environment variables
@@ -107,6 +109,15 @@ app.get('/health', async (req, res) => {
   // Check Deepgram
   if (!process.env.DEEPGRAM_API_KEY) {
     checks.deepgram = { status: 'error', message: 'API key not set' };
+  } else {
+    checks.deepgram = { status: 'ok', provider: transcriptionProvider === 'deepgram' ? 'active' : 'standby' };
+  }
+
+  // Check ElevenLabs
+  if (!process.env.ELEVENLABS_API_KEY) {
+    checks.elevenlabs = { status: 'warning', message: 'API key not set (optional)' };
+  } else {
+    checks.elevenlabs = { status: 'ok', provider: transcriptionProvider === 'elevenlabs' ? 'active' : 'standby' };
   }
 
   // Check Anthropic
@@ -552,7 +563,10 @@ app.get('/token', (req, res) => {
 });
 
 // TwiML for outbound calls from browser
-// Supports both Basic Mode (Twilio transcription) and Advanced Mode (Deepgram streaming)
+// Supports three modes:
+// - 'basic': Post-call Twilio transcription (slowest, simplest)
+// - 'advanced': Deepgram streaming via WebSocket (current default)
+// - 'twilio-realtime': Twilio's native real-time transcription with Deepgram backend (potentially fastest)
 app.post('/voice-outbound', (req, res) => {
   const twiml = new twilio.twiml.VoiceResponse();
   // Fix: URL-encoded '+' becomes space, so convert leading space back to '+'
@@ -583,8 +597,32 @@ app.post('/voice-outbound', (req, res) => {
     callMode: callMode
   });
 
-  if (callMode === 'advanced') {
-    // ADVANCED MODE: Use Deepgram for live transcription
+  if (callMode === 'twilio-realtime') {
+    // TWILIO REALTIME MODE: Use Twilio's native real-time transcription (Deepgram backend)
+    // This eliminates the server->Deepgram hop for potentially lower latency
+    const start = twiml.start();
+    start.transcription({
+      statusCallbackUrl: `https://${req.headers.host}/transcription-realtime`,
+      statusCallbackMethod: 'POST',
+      track: 'both_tracks',
+      transcriptionEngine: 'deepgram',
+      speechModel: 'nova-2-phonecall',
+      languageCode: 'en-US',
+      partialResults: true,
+      profanityFilter: false
+    });
+
+    // Dial with recording
+    const dial = twiml.dial({
+      callerId: process.env.TWILIO_PHONE_NUMBER,
+      answerOnBridge: true,
+      record: 'record-from-answer-dual',
+      recordingStatusCallback: `https://${req.headers.host}/recording-callback`,
+      recordingStatusCallbackEvent: 'completed'
+    });
+    dial.number(to);
+  } else if (callMode === 'advanced') {
+    // ADVANCED MODE: Use Deepgram for live transcription via WebSocket
     // Start media stream for real-time transcription
     const start = twiml.start();
     start.stream({
@@ -680,6 +718,10 @@ app.post('/api/twilio/voice/incoming', (req, res) => {
 // Call forwarding number (can be set via environment variable or settings)
 let callForwardingNumber = process.env.CALL_FORWARDING_NUMBER || null;
 
+// Transcription provider setting ('deepgram', 'elevenlabs', or 'twilio')
+// 'twilio' uses Twilio's native real-time transcription with Deepgram backend (fewer hops, potentially lower latency)
+let transcriptionProvider = process.env.TRANSCRIPTION_PROVIDER || 'deepgram';
+
 // API endpoint to get/set forwarding number
 app.get('/api/settings/forwarding', (req, res) => {
   res.json({ forwardingNumber: callForwardingNumber });
@@ -690,6 +732,22 @@ app.post('/api/settings/forwarding', (req, res) => {
   callForwardingNumber = forwardingNumber || null;
   console.log('Call forwarding number updated:', callForwardingNumber || 'disabled');
   res.json({ success: true, forwardingNumber: callForwardingNumber });
+});
+
+// API endpoint to get/set transcription provider
+app.get('/api/settings/transcription-provider', (req, res) => {
+  res.json({ provider: transcriptionProvider });
+});
+
+app.post('/api/settings/transcription-provider', (req, res) => {
+  const { provider } = req.body;
+  if (provider && ['deepgram', 'elevenlabs', 'twilio'].includes(provider)) {
+    transcriptionProvider = provider;
+    console.log('Transcription provider updated:', transcriptionProvider);
+    res.json({ success: true, provider: transcriptionProvider });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid provider. Use "deepgram", "elevenlabs", or "twilio"' });
+  }
 });
 
 // Shared handler for incoming calls
@@ -764,6 +822,191 @@ app.post('/recording-callback', async (req, res) => {
   });
 
   res.sendStatus(200);
+});
+
+// ============ TWILIO REAL-TIME TRANSCRIPTION WEBHOOK ============
+// This webhook receives real-time transcription events from Twilio's native transcription
+// Uses Deepgram as backend but Twilio handles the streaming (fewer network hops)
+
+app.post('/transcription-realtime', async (req, res) => {
+  try {
+    const {
+      CallSid,
+      TranscriptionEvent,  // 'transcription-started', 'transcription-content', 'transcription-stopped'
+      TranscriptionSid,
+      Track,               // 'inbound_track' (customer) or 'outbound_track' (rep)
+      TranscriptionData,   // JSON string with transcript content
+      SequenceId
+    } = req.body;
+
+    // Validate required fields
+    if (!CallSid) {
+      console.error('Transcription realtime callback missing CallSid');
+      return res.sendStatus(400);
+    }
+
+    const timestamp = new Date().toISOString();
+
+    switch (TranscriptionEvent) {
+      case 'transcription-started':
+        console.log(`[Twilio RT] Transcription started for call ${CallSid}`);
+
+        // Initialize transcript storage if not exists
+        if (!callTranscripts.has(CallSid)) {
+          callTranscripts.set(CallSid, []);
+        }
+
+        // Match with pending call if needed
+        activeCalls.forEach((data, key) => {
+          if (key.startsWith('pending_')) {
+            const callInfo = { ...data, transcriptionSid: TranscriptionSid, startTime: Date.now() };
+            activeCalls.set(CallSid, callInfo);
+            activeCalls.delete(key);
+          }
+        });
+
+        // Notify browser clients
+        broadcastToClients({
+          type: 'call_started',
+          callSid: CallSid,
+          transcriptionSid: TranscriptionSid,
+          provider: 'twilio-realtime'
+        });
+
+        broadcastToClients({
+          type: 'transcription_status',
+          callSid: CallSid,
+          status: 'active',
+          provider: 'twilio-realtime',
+          message: 'Twilio real-time transcription started'
+        }, (client) => client.role === 'rep');
+        break;
+
+      case 'transcription-content':
+        if (TranscriptionData) {
+          let transcriptData;
+          try {
+            transcriptData = typeof TranscriptionData === 'string'
+              ? JSON.parse(TranscriptionData)
+              : TranscriptionData;
+          } catch (e) {
+            console.error('Failed to parse TranscriptionData:', e);
+            return res.sendStatus(200);
+          }
+
+          const transcript = transcriptData.transcript || '';
+          const confidence = transcriptData.confidence || 0;
+          const isFinal = transcriptData.stability === 1.0 || transcriptData.is_final === true;
+
+          // Determine speaker from track
+          const speaker = Track === 'inbound_track' ? 'customer' : 'rep';
+
+          if (transcript) {
+            console.log(`[Twilio RT ${isFinal ? 'FINAL' : 'interim'}] [${speaker}] ${transcript}`);
+
+            // Store final transcripts for AI analysis
+            if (isFinal && CallSid) {
+              if (!callTranscripts.has(CallSid)) {
+                callTranscripts.set(CallSid, []);
+              }
+              callTranscripts.get(CallSid).push({
+                speaker,
+                text: transcript,
+                timestamp,
+                isFinal: true,
+                confidence
+              });
+
+              // Trigger AI coaching
+              const transcriptCount = callTranscripts.get(CallSid).length;
+              if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
+                  transcriptCount % AI_COACHING_INTERVAL === 0) {
+                getAICoachingSuggestion(CallSid, transcript).then(suggestion => {
+                  if (suggestion) {
+                    const coachMsg = {
+                      type: 'ai_coaching',
+                      callSid: CallSid,
+                      suggestion,
+                      timestamp
+                    };
+                    broadcastToClients(coachMsg, (client) => client.role === 'rep');
+                    broadcastToClients(coachMsg, (client) =>
+                      client.role === 'supervisor' && client.listeningTo === CallSid
+                    );
+                  }
+                });
+              }
+            }
+
+            // Send transcript to browser clients
+            const message = {
+              type: 'transcript',
+              callSid: CallSid,
+              speaker,
+              text: transcript,
+              isFinal,
+              timestamp,
+              confidence,
+              provider: 'twilio-realtime',
+              sequenceId: SequenceId
+            };
+
+            // Send to reps
+            broadcastToClients(message, (client) => client.role === 'rep');
+
+            // Send to supervisors listening to this call
+            broadcastToClients(message, (client) =>
+              client.role === 'supervisor' && client.listeningTo === CallSid
+            );
+          }
+        }
+        break;
+
+      case 'transcription-stopped':
+        console.log(`[Twilio RT] Transcription stopped for call ${CallSid}`);
+
+        // Get transcript and perform post-call analysis
+        const transcript = callTranscripts.get(CallSid) || [];
+        if (transcript.length > 0) {
+          // Save transcript to Supabase
+          await saveTranscript(CallSid, transcript);
+
+          // Trigger post-call AI analysis
+          const fullTranscriptText = transcript.map(t => t.text).join(' ');
+          if (fullTranscriptText.length > 50) {
+            console.log(`Starting post-call analysis for Twilio RT call ${CallSid}`);
+            performPostCallAnalysis(CallSid, fullTranscriptText)
+              .then(analysis => {
+                if (analysis) {
+                  console.log(`Post-call analysis complete for ${CallSid}: ${analysis.sentiment}`);
+                }
+              })
+              .catch(err => console.error('Post-call analysis failed:', err));
+          }
+        }
+
+        // Notify browser clients
+        broadcastToClients({
+          type: 'call_ended',
+          callSid: CallSid,
+          provider: 'twilio-realtime'
+        });
+
+        // Clean up after delay
+        setTimeout(() => {
+          callTranscripts.delete(CallSid);
+        }, 30 * 60 * 1000);
+        break;
+
+      default:
+        console.log(`[Twilio RT] Unknown event: ${TranscriptionEvent}`);
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error processing Twilio real-time transcription:', error);
+    res.sendStatus(500);
+  }
 });
 
 // ============ TWILIO VOICE INTELLIGENCE WEBHOOK (BASIC MODE) ============
@@ -1334,6 +1577,182 @@ wss.on('connection', (ws, req) => {
   let currentSpeaker = 'customer';
   let lastTrackTimestamp = 0;
 
+  // Set up transcription based on current provider setting
+  const setupTranscription = async (isReconnect = false) => {
+    const provider = transcriptionProvider; // Capture current setting
+    console.log(`Setting up transcription with provider: ${provider}`);
+
+    if (provider === 'elevenlabs') {
+      await setupElevenLabs(isReconnect);
+    } else {
+      await setupDeepgram(isReconnect);
+    }
+  };
+
+  // Set up ElevenLabs Scribe transcription via WebSocket
+  const setupElevenLabs = async (isReconnect = false) => {
+    if (isReconnect) {
+      console.log(`Attempting ElevenLabs reconnection (attempt ${deepgramReconnectAttempts + 1}/${DEEPGRAM_MAX_RECONNECT_ATTEMPTS})`);
+    }
+
+    try {
+      const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
+      if (!elevenLabsApiKey) {
+        console.error('ELEVENLABS_API_KEY not set - falling back to Deepgram');
+        await setupDeepgram(isReconnect);
+        return;
+      }
+
+      // ElevenLabs Scribe WebSocket URL
+      // Using speech-to-text streaming endpoint
+      const wsUrl = 'wss://api.elevenlabs.io/v1/speech-to-text/stream';
+
+      console.log('Connecting to ElevenLabs Scribe...');
+
+      deepgramConnection = new WebSocket(wsUrl, {
+        headers: {
+          'xi-api-key': elevenLabsApiKey,
+        },
+      });
+
+      // Set a timeout for connection
+      const connectionTimeout = setTimeout(() => {
+        if (deepgramConnection && deepgramConnection.readyState !== WebSocket.OPEN) {
+          console.log('ElevenLabs connection timeout, closing...');
+          deepgramConnection.close();
+          handleDeepgramError(new Error('Connection timeout'));
+        }
+      }, 5000);
+
+      deepgramConnection.on('open', () => {
+        clearTimeout(connectionTimeout);
+        console.log('ElevenLabs WebSocket opened' + (isReconnect ? ' (reconnected)' : ''));
+        deepgramReconnectAttempts = 0;
+        isDeepgramReconnecting = false;
+
+        // Send configuration message for ElevenLabs
+        const config = {
+          type: 'start',
+          encoding: 'mulaw',
+          sample_rate: 8000,
+          language: 'en',
+        };
+        deepgramConnection.send(JSON.stringify(config));
+
+        // Flush any buffered audio
+        if (pendingAudioBuffer.length > 0) {
+          console.log(`Flushing ${pendingAudioBuffer.length} buffered audio chunks`);
+          pendingAudioBuffer.forEach(audio => {
+            if (deepgramConnection && deepgramConnection.readyState === WebSocket.OPEN) {
+              deepgramConnection.send(audio);
+            }
+          });
+          pendingAudioBuffer = [];
+        }
+
+        // Notify browser clients
+        if (callSid) {
+          broadcastToClients({
+            type: 'transcription_status',
+            callSid,
+            status: 'active',
+            provider: 'elevenlabs',
+            message: isReconnect ? 'Transcription reconnected (ElevenLabs)' : 'Transcription started (ElevenLabs)'
+          }, (client) => client.role === 'rep');
+        }
+      });
+
+      deepgramConnection.on('message', async (rawData) => {
+        try {
+          const data = JSON.parse(rawData.toString());
+
+          // ElevenLabs sends different message types
+          if (data.type === 'transcript') {
+            const transcript = data.text;
+            const isFinal = data.is_final || false;
+
+            if (transcript) {
+              const timestamp = new Date().toISOString();
+
+              console.log(`[EL ${isFinal ? 'FINAL' : 'interim'}] ${transcript}`);
+
+              // Store final transcripts for AI analysis
+              if (isFinal && callSid) {
+                if (!callTranscripts.has(callSid)) {
+                  callTranscripts.set(callSid, []);
+                }
+                callTranscripts.get(callSid).push({
+                  speaker: currentSpeaker,
+                  text: transcript,
+                  timestamp,
+                  isFinal: true
+                });
+
+                // Trigger AI coaching
+                const transcriptCount = callTranscripts.get(callSid).length;
+                if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
+                    transcriptCount % AI_COACHING_INTERVAL === 0) {
+                  const suggestion = await getAICoachingSuggestion(callSid, transcript);
+                  if (suggestion) {
+                    const coachMsg = {
+                      type: 'ai_coaching',
+                      callSid,
+                      suggestion,
+                      timestamp
+                    };
+                    broadcastToClients(coachMsg, (client) => client.role === 'rep');
+                    broadcastToClients(coachMsg, (client) =>
+                      client.role === 'supervisor' && client.listeningTo === callSid
+                    );
+                  }
+                }
+              }
+
+              // Send transcript to browser clients
+              const message = {
+                type: 'transcript',
+                callSid,
+                speaker: currentSpeaker,
+                text: transcript,
+                isFinal: isFinal,
+                timestamp,
+                provider: 'elevenlabs'
+              };
+
+              broadcastToClients(message, (client) => client.role === 'rep');
+              broadcastToClients(message, (client) =>
+                client.role === 'supervisor' && client.listeningTo === callSid
+              );
+            }
+          } else if (data.type === 'error') {
+            console.error('ElevenLabs error:', data.message);
+            handleDeepgramError(new Error(data.message));
+          }
+        } catch (e) {
+          // Ignore non-JSON messages
+        }
+      });
+
+      deepgramConnection.on('error', (error) => {
+        clearTimeout(connectionTimeout);
+        console.error('ElevenLabs WebSocket error:', error.message || error);
+        handleDeepgramError(error);
+      });
+
+      deepgramConnection.on('close', () => {
+        clearTimeout(connectionTimeout);
+        console.log('ElevenLabs WebSocket closed');
+        if (callSid && activeCalls.has(callSid) && !isDeepgramReconnecting) {
+          handleDeepgramDisconnect();
+        }
+      });
+
+    } catch (error) {
+      console.error('Error setting up ElevenLabs:', error);
+      handleDeepgramError(error);
+    }
+  };
+
   // Set up Deepgram live transcription using raw WebSocket (more reliable than SDK)
   const setupDeepgram = async (isReconnect = false) => {
     if (isReconnect) {
@@ -1354,7 +1773,7 @@ wss.on('connection', (ws, req) => {
       dgUrl.searchParams.set('smart_format', 'true');
       dgUrl.searchParams.set('punctuate', 'true');
       dgUrl.searchParams.set('interim_results', 'true');
-      dgUrl.searchParams.set('endpointing', '200');           // Fast endpoint detection (200ms)
+      dgUrl.searchParams.set('endpointing', '100');           // Aggressive endpoint detection (100ms)
       dgUrl.searchParams.set('encoding', 'mulaw');
       dgUrl.searchParams.set('sample_rate', '8000');
       dgUrl.searchParams.set('channels', '1');
@@ -1556,7 +1975,7 @@ wss.on('connection', (ws, req) => {
 
     setTimeout(() => {
       if (callSid && activeCalls.has(callSid)) {
-        setupDeepgram(true);
+        setupTranscription(true);
       } else {
         console.log('Call ended during reconnection delay');
         isDeepgramReconnecting = false;
@@ -1572,7 +1991,8 @@ wss.on('connection', (ws, req) => {
     // If buffer is full, oldest chunks are dropped (they're already lost anyway)
   };
 
-  setupDeepgram();
+  // Start transcription with current provider setting
+  setupTranscription();
 
   ws.on('message', async (message) => {
     try {
