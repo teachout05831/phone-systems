@@ -600,24 +600,20 @@ app.post('/voice-outbound', (req, res) => {
   if (callMode === 'twilio-realtime') {
     // TWILIO REALTIME MODE: Use Twilio's native real-time transcription (Deepgram backend)
     // This eliminates the server->Deepgram hop for potentially lower latency
-    const start = twiml.start();
-    start.transcription({
-      statusCallbackUrl: `https://${req.headers.host}/transcription-realtime`,
-      track: 'both_tracks',
-      transcriptionEngine: 'deepgram',
-      speechModel: 'nova-2',
-      languageCode: 'en-US'
-    });
+    // Using raw TwiML since older SDK versions don't have .transcription() method
+    const transcriptionTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Start>
+    <Transcription statusCallbackUrl="https://${req.headers.host}/transcription-realtime" track="both_tracks" transcriptionEngine="deepgram" speechModel="nova-2" languageCode="en-US" />
+  </Start>
+  <Dial callerId="${process.env.TWILIO_PHONE_NUMBER}" answerOnBridge="true" record="record-from-answer-dual" recordingStatusCallback="https://${req.headers.host}/recording-callback" recordingStatusCallbackEvent="completed">
+    <Number>${to}</Number>
+  </Dial>
+</Response>`;
 
-    // Dial with recording
-    const dial = twiml.dial({
-      callerId: process.env.TWILIO_PHONE_NUMBER,
-      answerOnBridge: true,
-      record: 'record-from-answer-dual',
-      recordingStatusCallback: `https://${req.headers.host}/recording-callback`,
-      recordingStatusCallbackEvent: 'completed'
-    });
-    dial.number(to);
+    console.log('TwiML Response for twilio-realtime mode:', transcriptionTwiml);
+    res.type('text/xml');
+    return res.send(transcriptionTwiml);
   } else if (callMode === 'advanced') {
     // ADVANCED MODE: Use Deepgram for live transcription via WebSocket
     // Start media stream for real-time transcription
