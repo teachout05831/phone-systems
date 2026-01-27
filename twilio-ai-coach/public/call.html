@@ -370,17 +370,182 @@
     }
 
     .call-main {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
       height: 100%;
       overflow: hidden;
     }
 
-    .transcript-panel {
-      flex: 1;
+    /* AI Coaching Panel (Left) */
+    .ai-coaching-panel {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+    }
+
+    .ai-coaching-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-100);
+    }
+
+    .ai-coaching-header h3 {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .ai-coaching-header h3 .ai-icon {
+      font-size: 1.1rem;
+    }
+
+    .knowledge-base-select {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-300);
+      background: white;
+    }
+
+    .ai-coaching-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .ai-tip-card {
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--primary);
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .ai-tip-card.suggestion {
+      border-left-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+
+    .ai-tip-card.objection {
+      border-left-color: #ef4444;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+
+    .ai-tip-card.success {
+      border-left-color: #22c55e;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+
+    .ai-tip-card.signal {
+      border-left-color: #8b5cf6;
+      background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    }
+
+    .ai-tip-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-xs);
+      color: var(--gray-600);
+    }
+
+    .ai-tip-card.suggestion .ai-tip-header { color: #b45309; }
+    .ai-tip-card.objection .ai-tip-header { color: #dc2626; }
+    .ai-tip-card.success .ai-tip-header { color: #16a34a; }
+    .ai-tip-card.signal .ai-tip-header { color: #7c3aed; }
+
+    .ai-tip-text {
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--gray-800);
+    }
+
+    .ai-tip-script {
+      margin-top: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: rgba(0,0,0,0.05);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--gray-700);
+    }
+
+    .ai-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-500);
+      text-align: center;
+      padding: var(--spacing-xl);
+    }
+
+    .ai-empty-state .ai-empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: var(--spacing-md);
+    }
+
+    /* Transcript Panel (Right) */
+    .transcript-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+    }
+
+    .transcript-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-100);
+    }
+
+    .transcript-header h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .transcript-search {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) var(--spacing-md);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .transcript-search input {
+      flex: 1;
+      border: none;
+      background: white;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+    }
+
+    .transcript-search input:focus {
+      outline: 2px solid var(--primary);
     }
 
     .transcript-scroll {
@@ -389,7 +554,54 @@
       padding: var(--spacing-md);
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-md);
+      gap: var(--spacing-sm);
+    }
+
+    .transcript-message {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .transcript-message.rep {
+      background: #e0f2fe;
+      border-left: 3px solid #3b82f6;
+      margin-right: 20%;
+    }
+
+    .transcript-message.customer {
+      background: #f3e8ff;
+      border-left: 3px solid #8b5cf6;
+      margin-right: 20%;
+    }
+
+    .transcript-message .speaker-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .transcript-message.rep .speaker-label {
+      color: #2563eb;
+    }
+
+    .transcript-message.customer .speaker-label {
+      color: #7c3aed;
+    }
+
+    .transcript-time {
+      font-size: 0.65rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .search-highlight {
+      background: #fef08a;
+      padding: 0 2px;
+      border-radius: 2px;
     }
 
     .speaking-indicator {
@@ -1443,14 +1655,38 @@
           </div>
         </div>
 
-        <!-- Main Panel - Transcript -->
+        <!-- Main Panel - AI Coaching + Transcript (50/50 split) -->
         <div class="call-main">
-          <div class="card transcript-panel">
-            <div class="card-header">
-              <h3 class="card-title">Live Transcript</h3>
+          <!-- AI Coaching Panel (Left - 50%) -->
+          <div class="ai-coaching-panel" id="aiCoachingPanel">
+            <div class="ai-coaching-header">
+              <h3><span class="ai-icon">🤖</span> AI Coach</h3>
+              <select class="knowledge-base-select" id="knowledgeBaseSelect">
+                <option value="general">General Sales</option>
+                <option value="cleaning">Cleaning Services</option>
+                <option value="solar">Solar Sales</option>
+                <option value="insurance">Insurance</option>
+              </select>
+            </div>
+            <div class="ai-coaching-content" id="aiCoachingContent">
+              <div class="ai-empty-state" id="aiEmptyState">
+                <div class="ai-empty-icon">💡</div>
+                <div class="ai-empty-title">AI Coach Ready</div>
+                <div class="ai-empty-text">Start a call to receive real-time coaching tips and objection handling suggestions.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transcript Panel (Right - 50%) -->
+          <div class="transcript-panel">
+            <div class="transcript-header">
+              <h3>Live Transcript</h3>
               <div id="transcriptStatus" class="badge badge-info">Waiting for call</div>
             </div>
-
+            <div class="transcript-search">
+              <span>🔍</span>
+              <input type="text" id="transcriptSearchInput" placeholder="Search transcript..." onkeyup="searchTranscript(this.value)">
+            </div>
             <div class="transcript-scroll" id="transcriptContainer">
               <div class="empty-state">
                 <div class="empty-state-icon">💬</div>
@@ -1467,16 +1703,6 @@
                 <div class="dot"></div>
               </div>
               <span id="speakingText">Customer is speaking...</span>
-            </div>
-
-            <!-- AI Coach Box -->
-            <div class="ai-coach-box hidden" id="aiCoachBox">
-              <div class="ai-coach-header">
-                💡 AI Coach
-              </div>
-              <div class="ai-coach-text" id="aiCoachText">
-                Suggestion will appear here...
-              </div>
             </div>
           </div>
 
@@ -4584,9 +4810,11 @@ What do you say?`
       const interimIndicator = container.querySelector('.interim-transcript');
       if (interimIndicator) interimIndicator.remove();
 
+      const speakerLabel = speaker === 'rep' ? 'You' : 'Customer';
       const messageDiv = document.createElement('div');
       messageDiv.className = `transcript-message ${speaker === 'rep' ? 'rep' : 'customer'}`;
       messageDiv.innerHTML = `
+        <div class="speaker-label">${speakerLabel}</div>
         ${text}
         <div class="transcript-time">${formatTime(timestamp)}</div>
       `;
@@ -4630,17 +4858,92 @@ What do you say?`
       document.getElementById('speakingIndicator').classList.add('hidden');
     }
 
-    // AI Coaching
-    function showAICoaching(suggestion) {
-      const box = document.getElementById('aiCoachBox');
-      const text = document.getElementById('aiCoachText');
-      text.textContent = suggestion;
-      box.classList.remove('hidden');
+    // AI Coaching Panel Functions
+    function addAICoachingTip(type, text, script = null) {
+      const container = document.getElementById('aiCoachingContent');
 
-      // Auto-hide after 15 seconds
-      setTimeout(() => {
-        box.classList.add('hidden');
-      }, 15000);
+      // Remove empty state if present
+      const emptyState = container.querySelector('.ai-empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Determine tip category and icon
+      const typeConfig = {
+        suggestion: { icon: '💡', label: 'Suggestion' },
+        objection: { icon: '⚠️', label: 'Objection Detected' },
+        success: { icon: '✓', label: 'Good Job' },
+        signal: { icon: '📊', label: 'Buying Signal' }
+      };
+
+      const config = typeConfig[type] || typeConfig.suggestion;
+
+      const tipDiv = document.createElement('div');
+      tipDiv.className = `ai-tip-card ${type}`;
+      tipDiv.innerHTML = `
+        <div class="ai-tip-header">${config.icon} ${config.label}</div>
+        <div class="ai-tip-text">${text}</div>
+        ${script ? `<div class="ai-tip-script">"${script}"</div>` : ''}
+      `;
+
+      // Add to top of container (newest first)
+      container.insertBefore(tipDiv, container.firstChild);
+
+      // Keep only last 10 tips to prevent overflow
+      const tips = container.querySelectorAll('.ai-tip-card');
+      if (tips.length > 10) {
+        tips[tips.length - 1].remove();
+      }
+    }
+
+    // Legacy function for backwards compatibility
+    function showAICoaching(suggestion) {
+      // Determine type based on content
+      let type = 'suggestion';
+      if (suggestion.toLowerCase().includes('objection') || suggestion.toLowerCase().includes('expensive') || suggestion.toLowerCase().includes('too much')) {
+        type = 'objection';
+      } else if (suggestion.toLowerCase().includes('good') || suggestion.toLowerCase().includes('great') || suggestion.toLowerCase().includes('nice')) {
+        type = 'success';
+      } else if (suggestion.toLowerCase().includes('interest') || suggestion.toLowerCase().includes('signal') || suggestion.toLowerCase().includes('buying')) {
+        type = 'signal';
+      }
+
+      addAICoachingTip(type, suggestion);
+    }
+
+    function clearAICoachingPanel() {
+      const container = document.getElementById('aiCoachingContent');
+      container.innerHTML = `
+        <div class="ai-empty-state" id="aiEmptyState">
+          <div class="ai-empty-icon">💡</div>
+          <div class="ai-empty-title">AI Coach Ready</div>
+          <div class="ai-empty-text">Start a call to receive real-time coaching tips and objection handling suggestions.</div>
+        </div>
+      `;
+    }
+
+    // Transcript Search
+    function searchTranscript(query) {
+      const container = document.getElementById('transcriptContainer');
+      const messages = container.querySelectorAll('.transcript-message');
+
+      query = query.toLowerCase().trim();
+
+      messages.forEach(msg => {
+        if (!query) {
+          msg.style.display = '';
+          msg.innerHTML = msg.innerHTML.replace(/<mark class="search-highlight">(.*?)<\/mark>/gi, '$1');
+        } else {
+          const text = msg.textContent.toLowerCase();
+          if (text.includes(query)) {
+            msg.style.display = '';
+            // Highlight matching text
+            const regex = new RegExp(`(${query})`, 'gi');
+            const originalHTML = msg.innerHTML.replace(/<mark class="search-highlight">(.*?)<\/mark>/gi, '$1');
+            msg.innerHTML = originalHTML.replace(regex, '<mark class="search-highlight">$1</mark>');
+          } else {
+            msg.style.display = 'none';
+          }
+        }
+      });
     }
 
     // Scripts
@@ -5059,6 +5362,12 @@ What do you say?`
           <div class="empty-state-text">Start a call to see real-time transcription</div>
         </div>
       `;
+
+      // Clear AI coaching panel
+      clearAICoachingPanel();
+
+      // Clear search
+      document.getElementById('transcriptSearchInput').value = '';
 
       document.getElementById('transcriptStatus').textContent = 'Waiting for call';
       document.getElementById('transcriptStatus').className = 'badge badge-info';
