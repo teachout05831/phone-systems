@@ -3878,8 +3878,9 @@ What do you say?`
 
       document.getElementById('phoneNumber').textContent = formatPhoneNumber(number);
 
-      // Pass call mode to server - 'basic' or 'advanced'
-      const callMode = advancedModeEnabled ? 'advanced' : 'basic';
+      // Pass call mode to server - 'basic', 'advanced', or 'twilio-realtime'
+      // Using 'twilio-realtime' to test Twilio's native transcription (Deepgram backend, fewer hops)
+      const callMode = advancedModeEnabled ? 'twilio-realtime' : 'basic';
       const params = {
         To: number,
         CallMode: callMode
