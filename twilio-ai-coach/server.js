@@ -1354,7 +1354,7 @@ wss.on('connection', (ws, req) => {
       dgUrl.searchParams.set('smart_format', 'true');
       dgUrl.searchParams.set('punctuate', 'true');
       dgUrl.searchParams.set('interim_results', 'true');
-      dgUrl.searchParams.set('endpointing', '400');           // Faster endpoint detection (400ms)
+      dgUrl.searchParams.set('endpointing', '200');           // Fast endpoint detection (200ms)
       dgUrl.searchParams.set('encoding', 'mulaw');
       dgUrl.searchParams.set('sample_rate', '8000');
       dgUrl.searchParams.set('channels', '1');
