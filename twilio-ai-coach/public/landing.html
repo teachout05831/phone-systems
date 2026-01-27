@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DialPro - AI-Powered Sales Outreach</title>
+    <meta name="description" content="AI that listens, coaches, and closes. Smart dialing, real-time coaching, and live analytics for sales teams.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+        }
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+        }
+        .logo span {
+            color: #f97316;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .login-btn {
+            background: transparent;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: 2px solid #f97316;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .login-btn:hover {
+            background: #f97316;
+        }
+        .signup-btn {
+            background: #f97316;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: 2px solid #f97316;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .signup-btn:hover {
+            background: #ea580c;
+            border-color: #ea580c;
+        }
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+        }
+        .highlight {
+            color: #f97316;
+        }
+        .hero-content p {
+            font-size: 1.2rem;
+            color: #a1a1aa;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: white;
+            padding: 1.25rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .cta-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(249, 115, 22, 0.5);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .stat-card {
+            background: linear-gradient(145deg, #18181b, #27272a);
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #f97316;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #a1a1aa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .bottom-bar {
+            background: #18181b;
+            padding: 3rem 5%;
+            margin-top: 4rem;
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+        }
+        .bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #a1a1aa;
+        }
+        .bottom-item span {
+            font-size: 1.5rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            padding: 1rem;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 100%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a1a1aa;
+            font-size: 1.75rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-btn:hover {
+            color: white;
+        }
+        .modal p {
+            color: #a1a1aa;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input {
+            width: 100%;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: 8px;
+            padding: 0.875rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+        .form-group input::placeholder {
+            color: #71717a;
+        }
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .form-error {
+            color: #f87171;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .form-success {
+            color: #4ade80;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Thank You State */
+        .thank-you {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .thank-you-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .thank-you h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .thank-you p {
+            color: #a1a1aa;
+            margin-bottom: 1.5rem;
+        }
+        .thank-you .back-btn {
+            background: transparent;
+            border: 2px solid #f97316;
+            color: #f97316;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .thank-you .back-btn:hover {
+            background: #f97316;
+            color: white;
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .hero-content h1 {
+                font-size: 2.75rem;
+            }
+            .stats-grid {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+            .bottom-bar {
+                flex-direction: column;
+                align-items: center;
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Dial<span>Pro</span></div>
+        <div class="nav-buttons">
+            <a href="/index.html" class="login-btn">Login</a>
+            <a href="/signup.html" class="signup-btn">Sign Up</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Your Team. <span class="highlight">10x Faster.</span></h1>
+            <p>AI that listens, coaches, and closes. Stop leaving money on the table with outdated dialing systems.</p>
+            <button class="cta-btn" onclick="openModal()">Start Closing Deals</button>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">47%</div>
+                <div class="stat-label">More Connections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3.2x</div>
+                <div class="stat-label">Close Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">AI Coaching</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Calls Recorded</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="bottom-bar">
+        <div class="bottom-item"><span>📞</span> Smart Dialing</div>
+        <div class="bottom-item"><span>🤖</span> AI Coaching</div>
+        <div class="bottom-item"><span>📈</span> Live Analytics</div>
+        <div class="bottom-item"><span>👥</span> Team Management</div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <!-- Form State -->
+            <div id="formState">
+                <div class="modal-header">
+                    <h2>Get Started</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <p>Submit your information and we'll get you set up.</p>
+                <form id="leadForm">
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" name="fullName" placeholder="John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" placeholder="john@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company" placeholder="Acme Inc.">
+                    </div>
+                    <div id="formMessage"></div>
+                    <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+                </form>
+            </div>
+
+            <!-- Thank You State -->
+            <div id="thankYouState" class="thank-you" style="display: none;">
+                <div class="thank-you-icon">🎉</div>
+                <h2>Thank You!</h2>
+                <p>We've received your information and will be in touch soon to help you get started with DialPro.</p>
+                <button class="back-btn" onclick="closeModal()">Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="js/supabase.min.js"></script>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://emcsnlviqhbtqhjuqtam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtY3NubHZpcWhidHFoanVxdGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA1NTYsImV4cCI6MjA4NDYxNjU1Nn0.OHyF-SyCK2oh4xOhtDyhjhA9z6F_S1u6sxGx6TfhDFU';
+
+        // Initialize Supabase client
+        let supabaseClient = null;
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        function openModal() {
+            // Reset to form state when opening
+            document.getElementById('formState').style.display = 'block';
+            document.getElementById('thankYouState').style.display = 'none';
+            document.getElementById('leadForm').reset();
+            document.getElementById('formMessage').innerHTML = '';
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function showThankYou() {
+            document.getElementById('formState').style.display = 'none';
+            document.getElementById('thankYouState').style.display = 'block';
+        }
+
+        function showFormError(message) {
+            document.getElementById('formMessage').innerHTML = `<div class="form-error">${message}</div>`;
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Form submission handler
+        document.getElementById('leadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const formMessage = document.getElementById('formMessage');
+
+            // Get form values
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const company = document.getElementById('company').value.trim();
+
+            // Basic validation
+            if (!fullName || !email) {
+                showFormError('Please fill in all required fields.');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFormError('Please enter a valid email address.');
+                return;
+            }
+
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            formMessage.innerHTML = '';
+
+            try {
+                if (supabaseClient) {
+                    // Save to Supabase
+                    const { data, error } = await supabaseClient
+                        .from('leads')
+                        .insert({
+                            full_name: fullName,
+                            email: email,
+                            phone: phone || null,
+                            company: company || null,
+                            source: 'landing_page'
+                        });
+
+                    if (error) {
+                        console.error('Error saving lead:', error);
+                        showFormError('Something went wrong. Please try again.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit';
+                        return;
+                    }
+                }
+
+                // Show thank you state
+                showThankYou();
+
+            } catch (err) {
+                console.error('Error submitting form:', err);
+                showFormError('Something went wrong. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            }
+        });
+    </script>
+</body>
+</html>
