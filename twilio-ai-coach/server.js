@@ -1355,8 +1355,6 @@ wss.on('connection', (ws, req) => {
       dgUrl.searchParams.set('punctuate', 'true');
       dgUrl.searchParams.set('interim_results', 'true');
       dgUrl.searchParams.set('endpointing', '400');           // Faster endpoint detection (400ms)
-      dgUrl.searchParams.set('utterance_end_ms', '800');      // Faster utterance finalization (800ms)
-      dgUrl.searchParams.set('vad_events', 'true');           // Voice activity detection for better turn-taking
       dgUrl.searchParams.set('encoding', 'mulaw');
       dgUrl.searchParams.set('sample_rate', '8000');
       dgUrl.searchParams.set('channels', '1');
