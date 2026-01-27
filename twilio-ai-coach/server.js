@@ -901,7 +901,8 @@ app.post('/transcription-realtime', async (req, res) => {
                           (transcriptData.stability === undefined && transcript.length > 0); // Assume final if no stability field
 
           // Determine speaker from track
-          const speaker = Track === 'inbound_track' ? 'customer' : 'rep';
+          // For outbound calls: inbound_track = rep's voice, outbound_track = customer's voice
+          const speaker = Track === 'inbound_track' ? 'rep' : 'customer';
 
           if (transcript) {
             console.log(`[Twilio RT ${isFinal ? 'FINAL' : 'interim'}] [${speaker}] ${transcript}`);
