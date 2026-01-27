@@ -887,9 +887,18 @@ app.post('/transcription-realtime', async (req, res) => {
             return res.sendStatus(200);
           }
 
-          const transcript = transcriptData.transcript || '';
+          // Log the raw data to understand Twilio's format
+          console.log('[Twilio RT] Raw TranscriptionData:', JSON.stringify(transcriptData));
+
+          const transcript = transcriptData.transcript || transcriptData.text || '';
           const confidence = transcriptData.confidence || 0;
-          const isFinal = transcriptData.stability === 1.0 || transcriptData.is_final === true;
+          // Check multiple possible field names for final status
+          // Twilio may send: is_final, final, stability=1.0, or always final results
+          const isFinal = transcriptData.is_final === true ||
+                          transcriptData.final === true ||
+                          transcriptData.stability === 1.0 ||
+                          transcriptData.stability === '1.0' ||
+                          (transcriptData.stability === undefined && transcript.length > 0); // Assume final if no stability field
 
           // Determine speaker from track
           const speaker = Track === 'inbound_track' ? 'customer' : 'rep';
