@@ -1093,17 +1093,14 @@
           <h1 class="page-title">Call</h1>
         </div>
         <div class="top-header-right">
-          <!-- Call Mode Toggle -->
+          <!-- Call Mode Selector -->
           <div class="call-mode-toggle desktop-only">
             <span class="mode-label">Mode:</span>
-            <div class="mode-status" id="callModeStatus">
-              <span class="mode-indicator-dot" id="modeIndicator"></span>
-              <span id="modeText">Basic</span>
-            </div>
-            <label class="toggle-switch" title="Toggle Advanced Mode (Live AI Coaching)">
-              <input type="checkbox" id="advancedModeToggle">
-              <span class="toggle-slider"></span>
-            </label>
+            <select class="input" id="callModeSelect" style="width: 150px; font-size: 0.75rem;">
+              <option value="basic">Basic (Post-call)</option>
+              <option value="advanced">Deepgram (Live)</option>
+              <option value="twilio-realtime">Twilio (Live)</option>
+            </select>
           </div>
           <select class="input desktop-only" id="audioDevice" style="width: 180px; font-size: 0.75rem;">
             <option value="">Loading devices...</option>
@@ -3367,11 +3364,11 @@ What do you say?`
 
       // Restore call mode preference
       const savedMode = localStorage.getItem('callMode') || 'basic';
-      advancedModeEnabled = savedMode === 'advanced';
-      document.getElementById('advancedModeToggle').checked = advancedModeEnabled;
+      document.getElementById('callModeSelect').value = savedMode;
+      advancedModeEnabled = savedMode === 'advanced' || savedMode === 'twilio-realtime';
 
-      // Set up Advanced Mode toggle listener
-      setupAdvancedModeToggle();
+      // Set up Call Mode selector listener
+      setupCallModeSelector();
 
       // Initialize based on mode
       if (advancedModeEnabled) {
@@ -3391,12 +3388,13 @@ What do you say?`
       await sessionTracker.init();
     }
 
-    function setupAdvancedModeToggle() {
-      const toggle = document.getElementById('advancedModeToggle');
+    function setupCallModeSelector() {
+      const select = document.getElementById('callModeSelect');
 
-      toggle.addEventListener('change', (e) => {
-        advancedModeEnabled = e.target.checked;
-        localStorage.setItem('callMode', advancedModeEnabled ? 'advanced' : 'basic');
+      select.addEventListener('change', (e) => {
+        const selectedMode = e.target.value;
+        advancedModeEnabled = selectedMode === 'advanced' || selectedMode === 'twilio-realtime';
+        localStorage.setItem('callMode', selectedMode);
 
         if (advancedModeEnabled) {
           // Enable advanced mode
@@ -3618,8 +3616,8 @@ What do you say?`
       // Show notification
       showNotification(`Switched to Basic Mode: ${reason}. Call recording and post-call analysis still available.`, 'warning');
 
-      // Update mode toggle
-      document.getElementById('advancedModeToggle').checked = false;
+      // Update mode selector
+      document.getElementById('callModeSelect').value = 'basic';
       advancedModeEnabled = false;
       localStorage.setItem('callMode', 'basic');
     }
@@ -3879,8 +3877,7 @@ What do you say?`
       document.getElementById('phoneNumber').textContent = formatPhoneNumber(number);
 
       // Pass call mode to server - 'basic', 'advanced', or 'twilio-realtime'
-      // Using 'twilio-realtime' to test Twilio's native transcription (Deepgram backend, fewer hops)
-      const callMode = advancedModeEnabled ? 'twilio-realtime' : 'basic';
+      const callMode = document.getElementById('callModeSelect').value;
       const params = {
         To: number,
         CallMode: callMode
