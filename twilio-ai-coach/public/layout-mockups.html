@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call UI Layout Mockups - DialPro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #60a5fa;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+
+    .mockup-selector {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .mockup-btn {
+      padding: 12px 24px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .mockup-btn:hover {
+      background: #334155;
+    }
+
+    .mockup-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .mockup-container {
+      display: none;
+      background: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .mockup-container.active {
+      display: block;
+    }
+
+    .mockup-header {
+      background: #0f172a;
+      padding: 15px 20px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mockup-title {
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .call-status {
+      background: #22c55e;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .mockup-description {
+      background: #0f172a;
+      padding: 15px 20px;
+      border-bottom: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .mockup-description strong {
+      color: #60a5fa;
+    }
+
+    /* Transcript styles */
+    .transcript-panel {
+      background: #0f172a;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .transcript-line {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .transcript-line.rep {
+      background: #1e3a5f;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .transcript-line.customer {
+      background: #1e293b;
+      border-left: 3px solid #8b5cf6;
+    }
+
+    .speaker-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .rep .speaker-label {
+      color: #60a5fa;
+    }
+
+    .customer .speaker-label {
+      color: #a78bfa;
+    }
+
+    /* AI Panel styles */
+    .ai-panel {
+      background: #1a1a2e;
+      padding: 15px;
+    }
+
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #f59e0b;
+    }
+
+    .ai-tip {
+      background: linear-gradient(135deg, #1e3a5f 0%, #172554 100%);
+      border: 1px solid #3b82f6;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .ai-tip-header {
+      font-size: 11px;
+      color: #60a5fa;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-tip-text {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .ai-tip.suggestion {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #422006 0%, #1c1917 100%);
+    }
+
+    .ai-tip.suggestion .ai-tip-header {
+      color: #f59e0b;
+    }
+
+    .ai-tip.warning {
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #450a0a 0%, #1c1917 100%);
+    }
+
+    .ai-tip.warning .ai-tip-header {
+      color: #ef4444;
+    }
+
+    .ai-tip.success {
+      border-color: #22c55e;
+      background: linear-gradient(135deg, #052e16 0%, #1c1917 100%);
+    }
+
+    .ai-tip.success .ai-tip-header {
+      color: #22c55e;
+    }
+
+    /* Layout 1: Split 50/50 - AI Left, Transcript Right */
+    .layout-1 .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 500px;
+    }
+
+    .layout-1 .ai-panel {
+      border-right: 1px solid #334155;
+    }
+
+    /* Layout 2: Split 50/50 - Transcript Left, AI Right */
+    .layout-2 .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 500px;
+    }
+
+    .layout-2 .ai-panel {
+      border-left: 1px solid #334155;
+    }
+
+    /* Layout 3: 70/30 - Large Transcript, Narrow AI Sidebar */
+    .layout-3 .content {
+      display: grid;
+      grid-template-columns: 70% 30%;
+      height: 500px;
+    }
+
+    .layout-3 .ai-panel {
+      border-left: 1px solid #334155;
+    }
+
+    /* Layout 4: Stacked - Transcript Top, AI Bottom */
+    .layout-4 .content {
+      display: flex;
+      flex-direction: column;
+      height: 550px;
+    }
+
+    .layout-4 .transcript-panel {
+      flex: 1;
+      border-bottom: 1px solid #334155;
+    }
+
+    .layout-4 .ai-panel {
+      height: 180px;
+      overflow-y: auto;
+    }
+
+    /* Layout 5: Floating AI Cards over Transcript */
+    .layout-5 .content {
+      position: relative;
+      height: 500px;
+    }
+
+    .layout-5 .transcript-panel {
+      height: 100%;
+      padding-right: 320px;
+    }
+
+    .layout-5 .ai-panel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 290px;
+      background: rgba(26, 26, 46, 0.95);
+      border-radius: 12px;
+      border: 1px solid #334155;
+      max-height: calc(100% - 30px);
+      overflow-y: auto;
+    }
+
+    /* Pros/Cons */
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+      background: #0f172a;
+      border-top: 1px solid #334155;
+    }
+
+    .pros, .cons {
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .pros {
+      background: #052e16;
+      border: 1px solid #22c55e;
+    }
+
+    .cons {
+      background: #450a0a;
+      border: 1px solid #ef4444;
+    }
+
+    .pros h4 {
+      color: #22c55e;
+      margin-bottom: 10px;
+    }
+
+    .cons h4 {
+      color: #ef4444;
+      margin-bottom: 10px;
+    }
+
+    .pros ul, .cons ul {
+      list-style: none;
+      font-size: 13px;
+    }
+
+    .pros li, .cons li {
+      padding: 4px 0;
+    }
+
+    .pros li::before {
+      content: "✓ ";
+      color: #22c55e;
+    }
+
+    .cons li::before {
+      content: "✗ ";
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <h1>Call UI Layout Mockups</h1>
+  <p class="subtitle">Click each option to preview different layouts for AI coaching + Live Transcript</p>
+
+  <div class="mockup-selector">
+    <button class="mockup-btn active" onclick="showMockup(1)">Layout 1: AI Left</button>
+    <button class="mockup-btn" onclick="showMockup(2)">Layout 2: AI Right</button>
+    <button class="mockup-btn" onclick="showMockup(3)">Layout 3: Wide Transcript</button>
+    <button class="mockup-btn" onclick="showMockup(4)">Layout 4: Stacked</button>
+    <button class="mockup-btn" onclick="showMockup(5)">Layout 5: Floating AI</button>
+  </div>
+
+  <!-- Layout 1: AI Left, Transcript Right -->
+  <div class="mockup-container layout-1 active" id="mockup1">
+    <div class="mockup-header">
+      <span class="mockup-title">Layout 1: AI Coaching Left, Transcript Right (50/50)</span>
+      <span class="call-status">In Call - 02:34</span>
+    </div>
+    <div class="mockup-description">
+      <strong>Design:</strong> Equal split with AI coaching on the left, live transcript on the right. AI tips are always visible while you talk.
+    </div>
+    <div class="content">
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span>🤖</span> AI Coach
+        </div>
+        <div class="ai-tip suggestion">
+          <div class="ai-tip-header">💡 Suggestion</div>
+          <div class="ai-tip-text">Customer mentioned "budget" - ask about their price range to qualify the lead.</div>
+        </div>
+        <div class="ai-tip">
+          <div class="ai-tip-header">📊 Detected: Interest Signal</div>
+          <div class="ai-tip-text">Customer asked about cleaning frequency - this indicates genuine interest.</div>
+        </div>
+        <div class="ai-tip success">
+          <div class="ai-tip-header">✓ Good Job</div>
+          <div class="ai-tip-text">Great rapport building with the personal question!</div>
+        </div>
+        <div class="ai-tip warning">
+          <div class="ai-tip-header">⚠️ Objection Detected</div>
+          <div class="ai-tip-text">"Too expensive" - Try: "I understand budget is important. Let me show you how this actually saves money..."</div>
+        </div>
+      </div>
+      <div class="transcript-panel">
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          Hi, this is Mike from CleanPro. How are you doing today?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          I'm good, thanks. I was actually looking into getting my house cleaned.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          That's great to hear! What kind of cleaning were you thinking about?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          Well, I'm not sure yet. How much is cleaning gonna be? I have a pretty tight budget right now.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          I totally understand. Let me ask you a few questions to give you an accurate quote...
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>AI tips always visible</li>
+          <li>Easy to glance at suggestions</li>
+          <li>Natural left-to-right flow</li>
+          <li>Good for coaching focus</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Transcript space is smaller</li>
+          <li>May feel cramped on smaller screens</li>
+          <li>AI panel may have empty space during quiet calls</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout 2: Transcript Left, AI Right -->
+  <div class="mockup-container layout-2" id="mockup2">
+    <div class="mockup-header">
+      <span class="mockup-title">Layout 2: Transcript Left, AI Coaching Right (50/50)</span>
+      <span class="call-status">In Call - 02:34</span>
+    </div>
+    <div class="mockup-description">
+      <strong>Design:</strong> Equal split with live transcript on the left, AI coaching on the right. Transcript takes priority focus.
+    </div>
+    <div class="content">
+      <div class="transcript-panel">
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          Hi, this is Mike from CleanPro. How are you doing today?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          I'm good, thanks. I was actually looking into getting my house cleaned.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          That's great to hear! What kind of cleaning were you thinking about?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          Well, I'm not sure yet. How much is cleaning gonna be? I have a pretty tight budget right now.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          I totally understand. Let me ask you a few questions to give you an accurate quote...
+        </div>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span>🤖</span> AI Coach
+        </div>
+        <div class="ai-tip suggestion">
+          <div class="ai-tip-header">💡 Suggestion</div>
+          <div class="ai-tip-text">Customer mentioned "budget" - ask about their price range to qualify the lead.</div>
+        </div>
+        <div class="ai-tip">
+          <div class="ai-tip-header">📊 Detected: Interest Signal</div>
+          <div class="ai-tip-text">Customer asked about cleaning frequency - this indicates genuine interest.</div>
+        </div>
+        <div class="ai-tip success">
+          <div class="ai-tip-header">✓ Good Job</div>
+          <div class="ai-tip-text">Great rapport building with the personal question!</div>
+        </div>
+        <div class="ai-tip warning">
+          <div class="ai-tip-header">⚠️ Objection Detected</div>
+          <div class="ai-tip-text">"Too expensive" - Try: "I understand budget is important. Let me show you how this actually saves money..."</div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Transcript gets primary attention</li>
+          <li>Natural reading flow (left-to-right)</li>
+          <li>AI tips are secondary/supportive</li>
+          <li>Good for transcript-focused workflows</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>AI tips may be overlooked</li>
+          <li>Same space constraints as Layout 1</li>
+          <li>Eye movement jumps right for tips</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout 3: Wide Transcript, Narrow AI -->
+  <div class="mockup-container layout-3" id="mockup3">
+    <div class="mockup-header">
+      <span class="mockup-title">Layout 3: Wide Transcript (70%), AI Sidebar (30%)</span>
+      <span class="call-status">In Call - 02:34</span>
+    </div>
+    <div class="mockup-description">
+      <strong>Design:</strong> Transcript gets 70% of the space, AI coaching is a narrow sidebar. Best for reading long conversations.
+    </div>
+    <div class="content">
+      <div class="transcript-panel">
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          Hi, this is Mike from CleanPro. How are you doing today?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          I'm good, thanks. I was actually looking into getting my house cleaned.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          That's great to hear! What kind of cleaning were you thinking about? We offer regular weekly cleanings, deep cleans, and move-in/move-out services.
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          Well, I'm not sure yet. How much is cleaning gonna be? I have a pretty tight budget right now with everything going on.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          I totally understand - everyone's watching their spending these days. Let me ask you a few questions to give you an accurate quote that fits your needs...
+        </div>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span>🤖</span> AI Coach
+        </div>
+        <div class="ai-tip suggestion">
+          <div class="ai-tip-header">💡 Tip</div>
+          <div class="ai-tip-text">Ask about their price range.</div>
+        </div>
+        <div class="ai-tip success">
+          <div class="ai-tip-header">✓ Nice</div>
+          <div class="ai-tip-text">Good empathy shown!</div>
+        </div>
+        <div class="ai-tip warning">
+          <div class="ai-tip-header">⚠️ Objection</div>
+          <div class="ai-tip-text">Budget concern detected.</div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>More room for transcript text</li>
+          <li>Better for longer conversations</li>
+          <li>AI tips are compact but visible</li>
+          <li>Less eye movement needed</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>AI tips must be shorter/condensed</li>
+          <li>Less space for detailed coaching</li>
+          <li>Sidebar may feel cramped</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout 4: Stacked -->
+  <div class="mockup-container layout-4" id="mockup4">
+    <div class="mockup-header">
+      <span class="mockup-title">Layout 4: Stacked - Transcript Top, AI Bottom</span>
+      <span class="call-status">In Call - 02:34</span>
+    </div>
+    <div class="mockup-description">
+      <strong>Design:</strong> Full-width transcript on top, AI coaching bar at the bottom. Like subtitles with coaching tips below.
+    </div>
+    <div class="content">
+      <div class="transcript-panel">
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          Hi, this is Mike from CleanPro. How are you doing today?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          I'm good, thanks. I was actually looking into getting my house cleaned.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          That's great to hear! What kind of cleaning were you thinking about? We offer regular weekly cleanings, deep cleans, and move-in/move-out services.
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          Well, I'm not sure yet. How much is cleaning gonna be? I have a pretty tight budget right now.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          I totally understand. Let me ask you a few questions to give you an accurate quote...
+        </div>
+      </div>
+      <div class="ai-panel" style="display: flex; gap: 10px; overflow-x: auto;">
+        <div class="ai-tip suggestion" style="min-width: 250px;">
+          <div class="ai-tip-header">💡 Suggestion</div>
+          <div class="ai-tip-text">Ask about their price range to qualify.</div>
+        </div>
+        <div class="ai-tip success" style="min-width: 200px;">
+          <div class="ai-tip-header">✓ Good Job</div>
+          <div class="ai-tip-text">Great empathy shown!</div>
+        </div>
+        <div class="ai-tip warning" style="min-width: 280px;">
+          <div class="ai-tip-header">⚠️ Objection</div>
+          <div class="ai-tip-text">Budget concern - offer payment plans.</div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Full-width transcript = more text visible</li>
+          <li>AI tips are like a "ticker" at bottom</li>
+          <li>Clean separation of concerns</li>
+          <li>Good for horizontal screens</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>AI tips compete with transcript for attention</li>
+          <li>Vertical space is limited</li>
+          <li>May need to scroll horizontally for tips</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout 5: Floating AI -->
+  <div class="mockup-container layout-5" id="mockup5">
+    <div class="mockup-header">
+      <span class="mockup-title">Layout 5: Floating AI Cards Over Transcript</span>
+      <span class="call-status">In Call - 02:34</span>
+    </div>
+    <div class="mockup-description">
+      <strong>Design:</strong> Full-width transcript with floating AI panel that overlays on the right. AI tips feel like notifications.
+    </div>
+    <div class="content">
+      <div class="transcript-panel">
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          Hi, this is Mike from CleanPro. How are you doing today?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          I'm good, thanks. I was actually looking into getting my house cleaned.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          That's great to hear! What kind of cleaning were you thinking about?
+        </div>
+        <div class="transcript-line customer">
+          <div class="speaker-label">Customer</div>
+          Well, I'm not sure yet. How much is cleaning gonna be? I have a pretty tight budget.
+        </div>
+        <div class="transcript-line rep">
+          <div class="speaker-label">You (Rep)</div>
+          I totally understand. Let me ask you a few questions...
+        </div>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span>🤖</span> AI Coach
+        </div>
+        <div class="ai-tip suggestion">
+          <div class="ai-tip-header">💡 Suggestion</div>
+          <div class="ai-tip-text">Ask about their price range to qualify the lead.</div>
+        </div>
+        <div class="ai-tip warning">
+          <div class="ai-tip-header">⚠️ Objection Detected</div>
+          <div class="ai-tip-text">Budget concern - offer flexible options.</div>
+        </div>
+        <div class="ai-tip success">
+          <div class="ai-tip-header">✓ Good Job</div>
+          <div class="ai-tip-text">Nice rapport building!</div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Transcript gets full attention</li>
+          <li>AI feels like helpful notifications</li>
+          <li>Can minimize/hide AI panel</li>
+          <li>Modern, clean look</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Floating panel may obstruct text</li>
+          <li>Requires careful positioning</li>
+          <li>May feel cluttered with many tips</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showMockup(num) {
+      // Hide all mockups
+      document.querySelectorAll('.mockup-container').forEach(m => m.classList.remove('active'));
+      document.querySelectorAll('.mockup-btn').forEach(b => b.classList.remove('active'));
+
+      // Show selected mockup
+      document.getElementById('mockup' + num).classList.add('active');
+      document.querySelectorAll('.mockup-btn')[num - 1].classList.add('active');
+    }
+  </script>
+</body>
+</html>
