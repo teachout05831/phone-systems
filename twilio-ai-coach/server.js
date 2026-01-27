@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const twilio = require('twilio');
-const { createClient: createDeepgramClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
+// Deepgram SDK import removed - using raw WebSocket for better reliability
 const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
@@ -34,8 +34,8 @@ app.use((req, res, next) => {
 
 // Dashboard page routes (defined BEFORE static middleware)
 app.get('/', (req, res) => {
-  // Redirect to login page - login.js will redirect to dashboard if already authenticated
-  res.redirect('/index.html');
+  // Serve landing page at root
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
 app.get('/dashboard', (req, res) => {
@@ -143,8 +143,7 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-// Deepgram client
-const deepgram = createDeepgramClient(process.env.DEEPGRAM_API_KEY);
+// Deepgram: using raw WebSocket (configured in setupDeepgram function)
 
 // Anthropic client for AI coaching
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({
@@ -174,7 +173,7 @@ const callTranscripts = new Map(); // callSid -> [{ speaker, text, timestamp }]
 // Deepgram reconnection settings
 const DEEPGRAM_MAX_RECONNECT_ATTEMPTS = 3;
 const DEEPGRAM_RECONNECT_DELAY_MS = 1000;
-const DEEPGRAM_BUFFER_MAX_SIZE = 50; // Max audio chunks to buffer during reconnect
+const DEEPGRAM_BUFFER_MAX_SIZE = 200; // Max audio chunks to buffer during connect/reconnect
 
 // AI Coaching settings - more frequent coaching
 const AI_COACHING_INTERVAL = 2; // Trigger AI coaching every N final transcripts (changed from 3)
@@ -292,8 +291,9 @@ async function saveTranscript(callSid, segments) {
     }
 
     // Format segments for storage
+    // Use actual speaker from segment if available, otherwise fall back to alternating pattern
     const formattedSegments = segments.map((seg, index) => ({
-      speaker: index % 2 === 0 ? 'rep' : 'customer',
+      speaker: seg.speaker || (index % 2 === 0 ? 'rep' : 'customer'),
       text: seg.text,
       timestamp: seg.timestamp
     }));
@@ -454,9 +454,15 @@ Respond ONLY with valid JSON, no other text.`,
     }
 
     // Normalize the analysis structure
+    // Safely extract sentiment as string
+    let sentimentValue = analysis.sentiment || analysis.overall_sentiment || 'neutral';
+    if (typeof sentimentValue !== 'string') {
+      sentimentValue = 'neutral';
+    }
+
     const normalizedAnalysis = {
       summary: analysis.summary || analysis.brief_summary || '',
-      sentiment: (analysis.sentiment || analysis.overall_sentiment || 'neutral').toLowerCase(),
+      sentiment: sentimentValue.toLowerCase(),
       sentimentScore: analysis.sentiment_score || analysis.sentimentScore || 0,
       keyPoints: (analysis.key_points || analysis.keyPoints || []).map(p =>
         typeof p === 'string' ? { point: p, importance: 'medium' } : p
@@ -566,6 +572,7 @@ app.post('/voice-outbound', (req, res) => {
   }
 
   console.log(`Outbound call to: ${to}, from rep: ${from}, mode: ${callMode}`);
+  console.log(`Request host header: ${req.headers.host}`);
 
   // Store pending call info (will be matched when stream starts or call status updates)
   const pendingCallKey = `pending_${to}`;
@@ -595,19 +602,24 @@ app.post('/voice-outbound', (req, res) => {
     });
     dial.number(to);
   } else {
-    // BASIC MODE: Simple dial with recording
+    // BASIC MODE: Simple dial with recording and Twilio transcription
     const dial = twiml.dial({
       callerId: process.env.TWILIO_PHONE_NUMBER,
       answerOnBridge: true,
       record: 'record-from-answer-dual',
       recordingStatusCallback: `https://${req.headers.host}/recording-callback`,
-      recordingStatusCallbackEvent: 'completed'
+      recordingStatusCallbackEvent: 'completed',
+      transcribe: true,
+      transcribeCallback: `https://${req.headers.host}/transcript-callback`
     });
     dial.number(to);
   }
 
+  const twimlString = twiml.toString();
+  console.log(`TwiML Response for ${callMode} mode:`, twimlString);
+
   res.type('text/xml');
-  res.send(twiml.toString());
+  res.send(twimlString);
 });
 
 // Alternative: Basic mode outbound endpoint (explicit)
@@ -1317,32 +1329,59 @@ wss.on('connection', (ws, req) => {
   let isDeepgramReconnecting = false;
   let pendingAudioBuffer = [];
 
-  // Set up Deepgram live transcription with reconnection support
+  // Track which speaker is currently active based on Twilio track
+  // 'inbound' = customer speaking, 'outbound' = rep speaking
+  let currentSpeaker = 'customer';
+  let lastTrackTimestamp = 0;
+
+  // Set up Deepgram live transcription using raw WebSocket (more reliable than SDK)
   const setupDeepgram = async (isReconnect = false) => {
     if (isReconnect) {
       console.log(`Attempting Deepgram reconnection (attempt ${deepgramReconnectAttempts + 1}/${DEEPGRAM_MAX_RECONNECT_ATTEMPTS})`);
     }
 
     try {
-      deepgramConnection = deepgram.listen.live({
-        model: 'nova-2-phonecall',   // Optimized for phone call audio
-        language: 'en-US',
-        smart_format: true,
-        punctuate: true,             // Better punctuation
-        profanity_filter: false,     // Don't filter words (sales context)
-        diarize: false,              // We handle speakers separately
-        filler_words: true,          // Keep "um", "uh" for coaching insights
-        interim_results: true,
-        utterance_end_ms: 300,       // Fast end detection
-        endpointing: 200,            // Fast endpoint detection
-        vad_events: true,
-        encoding: 'mulaw',
-        sample_rate: 8000,
-        channels: 1
+      const dgApiKey = process.env.DEEPGRAM_API_KEY;
+      if (!dgApiKey) {
+        console.error('DEEPGRAM_API_KEY not set');
+        return;
+      }
+
+      // Build Deepgram WebSocket URL with parameters optimized for complete phrases
+      const dgUrl = new URL('wss://api.deepgram.com/v1/listen');
+      dgUrl.searchParams.set('model', 'nova-2-phonecall');
+      dgUrl.searchParams.set('language', 'en-US');
+      dgUrl.searchParams.set('smart_format', 'true');
+      dgUrl.searchParams.set('punctuate', 'true');
+      dgUrl.searchParams.set('interim_results', 'true');
+      dgUrl.searchParams.set('endpointing', '1000');          // Wait 1 second for complete phrases
+      dgUrl.searchParams.set('utterance_end_ms', '1500');     // Wait 1.5 seconds of silence before finalizing
+      dgUrl.searchParams.set('vad_events', 'true');           // Voice activity detection for better turn-taking
+      dgUrl.searchParams.set('encoding', 'mulaw');
+      dgUrl.searchParams.set('sample_rate', '8000');
+      dgUrl.searchParams.set('channels', '1');
+
+      console.log('Connecting to Deepgram via raw WebSocket...');
+
+      // Create WebSocket connection with auth header
+      deepgramConnection = new WebSocket(dgUrl.toString(), {
+        headers: {
+          'Authorization': `Token ${dgApiKey}`,
+        },
       });
 
-      deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
-        console.log('Deepgram connection opened' + (isReconnect ? ' (reconnected)' : ''));
+      // Set a timeout for connection
+      const connectionTimeout = setTimeout(() => {
+        if (deepgramConnection && deepgramConnection.readyState !== WebSocket.OPEN) {
+          console.log('Deepgram connection timeout, closing...');
+          deepgramConnection.close();
+          handleDeepgramError(new Error('Connection timeout'));
+        }
+      }, 5000);
+
+      deepgramConnection.on('open', () => {
+        clearTimeout(connectionTimeout);
+        console.log('Deepgram WebSocket opened' + (isReconnect ? ' (reconnected)' : ''));
         deepgramReconnectAttempts = 0;
         isDeepgramReconnecting = false;
 
@@ -1350,7 +1389,7 @@ wss.on('connection', (ws, req) => {
         if (pendingAudioBuffer.length > 0) {
           console.log(`Flushing ${pendingAudioBuffer.length} buffered audio chunks`);
           pendingAudioBuffer.forEach(audio => {
-            if (deepgramConnection) {
+            if (deepgramConnection && deepgramConnection.readyState === WebSocket.OPEN) {
               deepgramConnection.send(audio);
             }
           });
@@ -1368,74 +1407,84 @@ wss.on('connection', (ws, req) => {
         }
       });
 
-      deepgramConnection.on(LiveTranscriptionEvents.Transcript, async (data) => {
-        const transcript = data.channel?.alternatives[0]?.transcript;
+      deepgramConnection.on('message', async (rawData) => {
+        try {
+          const data = JSON.parse(rawData.toString());
+          const transcript = data.channel?.alternatives?.[0]?.transcript;
 
-        if (transcript) {
-          const isFinal = data.is_final;
-          const timestamp = new Date().toISOString();
+          if (transcript) {
+            const isFinal = data.is_final;
+            const timestamp = new Date().toISOString();
 
-          console.log(`[${isFinal ? 'FINAL' : 'interim'}] ${transcript}`);
+            console.log(`[${isFinal ? 'FINAL' : 'interim'}] ${transcript}`);
 
-          // Store final transcripts for AI analysis
-          if (isFinal && callSid) {
-            if (!callTranscripts.has(callSid)) {
-              callTranscripts.set(callSid, []);
-            }
-            callTranscripts.get(callSid).push({
-              text: transcript,
-              timestamp,
-              isFinal: true
-            });
+            // Store final transcripts for AI analysis
+            if (isFinal && callSid) {
+              if (!callTranscripts.has(callSid)) {
+                callTranscripts.set(callSid, []);
+              }
+              callTranscripts.get(callSid).push({
+                speaker: currentSpeaker,
+                text: transcript,
+                timestamp,
+                isFinal: true
+              });
 
-            // Trigger AI coaching more frequently (every AI_COACHING_INTERVAL final transcripts)
-            const transcriptCount = callTranscripts.get(callSid).length;
-            if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
-                transcriptCount % AI_COACHING_INTERVAL === 0) {
-              const suggestion = await getAICoachingSuggestion(callSid, transcript);
-              if (suggestion) {
-                const coachMsg = {
-                  type: 'ai_coaching',
-                  callSid,
-                  suggestion,
-                  timestamp
-                };
-                // Send to rep on this call
-                broadcastToClients(coachMsg, (client) => client.role === 'rep');
-                // Also send to supervisors listening to this call
-                broadcastToClients(coachMsg, (client) =>
-                  client.role === 'supervisor' && client.listeningTo === callSid
-                );
+              // Trigger AI coaching more frequently (every AI_COACHING_INTERVAL final transcripts)
+              const transcriptCount = callTranscripts.get(callSid).length;
+              if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
+                  transcriptCount % AI_COACHING_INTERVAL === 0) {
+                const suggestion = await getAICoachingSuggestion(callSid, transcript);
+                if (suggestion) {
+                  const coachMsg = {
+                    type: 'ai_coaching',
+                    callSid,
+                    suggestion,
+                    timestamp
+                  };
+                  // Send to rep on this call
+                  broadcastToClients(coachMsg, (client) => client.role === 'rep');
+                  // Also send to supervisors listening to this call
+                  broadcastToClients(coachMsg, (client) =>
+                    client.role === 'supervisor' && client.listeningTo === callSid
+                  );
+                }
               }
             }
+
+            // Send transcript to all browser clients
+            // Include speaker based on which track was last active
+            const message = {
+              type: 'transcript',
+              callSid,
+              speaker: currentSpeaker,
+              text: transcript,
+              isFinal: isFinal,
+              timestamp
+            };
+
+            // Send to reps
+            broadcastToClients(message, (client) => client.role === 'rep');
+
+            // Send to supervisors listening to this specific call
+            broadcastToClients(message, (client) =>
+              client.role === 'supervisor' && client.listeningTo === callSid
+            );
           }
-
-          // Send transcript to all browser clients
-          const message = {
-            type: 'transcript',
-            callSid,
-            text: transcript,
-            isFinal: isFinal,
-            timestamp
-          };
-
-          // Send to reps
-          broadcastToClients(message, (client) => client.role === 'rep');
-
-          // Send to supervisors listening to this specific call
-          broadcastToClients(message, (client) =>
-            client.role === 'supervisor' && client.listeningTo === callSid
-          );
+        } catch (e) {
+          // Ignore non-JSON messages
         }
       });
 
-      deepgramConnection.on(LiveTranscriptionEvents.Error, (error) => {
-        console.error('Deepgram error:', error);
+      deepgramConnection.on('error', (error) => {
+        clearTimeout(connectionTimeout);
+        console.error('Deepgram WebSocket error:', error.message || error);
         handleDeepgramError(error);
       });
 
-      deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
-        console.log('Deepgram connection closed');
+      deepgramConnection.on('close', () => {
+        clearTimeout(connectionTimeout);
+        console.log('Deepgram WebSocket closed');
         // Only attempt reconnect if not intentionally closed and call is still active
         if (callSid && activeCalls.has(callSid) && !isDeepgramReconnecting) {
           handleDeepgramDisconnect();
@@ -1571,23 +1620,53 @@ wss.on('connection', (ws, req) => {
           break;
 
         case 'media':
-          // Send audio to Deepgram (or buffer if reconnecting)
+          // Track which track is sending audio to identify speaker
+          // 'inbound' = customer, 'outbound' = rep
+          const track = msg.media.track;
+          if (track) {
+            const now = Date.now();
+            // Update speaker if this track has audio
+            // inbound track = audio from customer, outbound track = audio from rep
+            if (track === 'inbound') {
+              currentSpeaker = 'customer';
+            } else if (track === 'outbound') {
+              currentSpeaker = 'rep';
+            }
+            lastTrackTimestamp = now;
+          }
+
+          // Send audio to Deepgram (or buffer if not ready)
           const audio = Buffer.from(msg.media.payload, 'base64');
 
           if (isDeepgramReconnecting) {
             // Buffer audio while reconnecting
             bufferAudio(audio);
           } else if (deepgramConnection) {
-            try {
-              deepgramConnection.send(audio);
-            } catch (sendError) {
-              console.error('Error sending audio to Deepgram:', sendError.message);
-              // Buffer the audio and trigger reconnection
+            // Check WebSocket state: 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
+            const wsState = deepgramConnection.readyState;
+
+            if (wsState === WebSocket.OPEN) {
+              // Connection is open - send audio
+              try {
+                deepgramConnection.send(audio);
+              } catch (sendError) {
+                console.error('Error sending audio to Deepgram:', sendError.message);
+                bufferAudio(audio);
+              }
+            } else if (wsState === WebSocket.CONNECTING) {
+              // Still connecting - just buffer, don't trigger reconnect
+              bufferAudio(audio);
+            } else {
+              // CLOSING or CLOSED - buffer and trigger reconnect
               bufferAudio(audio);
               if (!isDeepgramReconnecting) {
+                console.log('Deepgram WebSocket in bad state:', wsState);
                 handleDeepgramDisconnect();
               }
             }
+          } else {
+            // No connection at all - buffer audio
+            bufferAudio(audio);
           }
           break;
 
@@ -1645,7 +1724,7 @@ wss.on('connection', (ws, req) => {
           pendingAudioBuffer = [];
           isDeepgramReconnecting = false;
           if (deepgramConnection) {
-            deepgramConnection.finish();
+            deepgramConnection.close();
             deepgramConnection = null;
           }
           break;
@@ -1658,7 +1737,7 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     console.log('Twilio WebSocket closed');
     if (deepgramConnection) {
-      deepgramConnection.finish();
+      deepgramConnection.close();
     }
   });
 

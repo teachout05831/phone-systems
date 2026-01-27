@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Call - AI Sales Coach</title>
+  <title>Call - DialPro</title>
   <link rel="stylesheet" href="css/styles.css">
   <!-- Supabase JS SDK (local) -->
   <script src="js/supabase.min.js"></script>
@@ -967,7 +967,7 @@
       <div class="sidebar-header">
         <a href="dashboard.html" class="sidebar-logo">
           <div class="sidebar-logo-icon">AI</div>
-          <span class="sidebar-logo-text">Sales Coach</span>
+          <span class="sidebar-logo-text">DialPro</span>
         </a>
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
           <span>◀</span>
@@ -3713,7 +3713,13 @@ What do you say?`
     function handleWebSocketMessage(data) {
       switch (data.type) {
         case 'transcript':
-          addTranscriptMessage(data.speaker || 'customer', data.text, data.timestamp);
+          // Only show final transcripts to avoid fragmented one-word display
+          if (data.isFinal) {
+            addTranscriptMessage(data.speaker || 'customer', data.text, data.timestamp);
+          } else {
+            // Show interim results as a typing indicator (optional visual feedback)
+            showInterimTranscript(data.speaker || 'customer', data.text);
+          }
           break;
         case 'ai_coaching':
           showAICoaching(data.suggestion);
@@ -4403,6 +4409,11 @@ What do you say?`
       stopTimer();
       updateCallState('Call ended');
 
+      // Hide call control buttons since call is over
+      document.getElementById('endCallBtn').classList.add('hidden');
+      document.getElementById('muteBtn').classList.add('hidden');
+      document.getElementById('holdBtn').classList.add('hidden');
+
       // Calculate call duration
       const duration = callStartTime ? Math.floor((new Date() - callStartTime) / 1000) : 0;
 
@@ -4571,6 +4582,10 @@ What do you say?`
       const emptyState = container.querySelector('.empty-state');
       if (emptyState) emptyState.remove();
 
+      // Remove any interim indicator when adding final message
+      const interimIndicator = container.querySelector('.interim-transcript');
+      if (interimIndicator) interimIndicator.remove();
+
       const messageDiv = document.createElement('div');
       messageDiv.className = `transcript-message ${speaker === 'rep' ? 'rep' : 'customer'}`;
       messageDiv.innerHTML = `
@@ -4579,6 +4594,30 @@ What do you say?`
       `;
 
       container.appendChild(messageDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Show interim transcript as a typing indicator (updates in place)
+    function showInterimTranscript(speaker, text) {
+      const container = document.getElementById('transcriptContainer');
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Find or create interim indicator
+      let interimIndicator = container.querySelector('.interim-transcript');
+      if (!interimIndicator) {
+        interimIndicator = document.createElement('div');
+        interimIndicator.className = `transcript-message interim-transcript ${speaker === 'rep' ? 'rep' : 'customer'}`;
+        interimIndicator.style.opacity = '0.6';
+        interimIndicator.style.fontStyle = 'italic';
+        container.appendChild(interimIndicator);
+      }
+
+      // Update the interim text
+      interimIndicator.className = `transcript-message interim-transcript ${speaker === 'rep' ? 'rep' : 'customer'}`;
+      interimIndicator.innerHTML = `${text} <span style="color: var(--gray-400);">...</span>`;
       container.scrollTop = container.scrollHeight;
     }
 
