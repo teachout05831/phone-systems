@@ -603,13 +603,10 @@ app.post('/voice-outbound', (req, res) => {
     const start = twiml.start();
     start.transcription({
       statusCallbackUrl: `https://${req.headers.host}/transcription-realtime`,
-      statusCallbackMethod: 'POST',
       track: 'both_tracks',
       transcriptionEngine: 'deepgram',
-      speechModel: 'nova-2-phonecall',
-      languageCode: 'en-US',
-      partialResults: true,
-      profanityFilter: false
+      speechModel: 'nova-2',
+      languageCode: 'en-US'
     });
 
     // Dial with recording
