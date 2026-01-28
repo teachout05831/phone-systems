@@ -1,5 +1,8 @@
+-- =====================================================
 -- Migration: Rep Time Tracking System
--- Adds session tracking, events logging, and company settings for sales rep productivity
+-- Adds session tracking, events logging, and company settings
+-- for sales rep productivity
+-- =====================================================
 
 -- =====================================================
 -- 1. REP SESSIONS TABLE

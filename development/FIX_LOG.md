@@ -41,6 +41,7 @@ Common error terms and where to find fixes:
 | ngrok, webhook, tunnel | [Ngrok/Webhook Issues](#ngrokwebhook-issues) |
 | Twilio, call, SMS | [Twilio Issues](#twilio-issues) |
 | WebSocket, connection | [WebSocket Issues](#websocket-issues) |
+| modal, visibility, display | [CSS/Modal Issues](#cssmodal-issues) |
 
 ---
 
@@ -394,6 +395,42 @@ ngrok http 3001
 **Fix:** Create the `import_history` table - run migration `00015_import_history.sql`
 
 **Files:** `00015_import_history.sql`
+
+---
+
+## CSS/Modal Issues
+
+### Issue: Knowledge Base Edit Modal Not Opening
+
+**Symptoms:**
+- Click pencil (edit) button on Knowledge Base entry
+- Nothing happens - modal doesn't appear
+- No errors in console
+
+**Root Cause:** CSS conflict between global modal styles and local modal styles.
+- Global CSS: `.modal { visibility: hidden; }`
+- Local JS: Sets `display: block` but doesn't override visibility
+
+**Fix:**
+Added specific CSS rule in settings.html:
+```css
+#kbEditModal.active {
+    display: block !important;
+    visibility: visible !important;
+}
+```
+
+And added console.log for future debugging in settings.js:
+```javascript
+function openEditKBModal(kb) {
+    console.log('[KB Edit] Opening modal for:', kb);
+    // ...
+}
+```
+
+**Files:** `twilio-ai-coach/public/settings.html`, `twilio-ai-coach/public/js/settings.js`
+
+**Pattern:** When a modal doesn't show, check for CSS `visibility` vs `display` conflicts.
 
 ---
 

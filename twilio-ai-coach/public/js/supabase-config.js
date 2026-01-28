@@ -490,6 +490,85 @@ function updateUserUI(user) {
 }
 
 // ===========================================
+// SIDEBAR LOGOUT BUTTON
+// ===========================================
+
+/**
+ * Add logout button to sidebar user section
+ * This runs on DOM load and injects a logout button if the sidebar-user element exists
+ */
+function initSidebarLogout() {
+  const sidebarUser = document.querySelector('.sidebar-user')
+  if (!sidebarUser) return
+
+  // Check if logout button already exists
+  if (sidebarUser.querySelector('.sidebar-logout-btn')) return
+
+  // Add CSS for logout button if not already present
+  if (!document.getElementById('sidebar-logout-styles')) {
+    const style = document.createElement('style')
+    style.id = 'sidebar-logout-styles'
+    style.textContent = `
+      .sidebar-logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: var(--gray-400, #9ca3af);
+        cursor: pointer;
+        border-radius: var(--radius-md, 8px);
+        transition: all 0.2s ease;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+      .sidebar-logout-btn:hover {
+        background: var(--danger-light, rgba(239, 68, 68, 0.1));
+        color: var(--danger, #ef4444);
+      }
+      .sidebar-logout-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+      .sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm, 8px);
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  // Create logout button
+  const logoutBtn = document.createElement('button')
+  logoutBtn.className = 'sidebar-logout-btn'
+  logoutBtn.title = 'Sign out'
+  logoutBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+  `
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault()
+    if (confirm('Are you sure you want to sign out?')) {
+      await signOut()
+    }
+  })
+
+  // Append to sidebar user section
+  sidebarUser.appendChild(logoutBtn)
+}
+
+// Initialize logout button when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSidebarLogout)
+} else {
+  initSidebarLogout()
+}
+
+// ===========================================
 // EXPORT FOR MODULE USAGE (if needed)
 // ===========================================
 window.OutreachApp = {
@@ -516,5 +595,6 @@ window.OutreachApp = {
   getFormData,
   setFormDisabled,
   initPage,
-  updateUserUI
+  updateUserUI,
+  initSidebarLogout
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Settings - AI Sales Coach</title>
+  <title>Settings - DialPro</title>
   <link rel="stylesheet" href="css/styles.css">
   <!-- Supabase JS SDK (local) -->
   <script src="js/supabase.min.js"></script>
@@ -13,6 +13,12 @@
     .settings-container {
       max-width: 800px;
       margin: 0 auto;
+      transition: max-width 0.2s ease;
+    }
+
+    /* Wider container for Knowledge Bases split view */
+    .settings-container.wide {
+      max-width: 1100px;
     }
 
     .settings-header {
@@ -495,6 +501,449 @@
     .sidebar-toggle {
       display: flex !important;
     }
+
+    /* ========== KNOWLEDGE BASES - SPLIT VIEW ========== */
+
+    .kb-split-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: var(--spacing-lg);
+      min-height: 500px;
+    }
+
+    /* Left Panel - KB List */
+    .kb-split-left {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .kb-split-left-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kb-split-left-header h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .kb-split-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .kb-loading, .kb-empty, .kb-error {
+      padding: var(--spacing-lg);
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .kb-error {
+      color: var(--danger);
+    }
+
+    .kb-split-item {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+    }
+
+    .kb-split-item:hover {
+      background: var(--gray-50);
+    }
+
+    .kb-split-item.selected {
+      background: var(--primary-light);
+      border-left: 3px solid var(--primary);
+    }
+
+    .kb-split-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-split-item-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: 2px;
+    }
+
+    .kb-default-badge {
+      font-size: 0.5625rem;
+      padding: 2px 6px;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .kb-split-item-description {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .kb-split-item-meta {
+      font-size: 0.6875rem;
+      color: var(--gray-400);
+    }
+
+    .kb-split-item-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8125rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn-icon:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-300);
+    }
+
+    .btn-icon.danger:hover {
+      background: var(--danger-light);
+      border-color: var(--danger);
+    }
+
+    /* Right Panel - Scripts */
+    .kb-split-right {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .kb-split-right-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kb-split-right-header h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .kb-split-right-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      text-align: center;
+      padding: var(--spacing-xl);
+    }
+
+    .kb-split-right-empty p {
+      margin-top: var(--spacing-sm);
+      font-size: 0.875rem;
+    }
+
+    /* Script Tabs */
+    .kb-split-tabs {
+      display: flex;
+      gap: 4px;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+      background: white;
+    }
+
+    .script-tab {
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .script-tab:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .script-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Scripts List */
+    .kb-split-scripts {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+    }
+
+    .script-card {
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-sm);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .script-card:hover {
+      border-color: var(--gray-200);
+      background: white;
+    }
+
+    .script-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .script-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .script-category {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .script-category.objection {
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .script-category.story {
+      background: var(--primary-light);
+      color: #1e40af;
+    }
+
+    .script-category.close {
+      background: var(--success-light);
+      color: #065f46;
+    }
+
+    .script-category.opener {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+
+    .script-card-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .script-card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .script-card-text {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    .script-card-triggers {
+      margin-top: var(--spacing-sm);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .trigger-tag {
+      font-size: 0.625rem;
+      padding: 2px 6px;
+      background: var(--gray-200);
+      color: var(--gray-600);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Analytics Table */
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .analytics-table th,
+    .analytics-table td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      text-align: left;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .analytics-table th {
+      background: var(--gray-50);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-500);
+    }
+
+    .analytics-table td {
+      font-size: 0.875rem;
+    }
+
+    /* Responsive - stack on mobile */
+    @media (max-width: 900px) {
+      .kb-split-container {
+        grid-template-columns: 1fr;
+      }
+
+      .kb-split-left {
+        max-height: 300px;
+      }
+    }
+
+    /* Modal Styles - Override global styles.css which uses visibility:hidden */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: var(--spacing-md);
+      /* Override global styles.css visibility/opacity */
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-content.modal-large {
+      max-width: 700px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      font-size: 1.5rem;
+      color: var(--gray-400);
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--gray-600);
+    }
+
+    .modal-content form {
+      padding: var(--spacing-lg);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border-color: #dc2626;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
   </style>
 </head>
 <body>
@@ -507,7 +956,7 @@
       <div class="sidebar-header">
         <a href="dashboard.html" class="sidebar-logo">
           <div class="sidebar-logo-icon">AI</div>
-          <span class="sidebar-logo-text">Sales Coach</span>
+          <span class="sidebar-logo-text">DialPro</span>
         </a>
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
           <span>◀</span>
@@ -633,7 +1082,7 @@
           <!-- Header -->
           <div class="settings-header">
             <h2>Settings</h2>
-            <p>Customize your AI Sales Coach experience</p>
+            <p>Customize your DialPro experience</p>
           </div>
 
           <!-- Settings Tabs -->
@@ -644,6 +1093,7 @@
             <button class="settings-tab" data-tab="timetracking">Time Tracking</button>
             <button class="settings-tab" data-tab="notifications">Notifications</button>
             <button class="settings-tab" data-tab="integrations">Integrations</button>
+            <button class="settings-tab" data-tab="knowledgebases">Knowledge Bases</button>
             <button class="settings-tab" data-tab="account">Account</button>
           </div>
 
@@ -976,6 +1426,30 @@
 
           <!-- Phone Settings -->
           <div class="settings-section" id="phoneSection">
+            <!-- Transcription Provider Card -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>Transcription Provider</h3>
+                <p>Choose which service to use for real-time call transcription</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Provider</label>
+                  <select class="input" id="transcriptionProvider" onchange="saveTranscriptionProvider()">
+                    <option value="deepgram">Deepgram Nova-2 (Default)</option>
+                    <option value="elevenlabs">ElevenLabs Scribe</option>
+                  </select>
+                  <div class="form-hint" id="providerHint">Deepgram: Best for phone audio, ~300ms latency, $0.0043/min</div>
+                </div>
+                <div id="providerStatus" style="margin-top: var(--spacing-md); display: none;">
+                  <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.875rem;">
+                    <span id="providerStatusIcon"></span>
+                    <span id="providerStatusText"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="settings-card">
               <div class="settings-card-header">
                 <h3>Call Forwarding</h3>
@@ -1258,6 +1732,61 @@
                   </div>
                   <span id="smsStatusBadge" class="status-badge" style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; background: var(--gray-200); color: var(--gray-600);">Not Connected</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Knowledge Bases Settings - Split View -->
+          <div class="settings-section" id="knowledgebasesSection">
+            <div class="kb-split-container">
+              <!-- Left Panel - Knowledge Bases List -->
+              <div class="kb-split-left">
+                <div class="kb-split-left-header">
+                  <h4>Knowledge Bases</h4>
+                  <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="showAddKnowledgeBaseModal()">+ Add</button>
+                </div>
+                <div class="kb-split-list" id="knowledgeBasesList">
+                  <div class="kb-loading">Loading...</div>
+                </div>
+              </div>
+
+              <!-- Right Panel - Scripts -->
+              <div class="kb-split-right">
+                <div class="kb-split-right-header">
+                  <h4 id="scriptsCardTitle">Select a Knowledge Base</h4>
+                  <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem; display: none;" id="addScriptBtn" onclick="showAddScriptModal()">+ Add Script</button>
+                </div>
+                <div id="scriptsPanel">
+                  <div class="kb-split-right-empty">
+                    <div style="font-size: 2rem;">📚</div>
+                    <p>Select a knowledge base from the left to view and manage its scripts</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Script Analytics (below split view) -->
+            <div class="settings-card" id="analyticsCard" style="display: none; margin-top: var(--spacing-lg);">
+              <div class="settings-card-header">
+                <h3>Script Performance</h3>
+                <p>See which scripts are converting best</p>
+              </div>
+              <div class="settings-card-body" style="padding: 0; overflow-x: auto;">
+                <table class="analytics-table">
+                  <thead>
+                    <tr>
+                      <th>Script</th>
+                      <th>Category</th>
+                      <th>Times Shown</th>
+                      <th>Times Used</th>
+                      <th>Conversions</th>
+                      <th>Conversion Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="analyticsTableBody">
+                    <!-- Analytics will be loaded here -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1837,8 +2366,626 @@
       // Wait a bit for auth to initialize
       setTimeout(() => {
         loadUserProfile()
+        loadTranscriptionProvider()
       }, 500)
     })
+
+    // ===========================================
+    // TRANSCRIPTION PROVIDER SETTINGS
+    // ===========================================
+
+    const providerInfo = {
+      deepgram: {
+        hint: 'Deepgram: Best for phone audio, ~300ms latency, $0.0043/min',
+        name: 'Deepgram Nova-2'
+      },
+      elevenlabs: {
+        hint: 'ElevenLabs: Faster latency (~150ms), $0.06-0.15/min',
+        name: 'ElevenLabs Scribe'
+      }
+    }
+
+    // Load current transcription provider setting
+    window.loadTranscriptionProvider = async function() {
+      try {
+        // First try localStorage (for quick access)
+        const cached = localStorage.getItem('transcriptionProvider')
+        if (cached) {
+          updateProviderUI(cached)
+        }
+
+        // Then fetch from server to confirm
+        const response = await fetch('/api/settings/transcription-provider')
+        if (response.ok) {
+          const data = await response.json()
+          const provider = data.provider || 'deepgram'
+          localStorage.setItem('transcriptionProvider', provider)
+          updateProviderUI(provider)
+        }
+      } catch (error) {
+        console.error('Error loading transcription provider:', error)
+        // Default to deepgram
+        updateProviderUI('deepgram')
+      }
+    }
+
+    // Save transcription provider setting
+    window.saveTranscriptionProvider = async function() {
+      const select = document.getElementById('transcriptionProvider')
+      const provider = select.value
+      const statusDiv = document.getElementById('providerStatus')
+      const statusIcon = document.getElementById('providerStatusIcon')
+      const statusText = document.getElementById('providerStatusText')
+
+      // Update hint text immediately
+      const hint = document.getElementById('providerHint')
+      if (hint && providerInfo[provider]) {
+        hint.textContent = providerInfo[provider].hint
+      }
+
+      // Show saving status
+      statusDiv.style.display = 'block'
+      statusDiv.querySelector('div').style.background = 'var(--gray-100)'
+      statusIcon.textContent = '...'
+      statusText.textContent = 'Saving...'
+
+      try {
+        const response = await fetch('/api/settings/transcription-provider', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider })
+        })
+
+        if (response.ok) {
+          // Save to localStorage for quick access
+          localStorage.setItem('transcriptionProvider', provider)
+
+          // Show success
+          statusDiv.querySelector('div').style.background = 'var(--success-light, #dcfce7)'
+          statusIcon.textContent = '✓'
+          statusText.textContent = `Switched to ${providerInfo[provider].name}. New calls will use this provider.`
+          statusText.style.color = 'var(--success, #22c55e)'
+
+          // Hide after 3 seconds
+          setTimeout(() => {
+            statusDiv.style.display = 'none'
+          }, 3000)
+        } else {
+          throw new Error('Failed to save')
+        }
+      } catch (error) {
+        console.error('Error saving transcription provider:', error)
+        statusDiv.querySelector('div').style.background = 'var(--danger-light, #fee2e2)'
+        statusIcon.textContent = '✕'
+        statusText.textContent = 'Failed to save. Please try again.'
+        statusText.style.color = 'var(--danger, #ef4444)'
+      }
+    }
+
+    // Update the provider dropdown and hint
+    function updateProviderUI(provider) {
+      const select = document.getElementById('transcriptionProvider')
+      const hint = document.getElementById('providerHint')
+
+      if (select) {
+        select.value = provider
+      }
+      if (hint && providerInfo[provider]) {
+        hint.textContent = providerInfo[provider].hint
+      }
+    }
+
+    // ============ NOTIFICATION HELPER ============
+    window.showNotification = function(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 500;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      `;
+
+      // Set background based on type
+      const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+      };
+      notification.style.background = colors[type] || colors.info;
+      notification.textContent = message;
+
+      document.body.appendChild(notification);
+
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // ============ KNOWLEDGE BASES MANAGEMENT ============
+
+    let selectedKnowledgeBaseId = null;
+    let knowledgeBasesList = [];
+    let scriptsList = [];
+    let currentScriptFilter = 'all';
+
+    // Load knowledge bases when tab is selected
+    window.loadKnowledgeBases = async function() {
+      const container = document.getElementById('knowledgeBasesList');
+      container.innerHTML = '<div class="kb-loading">Loading...</div>';
+
+      try {
+        const response = await fetch('/api/knowledge-bases');
+        const result = await response.json();
+
+        if (result.success) {
+          knowledgeBasesList = result.knowledgeBases;
+          renderKnowledgeBases();
+        } else {
+          container.innerHTML = '<div class="kb-error">Failed to load knowledge bases</div>';
+        }
+      } catch (error) {
+        console.error('Error loading knowledge bases:', error);
+        container.innerHTML = '<div class="kb-error">Failed to load knowledge bases</div>';
+      }
+    }
+
+    window.renderKnowledgeBases = function() {
+      const container = document.getElementById('knowledgeBasesList');
+
+      if (knowledgeBasesList.length === 0) {
+        container.innerHTML = '<div class="kb-empty">No knowledge bases yet. Click "+ Add" to create one.</div>';
+        return;
+      }
+
+      container.innerHTML = knowledgeBasesList.map(kb => `
+        <div class="kb-split-item ${String(selectedKnowledgeBaseId) === String(kb.id) ? 'selected' : ''}" onclick="selectKnowledgeBase('${kb.id}')">
+          <div class="kb-split-item-info">
+            <div class="kb-split-item-name">
+              ${kb.name}
+              ${kb.is_default ? '<span class="kb-default-badge">Default</span>' : ''}
+            </div>
+            <div class="kb-split-item-description">${kb.description || 'No description'}</div>
+            <div class="kb-split-item-meta">${kb.industry ? kb.industry : ''}</div>
+          </div>
+          <div class="kb-split-item-actions" onclick="event.stopPropagation()">
+            <button class="btn-icon" onclick="editKnowledgeBase('${kb.id}'); return false;" title="Edit">✏️</button>
+            <button class="btn-icon danger" onclick="deleteKnowledgeBase('${kb.id}'); return false;" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.selectKnowledgeBase = async function(kbId) {
+      selectedKnowledgeBaseId = kbId;
+      renderKnowledgeBases();
+
+      const kb = knowledgeBasesList.find(k => String(k.id) === String(kbId));
+      document.getElementById('scriptsCardTitle').textContent = `Scripts — ${kb.name}`;
+      document.getElementById('addScriptBtn').style.display = 'block';
+      document.getElementById('analyticsCard').style.display = 'block';
+
+      await loadScripts(kbId);
+      await loadAnalytics();
+    }
+
+    window.loadScripts = async function(kbId) {
+      const panel = document.getElementById('scriptsPanel');
+      panel.innerHTML = '<div class="kb-loading" style="padding: 40px;">Loading scripts...</div>';
+
+      try {
+        const response = await fetch(`/api/knowledge-bases/${kbId}/scripts`);
+        const result = await response.json();
+
+        if (result.success) {
+          scriptsList = result.scripts;
+          renderScripts();
+        }
+      } catch (error) {
+        console.error('Error loading scripts:', error);
+        panel.innerHTML = '<div class="kb-error" style="padding: 40px;">Failed to load scripts</div>';
+      }
+    }
+
+    window.filterScripts = function(category) {
+      currentScriptFilter = category;
+      document.querySelectorAll('.script-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.category === category);
+      });
+      renderScriptsContent();
+    }
+
+    window.renderScripts = function() {
+      const panel = document.getElementById('scriptsPanel');
+
+      // Build the tabs + scripts container
+      panel.innerHTML = `
+        <div class="kb-split-tabs">
+          <button class="script-tab ${currentScriptFilter === 'all' ? 'active' : ''}" data-category="all" onclick="filterScripts('all')">All</button>
+          <button class="script-tab ${currentScriptFilter === 'objection' ? 'active' : ''}" data-category="objection" onclick="filterScripts('objection')">Objections</button>
+          <button class="script-tab ${currentScriptFilter === 'story' ? 'active' : ''}" data-category="story" onclick="filterScripts('story')">Stories</button>
+          <button class="script-tab ${currentScriptFilter === 'close' ? 'active' : ''}" data-category="close" onclick="filterScripts('close')">Closes</button>
+          <button class="script-tab ${currentScriptFilter === 'opener' ? 'active' : ''}" data-category="opener" onclick="filterScripts('opener')">Openers</button>
+        </div>
+        <div class="kb-split-scripts" id="scriptsListContent">
+        </div>
+      `;
+
+      renderScriptsContent();
+    }
+
+    window.renderScriptsContent = function() {
+      const container = document.getElementById('scriptsListContent');
+      if (!container) return;
+
+      const filtered = currentScriptFilter === 'all'
+        ? scriptsList
+        : scriptsList.filter(s => s.category === currentScriptFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="kb-empty">No scripts in this category. Click "+ Add Script" to create one.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(script => `
+        <div class="script-card">
+          <div class="script-card-header">
+            <span class="script-category ${script.category}">${script.category}</span>
+            <div class="script-card-actions">
+              <button class="btn-icon" onclick="editScript('${script.id}')" title="Edit">✏️</button>
+              <button class="btn-icon danger" onclick="deleteScript('${script.id}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+          <div class="script-card-title">${script.title}</div>
+          <div class="script-card-text">${script.script_text}</div>
+          ${(script.trigger_phrases && script.trigger_phrases.length > 0) ? `
+            <div class="script-card-triggers">
+              ${script.trigger_phrases.map(t => `<span class="trigger-tag">${t}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.loadAnalytics = async function() {
+      try {
+        const response = await fetch('/api/scripts/analytics');
+        const result = await response.json();
+
+        if (result.success) {
+          const tbody = document.getElementById('analyticsTableBody');
+          const filtered = result.analytics.filter(a =>
+            knowledgeBasesList.find(kb => kb.id === selectedKnowledgeBaseId)?.name === a.knowledge_bases?.name
+          );
+
+          if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--gray-500);">No analytics data yet. Scripts need to be shown during calls.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = filtered.map(a => `
+            <tr>
+              <td>${a.title}</td>
+              <td><span class="script-item-category ${a.category}">${a.category}</span></td>
+              <td>${a.times_shown || 0}</td>
+              <td>${a.times_used || 0}</td>
+              <td>${a.times_converted || 0}</td>
+              <td><strong>${(a.conversion_rate || 0).toFixed(1)}%</strong></td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    }
+
+    // Modal functions
+    window.showAddKnowledgeBaseModal = function() {
+      document.getElementById('kbModalTitle').textContent = 'Add Knowledge Base';
+      document.getElementById('kbForm').reset();
+      document.getElementById('kbId').value = '';
+      document.getElementById('kbModal').classList.add('show');
+    }
+
+    window.editKnowledgeBase = function(kbId) {
+      console.log('[editKnowledgeBase] Called with kbId:', kbId);
+      console.log('[editKnowledgeBase] knowledgeBasesList:', knowledgeBasesList);
+
+      const kb = knowledgeBasesList.find(k => String(k.id) === String(kbId));
+      console.log('[editKnowledgeBase] Found KB:', kb);
+
+      if (!kb) {
+        console.error('[editKnowledgeBase] KB not found for id:', kbId);
+        showNotification('Knowledge base not found', 'error');
+        return;
+      }
+
+      document.getElementById('kbModalTitle').textContent = 'Edit Knowledge Base';
+      document.getElementById('kbId').value = kb.id;
+      document.getElementById('kbName').value = kb.name;
+      document.getElementById('kbDescription').value = kb.description || '';
+      document.getElementById('kbIndustry').value = kb.industry || '';
+      document.getElementById('kbIsDefault').checked = kb.is_default;
+
+      const modal = document.getElementById('kbModal');
+      console.log('[editKnowledgeBase] Modal element:', modal);
+      modal.classList.add('show');
+      console.log('[editKnowledgeBase] Modal classes after show:', modal.className);
+    }
+
+    window.saveKnowledgeBase = async function(event) {
+      event.preventDefault();
+
+      const kbId = document.getElementById('kbId').value;
+      const data = {
+        name: document.getElementById('kbName').value,
+        description: document.getElementById('kbDescription').value,
+        industry: document.getElementById('kbIndustry').value || null,
+        is_default: document.getElementById('kbIsDefault').checked
+      };
+
+      try {
+        const url = kbId ? `/api/knowledge-bases/${kbId}` : '/api/knowledge-bases';
+        const method = kbId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          closeKbModal();
+          await loadKnowledgeBases();
+          showNotification(kbId ? 'Knowledge base updated' : 'Knowledge base created', 'success');
+        } else {
+          showNotification(result.error || 'Failed to save', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving knowledge base:', error);
+        showNotification('Failed to save knowledge base', 'error');
+      }
+    }
+
+    window.deleteKnowledgeBase = async function(kbId) {
+      if (!confirm('Are you sure you want to delete this knowledge base? All scripts will also be deleted.')) return;
+
+      try {
+        const response = await fetch(`/api/knowledge-bases/${kbId}`, { method: 'DELETE' });
+        const result = await response.json();
+
+        if (result.success) {
+          if (selectedKnowledgeBaseId === kbId) {
+            selectedKnowledgeBaseId = null;
+            document.getElementById('scriptsCard').style.display = 'none';
+            document.getElementById('analyticsCard').style.display = 'none';
+          }
+          await loadKnowledgeBases();
+          showNotification('Knowledge base deleted', 'success');
+        } else {
+          showNotification(result.error || 'Failed to delete', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting knowledge base:', error);
+        showNotification('Failed to delete knowledge base', 'error');
+      }
+    }
+
+    window.closeKbModal = function() {
+      document.getElementById('kbModal').classList.remove('show');
+    }
+
+    // Script modal functions
+    window.showAddScriptModal = function() {
+      if (!selectedKnowledgeBaseId) {
+        showNotification('Please select a knowledge base first', 'warning');
+        return;
+      }
+      document.getElementById('scriptModalTitle').textContent = 'Add Script';
+      document.getElementById('scriptForm').reset();
+      document.getElementById('scriptId').value = '';
+      document.getElementById('scriptModal').classList.add('show');
+    }
+
+    window.editScript = function(scriptId) {
+      console.log('editScript called with:', scriptId);
+
+      // Use loose equality to handle string/number mismatch
+      const script = scriptsList.find(s => String(s.id) === String(scriptId));
+      if (!script) {
+        console.error('Script not found for id:', scriptId);
+        showNotification('Script not found', 'error');
+        return;
+      }
+
+      document.getElementById('scriptModalTitle').textContent = 'Edit Script';
+      document.getElementById('scriptId').value = script.id;
+      document.getElementById('scriptCategory').value = script.category;
+      document.getElementById('scriptTitle').value = script.title;
+      document.getElementById('scriptTriggers').value = (script.trigger_phrases || []).join(', ');
+      document.getElementById('scriptText').value = script.script_text;
+      document.getElementById('scriptStory').value = script.story_text || '';
+      document.getElementById('scriptTips').value = script.tips || '';
+
+      const modal = document.getElementById('scriptModal');
+      console.log('Script Modal element:', modal);
+      if (modal) {
+        modal.classList.add('show');
+        console.log('Script Modal classes after adding show:', modal.className);
+      } else {
+        console.error('scriptModal element not found!');
+      }
+    }
+
+    window.saveScript = async function(event) {
+      event.preventDefault();
+
+      const scriptId = document.getElementById('scriptId').value;
+      const triggersRaw = document.getElementById('scriptTriggers').value;
+      const triggers = triggersRaw.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+
+      const data = {
+        knowledge_base_id: selectedKnowledgeBaseId,
+        category: document.getElementById('scriptCategory').value,
+        title: document.getElementById('scriptTitle').value,
+        trigger_phrases: triggers,
+        script_text: document.getElementById('scriptText').value,
+        story_text: document.getElementById('scriptStory').value || null,
+        tips: document.getElementById('scriptTips').value || null
+      };
+
+      try {
+        const url = scriptId ? `/api/scripts/${scriptId}` : '/api/scripts';
+        const method = scriptId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          closeScriptModal();
+          await loadScripts(selectedKnowledgeBaseId);
+          showNotification(scriptId ? 'Script updated' : 'Script created', 'success');
+        } else {
+          showNotification(result.error || 'Failed to save', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving script:', error);
+        showNotification('Failed to save script', 'error');
+      }
+    }
+
+    window.deleteScript = async function(scriptId) {
+      if (!confirm('Are you sure you want to delete this script?')) return;
+
+      try {
+        const response = await fetch(`/api/scripts/${scriptId}`, { method: 'DELETE' });
+        const result = await response.json();
+
+        if (result.success) {
+          await loadScripts(selectedKnowledgeBaseId);
+          showNotification('Script deleted', 'success');
+        } else {
+          showNotification(result.error || 'Failed to delete', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting script:', error);
+        showNotification('Failed to delete script', 'error');
+      }
+    }
+
+    window.closeScriptModal = function() {
+      document.getElementById('scriptModal').classList.remove('show');
+    }
+
+    // Initialize knowledge bases when tab is clicked
+    document.addEventListener('DOMContentLoaded', () => {
+      const kbTab = document.querySelector('[data-tab="knowledgebases"]');
+      if (kbTab) {
+        kbTab.addEventListener('click', () => {
+          loadKnowledgeBases();
+        });
+      }
+    });
   </script>
+
+  <!-- Knowledge Base Modal -->
+  <div class="modal-overlay" id="kbModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="kbModalTitle">Add Knowledge Base</h3>
+        <button class="modal-close" onclick="closeKbModal()">&times;</button>
+      </div>
+      <form id="kbForm" onsubmit="saveKnowledgeBase(event)">
+        <input type="hidden" id="kbId">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input type="text" class="input" id="kbName" required placeholder="e.g., Cleaning Services">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="input" id="kbDescription" rows="2" placeholder="Describe this knowledge base..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <input type="text" class="input" id="kbIndustry" placeholder="e.g., cleaning, solar, insurance">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="kbIsDefault">
+            <span>Set as default knowledge base</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeKbModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script Modal -->
+  <div class="modal-overlay" id="scriptModal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 id="scriptModalTitle">Add Script</h3>
+        <button class="modal-close" onclick="closeScriptModal()">&times;</button>
+      </div>
+      <form id="scriptForm" onsubmit="saveScript(event)">
+        <input type="hidden" id="scriptId">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select class="input" id="scriptCategory" required>
+              <option value="objection">Objection Handler</option>
+              <option value="story">Story</option>
+              <option value="close">Close</option>
+              <option value="opener">Opener</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 2;">
+            <label class="form-label">Title *</label>
+            <input type="text" class="input" id="scriptTitle" required placeholder="e.g., Price Objection - Value Focus">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trigger Phrases</label>
+          <input type="text" class="input" id="scriptTriggers" placeholder="too expensive, costs too much, can't afford (comma separated)">
+          <div class="form-hint">Keywords that will trigger this script when the customer says them</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Script Text *</label>
+          <textarea class="input" id="scriptText" rows="4" required placeholder="The exact words the rep should say..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Story (Optional)</label>
+          <textarea class="input" id="scriptStory" rows="3" placeholder="An optional story to tell..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tips (Optional)</label>
+          <textarea class="input" id="scriptTips" rows="2" placeholder="Coaching tips for the rep..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeScriptModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Script</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

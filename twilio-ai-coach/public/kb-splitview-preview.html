@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base - Split View Preview</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Override container width for split view */
+    .settings-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .settings-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .settings-header h2 {
+      margin: 0;
+      color: var(--gray-800);
+    }
+
+    .settings-header p {
+      margin: 4px 0 0;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .settings-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+      overflow: hidden;
+    }
+
+    .settings-card-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .settings-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .settings-card-header p {
+      margin: 4px 0 0;
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    /* ========== SPLIT VIEW DESIGN ========== */
+
+    .kb-split-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: var(--spacing-lg);
+      min-height: 500px;
+    }
+
+    /* Left Panel - KB List */
+    .kb-split-left {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .kb-split-left-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kb-split-left-header h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .kb-split-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .kb-split-item {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+    }
+
+    .kb-split-item:hover {
+      background: var(--gray-50);
+    }
+
+    .kb-split-item.selected {
+      background: var(--primary-light);
+      border-left: 3px solid var(--primary);
+    }
+
+    .kb-split-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-split-item-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: 2px;
+    }
+
+    .kb-badge {
+      font-size: 0.5625rem;
+      padding: 2px 6px;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .kb-split-item-description {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .kb-split-item-meta {
+      font-size: 0.6875rem;
+      color: var(--gray-400);
+    }
+
+    .kb-split-item-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .kb-split-item:hover .kb-split-item-actions,
+    .kb-split-item.selected .kb-split-item-actions {
+      opacity: 1;
+    }
+
+    .btn-icon-sm {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8125rem;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-icon-sm:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-300);
+    }
+
+    .btn-icon-sm.danger:hover {
+      background: var(--danger-light);
+      border-color: var(--danger);
+    }
+
+    /* Right Panel - Scripts */
+    .kb-split-right {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .kb-split-right-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kb-split-right-header h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .kb-split-tabs {
+      display: flex;
+      gap: 4px;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+      background: white;
+    }
+
+    .kb-split-tab {
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .kb-split-tab:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .kb-split-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .kb-split-scripts {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+    }
+
+    .kb-script-card {
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-sm);
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .kb-script-card:hover {
+      border-color: var(--gray-200);
+      background: white;
+    }
+
+    .kb-script-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .kb-script-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .kb-script-category {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .kb-script-category.objection {
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .kb-script-category.story {
+      background: var(--primary-light);
+      color: #1e40af;
+    }
+
+    .kb-script-category.close {
+      background: var(--success-light);
+      color: #065f46;
+    }
+
+    .kb-script-category.opener {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+
+    .kb-script-card-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .kb-script-card:hover .kb-script-card-actions {
+      opacity: 1;
+    }
+
+    .kb-script-card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .kb-script-card-text {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    .kb-script-card-triggers {
+      margin-top: var(--spacing-sm);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .trigger-tag {
+      font-size: 0.625rem;
+      padding: 2px 6px;
+      background: var(--gray-200);
+      color: var(--gray-600);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Empty state */
+    .kb-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--gray-400);
+      text-align: center;
+      padding: var(--spacing-xl);
+    }
+
+    .kb-empty-state p {
+      margin-top: var(--spacing-sm);
+      font-size: 0.875rem;
+    }
+
+    /* Preview label */
+    .preview-label {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .kb-split-container {
+        grid-template-columns: 1fr;
+      }
+
+      .kb-split-left {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-label">
+    PREVIEW: Split View Design with DialPro styles
+  </div>
+
+  <!-- Simulated header -->
+  <header class="header">
+    <div class="logo">
+      <span style="font-weight: 700; font-size: 1.25rem; color: var(--primary);">DialPro</span>
+    </div>
+    <nav class="nav" style="display: flex; gap: 20px;">
+      <span style="color: var(--gray-500);">Dashboard</span>
+      <span style="color: var(--gray-500);">Contacts</span>
+      <span style="color: var(--primary); font-weight: 500;">Settings</span>
+    </nav>
+  </header>
+
+  <main class="main-content" style="padding: var(--spacing-xl);">
+    <div class="settings-container">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <p>Manage your account settings and preferences</p>
+      </div>
+
+      <!-- Simulated tabs -->
+      <div style="display: flex; gap: 4px; border-bottom: 1px solid var(--gray-200); margin-bottom: var(--spacing-lg);">
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">General</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">Notifications</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-size: 0.875rem; font-weight: 500; cursor: pointer;">Knowledge Bases</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">Account</button>
+      </div>
+
+      <!-- SPLIT VIEW DESIGN -->
+      <div class="kb-split-container">
+        <!-- Left Panel - KB List -->
+        <div class="kb-split-left">
+          <div class="kb-split-left-header">
+            <h4>Knowledge Bases</h4>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;">+ Add</button>
+          </div>
+          <div class="kb-split-list">
+            <div class="kb-split-item selected" onclick="selectKB(this)">
+              <div class="kb-split-item-info">
+                <div class="kb-split-item-name">
+                  Cleaning Services
+                  <span class="kb-badge">Default</span>
+                </div>
+                <div class="kb-split-item-description">Scripts for residential cleaning</div>
+                <div class="kb-split-item-meta">12 scripts • Cleaning</div>
+              </div>
+              <div class="kb-split-item-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-split-item" onclick="selectKB(this)">
+              <div class="kb-split-item-info">
+                <div class="kb-split-item-name">Solar Sales</div>
+                <div class="kb-split-item-description">Solar panel installation scripts</div>
+                <div class="kb-split-item-meta">8 scripts • Energy</div>
+              </div>
+              <div class="kb-split-item-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-split-item" onclick="selectKB(this)">
+              <div class="kb-split-item-info">
+                <div class="kb-split-item-name">Insurance</div>
+                <div class="kb-split-item-description">Life and health insurance</div>
+                <div class="kb-split-item-meta">15 scripts • Insurance</div>
+              </div>
+              <div class="kb-split-item-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-split-item" onclick="selectKB(this)">
+              <div class="kb-split-item-info">
+                <div class="kb-split-item-name">Roofing</div>
+                <div class="kb-split-item-description">Roof repair and replacement</div>
+                <div class="kb-split-item-meta">6 scripts • Home Services</div>
+              </div>
+              <div class="kb-split-item-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel - Scripts -->
+        <div class="kb-split-right">
+          <div class="kb-split-right-header">
+            <h4>Scripts — Cleaning Services</h4>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;">+ Add Script</button>
+          </div>
+          <div class="kb-split-tabs">
+            <button class="kb-split-tab active">All (12)</button>
+            <button class="kb-split-tab">Objections (4)</button>
+            <button class="kb-split-tab">Stories (3)</button>
+            <button class="kb-split-tab">Closes (3)</button>
+            <button class="kb-split-tab">Openers (2)</button>
+          </div>
+          <div class="kb-split-scripts">
+            <div class="kb-script-card">
+              <div class="kb-script-card-header">
+                <span class="kb-script-category objection">Objection</span>
+                <div class="kb-script-card-actions">
+                  <button class="btn-icon-sm" title="Edit">✏️</button>
+                  <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="kb-script-card-title">Price Too High</div>
+              <div class="kb-script-card-text">I understand price is important. Let me ask - if we could find a way to fit this into your budget, would you be ready to move forward today?</div>
+              <div class="kb-script-card-triggers">
+                <span class="trigger-tag">too expensive</span>
+                <span class="trigger-tag">costs too much</span>
+                <span class="trigger-tag">can't afford</span>
+              </div>
+            </div>
+
+            <div class="kb-script-card">
+              <div class="kb-script-card-header">
+                <span class="kb-script-category story">Story</span>
+                <div class="kb-script-card-actions">
+                  <button class="btn-icon-sm" title="Edit">✏️</button>
+                  <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="kb-script-card-title">The Busy Mom</div>
+              <div class="kb-script-card-text">I had a client, Sarah, who was a working mom of three. She said the same thing about not having time. But after her first cleaning, she told me she finally got to spend that Saturday at her daughter's soccer game instead of scrubbing floors.</div>
+              <div class="kb-script-card-triggers">
+                <span class="trigger-tag">no time</span>
+                <span class="trigger-tag">too busy</span>
+              </div>
+            </div>
+
+            <div class="kb-script-card">
+              <div class="kb-script-card-header">
+                <span class="kb-script-category close">Close</span>
+                <div class="kb-script-card-actions">
+                  <button class="btn-icon-sm" title="Edit">✏️</button>
+                  <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="kb-script-card-title">Assumptive Close</div>
+              <div class="kb-script-card-text">Great! So let's go ahead and get you scheduled. What day works better for you - Tuesday or Thursday?</div>
+              <div class="kb-script-card-triggers">
+                <span class="trigger-tag">sounds good</span>
+                <span class="trigger-tag">interested</span>
+              </div>
+            </div>
+
+            <div class="kb-script-card">
+              <div class="kb-script-card-header">
+                <span class="kb-script-category opener">Opener</span>
+                <div class="kb-script-card-actions">
+                  <button class="btn-icon-sm" title="Edit">✏️</button>
+                  <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="kb-script-card-title">Referral Intro</div>
+              <div class="kb-script-card-text">Hi, this is [Name] calling from [Company]. Your neighbor [Referrer] suggested I reach out - they mentioned you might be interested in our cleaning services.</div>
+              <div class="kb-script-card-triggers">
+                <span class="trigger-tag">referral</span>
+                <span class="trigger-tag">neighbor</span>
+              </div>
+            </div>
+
+            <div class="kb-script-card">
+              <div class="kb-script-card-header">
+                <span class="kb-script-category objection">Objection</span>
+                <div class="kb-script-card-actions">
+                  <button class="btn-icon-sm" title="Edit">✏️</button>
+                  <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="kb-script-card-title">Need to Think About It</div>
+              <div class="kb-script-card-text">I totally understand wanting to think it over. Most of my best customers said the same thing. What specifically would you like to think about - is it the price, the schedule, or something else?</div>
+              <div class="kb-script-card-triggers">
+                <span class="trigger-tag">think about it</span>
+                <span class="trigger-tag">not sure</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function selectKB(item) {
+      document.querySelectorAll('.kb-split-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+    }
+  </script>
+</body>
+</html>

@@ -502,6 +502,201 @@
       margin-bottom: var(--spacing-md);
     }
 
+    /* Script Match Cards */
+    .ai-tip-card.script-match {
+      border-left-color: #10b981;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .ai-tip-card.script-match.story {
+      border-left-color: #3b82f6;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+
+    .ai-tip-card.script-match.close {
+      border-left-color: #8b5cf6;
+      background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    }
+
+    .ai-tip-card.script-match.opener {
+      border-left-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+
+    .script-header {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: rgba(0,0,0,0.05);
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .script-category {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #059669;
+    }
+
+    .script-match.story .script-category { color: #2563eb; }
+    .script-match.close .script-category { color: #7c3aed; }
+    .script-match.opener .script-category { color: #d97706; }
+
+    .script-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .script-body {
+      padding: var(--spacing-md);
+    }
+
+    .script-text-box {
+      position: relative;
+      background: white;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      padding-right: calc(var(--spacing-md) + 32px);
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .script-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--gray-800);
+      margin: 0;
+    }
+
+    .copy-script-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .copy-script-btn:hover {
+      background: var(--gray-200);
+    }
+
+    .copy-script-btn.copied {
+      background: #10b981;
+      color: white;
+    }
+
+    .script-story {
+      margin-top: var(--spacing-sm);
+    }
+
+    .story-toggle {
+      background: none;
+      border: 1px dashed var(--gray-300);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+
+    .story-toggle:hover {
+      background: rgba(0,0,0,0.03);
+    }
+
+    .story-content {
+      margin-top: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--gray-700);
+      font-style: italic;
+    }
+
+    .story-content p {
+      margin: 0;
+    }
+
+    .script-tips {
+      margin-top: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      color: var(--gray-700);
+    }
+
+    .tips-label {
+      font-weight: 600;
+    }
+
+    .script-feedback {
+      display: flex;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: rgba(0,0,0,0.03);
+      border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .feedback-btn {
+      flex: 1;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--gray-300);
+      background: white;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .feedback-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .feedback-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .feedback-btn.used.active {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .feedback-btn.helpful.active {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+
+    .feedback-btn.not-helpful.active {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     /* Transcript Panel (Right) */
     .transcript-panel {
       display: flex;
@@ -2035,6 +2230,10 @@
       aiCoaching: true,
       speakingIndicator: true
     };
+
+    // Knowledge Base State
+    let selectedKnowledgeBaseId = null;
+    let knowledgeBases = [];
 
     // Lead Source State
     let leadSourceData = {
@@ -3596,6 +3795,10 @@ What do you say?`
       // Set up Call Mode selector listener
       setupCallModeSelector();
 
+      // Load and set up knowledge bases
+      await loadKnowledgeBases();
+      setupKnowledgeBaseSelector();
+
       // Initialize based on mode
       if (advancedModeEnabled) {
         connectWebSocket();
@@ -3636,6 +3839,64 @@ What do you say?`
           showNotification('Basic Mode enabled. Calls will still be recorded with post-call analysis.', 'info');
         }
       });
+    }
+
+    // Load knowledge bases from API
+    async function loadKnowledgeBases() {
+      try {
+        const response = await fetch('/api/knowledge-bases');
+        const result = await response.json();
+
+        if (result.success && result.knowledgeBases) {
+          knowledgeBases = result.knowledgeBases;
+          const select = document.getElementById('knowledgeBaseSelect');
+
+          // Clear existing options and populate with real data
+          select.innerHTML = knowledgeBases.map(kb =>
+            `<option value="${kb.id}" ${kb.is_default ? 'selected' : ''}>${kb.name}</option>`
+          ).join('');
+
+          // Set the selected knowledge base ID
+          const defaultKB = knowledgeBases.find(kb => kb.is_default) || knowledgeBases[0];
+          if (defaultKB) {
+            selectedKnowledgeBaseId = defaultKB.id;
+            localStorage.setItem('selectedKnowledgeBaseId', selectedKnowledgeBaseId);
+          }
+
+          console.log('Knowledge bases loaded:', knowledgeBases.length);
+        }
+      } catch (error) {
+        console.error('Failed to load knowledge bases:', error);
+      }
+    }
+
+    // Set up knowledge base selector event listener
+    function setupKnowledgeBaseSelector() {
+      const select = document.getElementById('knowledgeBaseSelect');
+
+      select.addEventListener('change', (e) => {
+        selectedKnowledgeBaseId = e.target.value;
+        localStorage.setItem('selectedKnowledgeBaseId', selectedKnowledgeBaseId);
+
+        const selectedKB = knowledgeBases.find(kb => kb.id === selectedKnowledgeBaseId);
+        console.log('Knowledge base changed to:', selectedKB?.name);
+
+        // Notify server via WebSocket if connected
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'set_knowledge_base',
+            knowledgeBaseId: selectedKnowledgeBaseId,
+            callSid: currentCallSid
+          }));
+        }
+      });
+
+      // Restore saved selection
+      const savedKBId = localStorage.getItem('selectedKnowledgeBaseId');
+      if (savedKBId) {
+        selectedKnowledgeBaseId = savedKBId;
+        select.value = savedKBId;
+      }
     }
 
     function setupQueueEventListeners() {
@@ -3760,6 +4021,15 @@ What do you say?`
         updateConnectionStatus(true);
         updateAdvancedModeStatus('connected');
         hideReconnectingOverlay();
+
+        // Send current knowledge base selection to server
+        if (selectedKnowledgeBaseId) {
+          ws.send(JSON.stringify({
+            type: 'set_knowledge_base',
+            knowledgeBaseId: selectedKnowledgeBaseId,
+            callSid: currentCallSid
+          }));
+        }
       };
 
       ws.onclose = (event) => {
@@ -3946,7 +4216,11 @@ What do you say?`
           }
           break;
         case 'ai_coaching':
-          showAICoaching(data.suggestion);
+          if (data.type === 'script') {
+            showScriptCard(data);
+          } else {
+            showAICoaching(data.suggestion);
+          }
           break;
         case 'speaking_started':
           showSpeakingIndicator(data.speaker);
@@ -4918,6 +5192,160 @@ What do you say?`
           <div class="ai-empty-text">Start a call to receive real-time coaching tips and objection handling suggestions.</div>
         </div>
       `;
+    }
+
+    // Show a script card from the knowledge base
+    function showScriptCard(data) {
+      const container = document.getElementById('aiCoachingContent');
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.ai-empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Category icons and labels
+      const categoryConfig = {
+        objection: { icon: '🛡️', label: 'Objection Handler', color: 'objection' },
+        story: { icon: '📖', label: 'Story', color: 'story' },
+        close: { icon: '🎯', label: 'Close', color: 'close' },
+        opener: { icon: '👋', label: 'Opener', color: 'opener' },
+        rebuttall: { icon: '💬', label: 'Rebuttal', color: 'objection' }
+      };
+
+      const config = categoryConfig[data.category] || categoryConfig.objection;
+      const scriptId = data.scriptId;
+
+      const cardDiv = document.createElement('div');
+      cardDiv.className = `ai-tip-card script-match ${config.color}`;
+      cardDiv.dataset.scriptId = scriptId;
+      cardDiv.innerHTML = `
+        <div class="script-header">
+          <span class="script-category">${config.icon} ${config.label}</span>
+          <span class="script-title">${data.title}</span>
+        </div>
+        <div class="script-body">
+          <div class="script-text-box">
+            <p class="script-text">${data.scriptText}</p>
+            <button class="copy-script-btn" onclick="copyScript(this, '${scriptId}')" title="Copy to clipboard">📋</button>
+          </div>
+          ${data.storyText ? `
+            <div class="script-story">
+              <button class="story-toggle" onclick="toggleStory(this)">📖 Show Story</button>
+              <div class="story-content hidden">
+                <p>${data.storyText}</p>
+              </div>
+            </div>
+          ` : ''}
+          ${data.tips ? `
+            <div class="script-tips">
+              <span class="tips-label">💡 Tip:</span> ${data.tips}
+            </div>
+          ` : ''}
+        </div>
+        <div class="script-feedback">
+          <button class="feedback-btn used" onclick="markScriptUsed('${scriptId}')" title="I used this script">
+            ✓ Used This
+          </button>
+          <button class="feedback-btn helpful" onclick="markScriptHelpful('${scriptId}', true)" title="Helpful">
+            👍
+          </button>
+          <button class="feedback-btn not-helpful" onclick="markScriptHelpful('${scriptId}', false)" title="Not helpful">
+            👎
+          </button>
+        </div>
+      `;
+
+      // Add to top of container (newest first)
+      container.insertBefore(cardDiv, container.firstChild);
+
+      // Keep only last 8 cards to prevent overflow
+      const cards = container.querySelectorAll('.ai-tip-card');
+      if (cards.length > 8) {
+        cards[cards.length - 1].remove();
+      }
+
+      // Animate entrance
+      cardDiv.style.animation = 'slideIn 0.3s ease-out';
+    }
+
+    // Copy script text to clipboard
+    async function copyScript(button, scriptId) {
+      const card = button.closest('.ai-tip-card');
+      const scriptText = card.querySelector('.script-text').textContent;
+
+      try {
+        await navigator.clipboard.writeText(scriptText);
+        button.textContent = '✓';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.textContent = '📋';
+          button.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+
+    // Toggle story visibility
+    function toggleStory(button) {
+      const storyContent = button.nextElementSibling;
+      const isHidden = storyContent.classList.contains('hidden');
+
+      storyContent.classList.toggle('hidden');
+      button.textContent = isHidden ? '📖 Hide Story' : '📖 Show Story';
+    }
+
+    // Mark script as used
+    async function markScriptUsed(scriptId) {
+      try {
+        await fetch(`/api/scripts/${scriptId}/used`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ callSid: currentCallSid })
+        });
+
+        // Update button state
+        const card = document.querySelector(`[data-script-id="${scriptId}"]`);
+        if (card) {
+          const btn = card.querySelector('.feedback-btn.used');
+          btn.classList.add('active');
+          btn.textContent = '✓ Used';
+        }
+
+        showNotification('Script marked as used', 'success');
+      } catch (error) {
+        console.error('Failed to mark script as used:', error);
+      }
+    }
+
+    // Mark script as helpful or not
+    async function markScriptHelpful(scriptId, helpful) {
+      try {
+        await fetch(`/api/scripts/${scriptId}/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callSid: currentCallSid,
+            helpful: helpful
+          })
+        });
+
+        // Update button states
+        const card = document.querySelector(`[data-script-id="${scriptId}"]`);
+        if (card) {
+          const helpfulBtn = card.querySelector('.feedback-btn.helpful');
+          const notHelpfulBtn = card.querySelector('.feedback-btn.not-helpful');
+
+          if (helpful) {
+            helpfulBtn.classList.add('active');
+            notHelpfulBtn.classList.remove('active');
+          } else {
+            notHelpfulBtn.classList.add('active');
+            helpfulBtn.classList.remove('active');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to record feedback:', error);
+      }
     }
 
     // Transcript Search

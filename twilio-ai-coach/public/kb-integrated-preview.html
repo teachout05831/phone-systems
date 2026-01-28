@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base - Integrated Preview</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Settings Page Styles (same as settings.html) */
+    .settings-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .settings-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .settings-header h2 {
+      margin: 0;
+      color: var(--gray-800);
+    }
+
+    .settings-header p {
+      margin: 4px 0 0;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .settings-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+      overflow: hidden;
+    }
+
+    .settings-card-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .settings-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+
+    .settings-card-header p {
+      margin: 4px 0 0;
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    /* ========== NEW KB DESIGN STYLES ========== */
+
+    .kb-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-md);
+      overflow: hidden;
+      transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+    }
+
+    .kb-card:hover {
+      border-color: var(--gray-300);
+    }
+
+    .kb-card-header {
+      padding: var(--spacing-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .kb-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-xs);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .kb-badge {
+      font-size: 0.625rem;
+      padding: 2px 8px;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kb-card-description {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .kb-card-meta {
+      display: flex;
+      gap: var(--spacing-md);
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .kb-card-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kb-card-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-shrink: 0;
+    }
+
+    .btn-outline {
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-outline:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline.danger:hover {
+      background: var(--danger-light);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Scripts Toggle */
+    .kb-scripts-toggle {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      user-select: none;
+    }
+
+    .kb-scripts-toggle:hover {
+      background: var(--gray-100);
+    }
+
+    .kb-scripts-toggle-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .kb-scripts-toggle-icon {
+      color: var(--gray-400);
+      transition: transform var(--transition-fast);
+    }
+
+    .kb-scripts-toggle.expanded .kb-scripts-toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Scripts Section */
+    .kb-scripts-section {
+      display: none;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .kb-scripts-section.expanded {
+      display: block;
+    }
+
+    .kb-scripts-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-200);
+      background: white;
+    }
+
+    .kb-scripts-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .kb-script-tab {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .kb-script-tab:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .kb-script-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .kb-scripts-list {
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
+
+    .kb-script-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-sm);
+      transition: border-color var(--transition-fast);
+    }
+
+    .kb-script-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .kb-script-item:hover {
+      border-color: var(--gray-300);
+    }
+
+    .kb-script-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-script-category {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .kb-script-category.objection {
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .kb-script-category.story {
+      background: var(--primary-light);
+      color: #1e40af;
+    }
+
+    .kb-script-category.close {
+      background: var(--success-light);
+      color: #065f46;
+    }
+
+    .kb-script-category.opener {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+
+    .kb-script-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-script-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-800);
+      margin-bottom: 2px;
+    }
+
+    .kb-script-preview {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 400px;
+    }
+
+    .kb-script-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-icon-sm {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gray-100);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background var(--transition-fast);
+    }
+
+    .btn-icon-sm:hover {
+      background: var(--gray-200);
+    }
+
+    .btn-icon-sm.danger:hover {
+      background: var(--danger-light);
+    }
+
+    /* Empty state */
+    .kb-empty-state {
+      padding: var(--spacing-xl);
+      text-align: center;
+      color: var(--gray-500);
+    }
+
+    .kb-empty-state p {
+      margin-bottom: var(--spacing-md);
+    }
+
+    /* Preview label */
+    .preview-label {
+      background: var(--warning);
+      color: white;
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-label">
+    PREVIEW: This shows how Design 5 looks with your actual DialPro styles
+  </div>
+
+  <!-- Simulated header -->
+  <header class="header">
+    <div class="logo">
+      <span style="font-weight: 700; font-size: 1.25rem; color: var(--primary);">DialPro</span>
+    </div>
+    <nav class="nav" style="display: flex; gap: 20px;">
+      <span style="color: var(--gray-500);">Dashboard</span>
+      <span style="color: var(--gray-500);">Contacts</span>
+      <span style="color: var(--primary); font-weight: 500;">Settings</span>
+    </nav>
+  </header>
+
+  <main class="main-content" style="padding: var(--spacing-xl);">
+    <div class="settings-container">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <p>Manage your account settings and preferences</p>
+      </div>
+
+      <!-- Simulated tabs -->
+      <div style="display: flex; gap: 4px; border-bottom: 1px solid var(--gray-200); margin-bottom: var(--spacing-lg);">
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">General</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">Notifications</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid var(--primary); color: var(--primary); font-size: 0.875rem; font-weight: 500; cursor: pointer;">Knowledge Bases</button>
+        <button style="padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gray-500); font-size: 0.875rem; cursor: pointer;">Account</button>
+      </div>
+
+      <!-- Knowledge Bases Section - NEW DESIGN -->
+      <div class="settings-card">
+        <div class="settings-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3>Knowledge Bases</h3>
+            <p>Manage AI coaching knowledge bases and scripts for your sales team</p>
+          </div>
+          <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.875rem;">+ Add Knowledge Base</button>
+        </div>
+      </div>
+
+      <!-- KB Card 1 - Expanded -->
+      <div class="kb-card">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <div class="kb-card-title">
+              Cleaning Services
+              <span class="kb-badge">Default</span>
+            </div>
+            <div class="kb-card-description">Scripts for residential and commercial cleaning services</div>
+            <div class="kb-card-meta">
+              <span>12 scripts</span>
+              <span>Industry: Cleaning</span>
+            </div>
+          </div>
+          <div class="kb-card-actions">
+            <button class="btn-outline">
+              <span>✏️</span> Edit
+            </button>
+            <button class="btn-outline danger">
+              <span>🗑️</span> Delete
+            </button>
+          </div>
+        </div>
+        <div class="kb-scripts-toggle expanded" onclick="toggleScripts(this)">
+          <span class="kb-scripts-toggle-label">
+            <span>📋</span> Hide Scripts (12)
+          </span>
+          <span class="kb-scripts-toggle-icon">▲</span>
+        </div>
+        <div class="kb-scripts-section expanded">
+          <div class="kb-scripts-header">
+            <div class="kb-scripts-tabs">
+              <button class="kb-script-tab active">All</button>
+              <button class="kb-script-tab">Objections</button>
+              <button class="kb-script-tab">Stories</button>
+              <button class="kb-script-tab">Closes</button>
+              <button class="kb-script-tab">Openers</button>
+            </div>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8125rem;">+ Add Script</button>
+          </div>
+          <div class="kb-scripts-list">
+            <div class="kb-script-item">
+              <div class="kb-script-info">
+                <span class="kb-script-category objection">Objection</span>
+                <div class="kb-script-content">
+                  <div class="kb-script-title">Price Too High</div>
+                  <div class="kb-script-preview">I understand price is important. Let me ask - if we could find a way to fit this into your budget...</div>
+                </div>
+              </div>
+              <div class="kb-script-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-script-item">
+              <div class="kb-script-info">
+                <span class="kb-script-category story">Story</span>
+                <div class="kb-script-content">
+                  <div class="kb-script-title">The Busy Mom</div>
+                  <div class="kb-script-preview">I had a client, Sarah, who was a working mom of three. She said the same thing about not having time...</div>
+                </div>
+              </div>
+              <div class="kb-script-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-script-item">
+              <div class="kb-script-info">
+                <span class="kb-script-category close">Close</span>
+                <div class="kb-script-content">
+                  <div class="kb-script-title">Assumptive Close</div>
+                  <div class="kb-script-preview">Great! So let's go ahead and get you scheduled. What day works better for you - Tuesday or Thursday?</div>
+                </div>
+              </div>
+              <div class="kb-script-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="kb-script-item">
+              <div class="kb-script-info">
+                <span class="kb-script-category opener">Opener</span>
+                <div class="kb-script-content">
+                  <div class="kb-script-title">Referral Intro</div>
+                  <div class="kb-script-preview">Hi, this is [Name] calling from [Company]. Your neighbor [Referrer] suggested I reach out...</div>
+                </div>
+              </div>
+              <div class="kb-script-actions">
+                <button class="btn-icon-sm" title="Edit">✏️</button>
+                <button class="btn-icon-sm danger" title="Delete">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KB Card 2 - Collapsed -->
+      <div class="kb-card">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <div class="kb-card-title">Solar Sales</div>
+            <div class="kb-card-description">Solar panel installation and financing scripts</div>
+            <div class="kb-card-meta">
+              <span>8 scripts</span>
+              <span>Industry: Energy</span>
+            </div>
+          </div>
+          <div class="kb-card-actions">
+            <button class="btn-outline">
+              <span>✏️</span> Edit
+            </button>
+            <button class="btn-outline danger">
+              <span>🗑️</span> Delete
+            </button>
+          </div>
+        </div>
+        <div class="kb-scripts-toggle" onclick="toggleScripts(this)">
+          <span class="kb-scripts-toggle-label">
+            <span>📋</span> Show Scripts (8)
+          </span>
+          <span class="kb-scripts-toggle-icon">▼</span>
+        </div>
+        <div class="kb-scripts-section"></div>
+      </div>
+
+      <!-- KB Card 3 - Collapsed -->
+      <div class="kb-card">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <div class="kb-card-title">Insurance</div>
+            <div class="kb-card-description">Life and health insurance sales scripts</div>
+            <div class="kb-card-meta">
+              <span>15 scripts</span>
+              <span>Industry: Insurance</span>
+            </div>
+          </div>
+          <div class="kb-card-actions">
+            <button class="btn-outline">
+              <span>✏️</span> Edit
+            </button>
+            <button class="btn-outline danger">
+              <span>🗑️</span> Delete
+            </button>
+          </div>
+        </div>
+        <div class="kb-scripts-toggle" onclick="toggleScripts(this)">
+          <span class="kb-scripts-toggle-label">
+            <span>📋</span> Show Scripts (15)
+          </span>
+          <span class="kb-scripts-toggle-icon">▼</span>
+        </div>
+        <div class="kb-scripts-section"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function toggleScripts(toggle) {
+      const section = toggle.nextElementSibling;
+      const isExpanded = toggle.classList.contains('expanded');
+
+      toggle.classList.toggle('expanded');
+      section.classList.toggle('expanded');
+
+      const label = toggle.querySelector('.kb-scripts-toggle-label');
+      const icon = toggle.querySelector('.kb-scripts-toggle-icon');
+      const scriptCount = label.textContent.match(/\((\d+)\)/)?.[1] || '';
+
+      if (isExpanded) {
+        label.innerHTML = `<span>📋</span> Show Scripts (${scriptCount})`;
+        icon.textContent = '▼';
+      } else {
+        label.innerHTML = `<span>📋</span> Hide Scripts (${scriptCount})`;
+        icon.textContent = '▲';
+      }
+    }
+  </script>
+</body>
+</html>

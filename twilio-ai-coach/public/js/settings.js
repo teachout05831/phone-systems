@@ -592,6 +592,12 @@ function setupEventListeners() {
       document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
       const section = document.getElementById(tabId + 'Section');
       if (section) section.classList.add('active');
+
+      // Wider container for Knowledge Bases split view
+      const container = document.querySelector('.settings-container');
+      if (container) {
+        container.classList.toggle('wide', tabId === 'knowledgebases');
+      }
     });
   });
 

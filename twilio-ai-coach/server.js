@@ -924,12 +924,14 @@ app.post('/transcription-realtime', async (req, res) => {
               const transcriptCount = callTranscripts.get(CallSid).length;
               if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
                   transcriptCount % AI_COACHING_INTERVAL === 0) {
-                getAICoachingSuggestion(CallSid, transcript).then(suggestion => {
-                  if (suggestion) {
+                const callData = activeCalls.get(CallSid);
+                const knowledgeBaseId = callData?.knowledgeBaseId || null;
+                getAICoachingSuggestion(CallSid, transcript, knowledgeBaseId).then(coachingResult => {
+                  if (coachingResult) {
                     const coachMsg = {
                       type: 'ai_coaching',
                       callSid: CallSid,
-                      suggestion,
+                      ...coachingResult,
                       timestamp
                     };
                     broadcastToClients(coachMsg, (client) => client.role === 'rep');
@@ -1279,18 +1281,131 @@ app.get('/active-calls', (req, res) => {
   res.json({ calls });
 });
 
-// AI Coaching - analyze transcript and provide suggestions
-async function getAICoachingSuggestion(callSid, latestTranscript) {
+// ============ KNOWLEDGE BASE & SCRIPT MATCHING ============
+
+/**
+ * Detect if customer speech matches any trigger phrases in the knowledge base
+ * @param {string} callSid - Call identifier
+ * @param {string} knowledgeBaseId - Selected knowledge base UUID
+ * @returns {Object|null} - Matching script or null
+ */
+async function detectScriptMatch(callSid, knowledgeBaseId) {
+  if (!supabase || !knowledgeBaseId) return null;
+
+  try {
+    // Get scripts with trigger phrases for this knowledge base
+    const { data: scripts, error } = await supabase
+      .from('scripts')
+      .select('id, title, trigger_phrases, script_text, story_text, tips, category')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    if (error || !scripts || scripts.length === 0) {
+      console.log('No scripts found for knowledge base:', knowledgeBaseId);
+      return null;
+    }
+
+    // Get recent customer statements from transcript
+    const transcript = callTranscripts.get(callSid) || [];
+    const recentCustomerText = transcript
+      .filter(t => t.speaker === 'customer')
+      .slice(-3)
+      .map(t => t.text.toLowerCase())
+      .join(' ');
+
+    if (!recentCustomerText) return null;
+
+    // Find best matching script based on trigger phrases
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const script of scripts) {
+      if (!script.trigger_phrases || script.trigger_phrases.length === 0) continue;
+
+      const matchCount = script.trigger_phrases.filter(phrase =>
+        recentCustomerText.includes(phrase.toLowerCase())
+      ).length;
+
+      if (matchCount > bestScore) {
+        bestScore = matchCount;
+        bestMatch = script;
+      }
+    }
+
+    if (bestMatch) {
+      console.log(`Script match found: "${bestMatch.title}" (score: ${bestScore})`);
+
+      // Track that this script was shown
+      await supabase.from('call_script_usage').insert({
+        call_sid: callSid,
+        script_id: bestMatch.id,
+        knowledge_base_id: knowledgeBaseId,
+        shown_at: new Date().toISOString()
+      });
+
+      // Increment times_shown counter
+      await supabase
+        .from('scripts')
+        .update({ times_shown: bestMatch.times_shown ? bestMatch.times_shown + 1 : 1 })
+        .eq('id', bestMatch.id);
+    }
+
+    return bestMatch;
+  } catch (error) {
+    console.error('Script match error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get AI coaching suggestion - first tries script matching, then falls back to AI
+ * @param {string} callSid - Call identifier
+ * @param {string} latestTranscript - Most recent transcript text
+ * @param {string} knowledgeBaseId - Selected knowledge base UUID (optional)
+ * @returns {Object|null} - Coaching response with type 'script' or 'ai'
+ */
+async function getAICoachingSuggestion(callSid, latestTranscript, knowledgeBaseId = null) {
+  const transcript = callTranscripts.get(callSid) || [];
+  if (transcript.length < 3) return null; // Need some context
+
+  // First, try to match a script from the knowledge base
+  if (knowledgeBaseId) {
+    const scriptMatch = await detectScriptMatch(callSid, knowledgeBaseId);
+    if (scriptMatch) {
+      return {
+        type: 'script',
+        scriptId: scriptMatch.id,
+        category: scriptMatch.category,
+        title: scriptMatch.title,
+        scriptText: scriptMatch.script_text,
+        storyText: scriptMatch.story_text,
+        tips: scriptMatch.tips
+      };
+    }
+  }
+
+  // Fall back to AI-generated suggestion
   if (!anthropic) {
     console.log('Anthropic API key not configured - skipping AI coaching');
     return null;
   }
 
-  const transcript = callTranscripts.get(callSid) || [];
-  if (transcript.length < 3) return null; // Need some context
-
   // Get last 10 exchanges for context
-  const recentTranscript = transcript.slice(-10).map(t => t.text).join('\n');
+  const recentTranscript = transcript.slice(-10).map(t => `${t.speaker}: ${t.text}`).join('\n');
+
+  // Build context about the knowledge base if available
+  let kbContext = '';
+  if (knowledgeBaseId && supabase) {
+    const { data: kb } = await supabase
+      .from('knowledge_bases')
+      .select('name, description, industry')
+      .eq('id', knowledgeBaseId)
+      .single();
+
+    if (kb) {
+      kbContext = `\nContext: This is a ${kb.industry || 'general'} sales call using the "${kb.name}" approach. ${kb.description || ''}`;
+    }
+  }
 
   try {
     const response = await anthropic.messages.create({
@@ -1301,7 +1416,7 @@ async function getAICoachingSuggestion(callSid, latestTranscript) {
 - Building rapport
 - Closing techniques
 - Asking better questions
-Keep suggestions under 20 words. Be specific and actionable. If no suggestion needed, respond with "NONE".`,
+Keep suggestions under 25 words. Be specific and actionable. If no suggestion needed, respond with "NONE".${kbContext}`,
       messages: [{
         role: 'user',
         content: `Recent call transcript:\n${recentTranscript}\n\nLatest: "${latestTranscript}"\n\nProvide one coaching tip:`
@@ -1311,12 +1426,371 @@ Keep suggestions under 20 words. Be specific and actionable. If no suggestion ne
     const suggestion = response.content[0].text.trim();
     if (suggestion === 'NONE' || suggestion.length < 5) return null;
 
-    return suggestion;
+    return {
+      type: 'ai',
+      suggestion: suggestion
+    };
   } catch (error) {
     console.error('AI coaching error:', error.message);
     return null;
   }
 }
+
+// ============ KNOWLEDGE BASE API ENDPOINTS ============
+
+/**
+ * Get all active knowledge bases
+ * GET /api/knowledge-bases
+ */
+app.get('/api/knowledge-bases', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('knowledge_bases')
+      .select('id, name, description, industry, is_default')
+      .eq('is_active', true)
+      .order('is_default', { ascending: false })
+      .order('name');
+
+    if (error) throw error;
+    res.json({ success: true, knowledgeBases: data });
+  } catch (error) {
+    console.error('Error fetching knowledge bases:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get scripts for a knowledge base
+ * GET /api/knowledge-bases/:id/scripts
+ */
+app.get('/api/knowledge-bases/:id/scripts', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('scripts')
+      .select('*')
+      .eq('knowledge_base_id', req.params.id)
+      .eq('is_active', true)
+      .order('category')
+      .order('sort_order');
+
+    if (error) throw error;
+    res.json({ success: true, scripts: data });
+  } catch (error) {
+    console.error('Error fetching scripts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Mark a script as used during a call
+ * POST /api/scripts/:scriptId/used
+ * Body: { callSid: string }
+ */
+app.post('/api/scripts/:scriptId/used', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { scriptId } = req.params;
+    const { callSid } = req.body;
+
+    // Update the call_script_usage record
+    const { error: usageError } = await supabase
+      .from('call_script_usage')
+      .update({ was_used: true })
+      .eq('script_id', scriptId)
+      .eq('call_sid', callSid)
+      .order('shown_at', { ascending: false })
+      .limit(1);
+
+    // Increment times_used on the script
+    const { data: script } = await supabase
+      .from('scripts')
+      .select('times_used')
+      .eq('id', scriptId)
+      .single();
+
+    await supabase
+      .from('scripts')
+      .update({ times_used: (script?.times_used || 0) + 1 })
+      .eq('id', scriptId);
+
+    console.log(`Script ${scriptId} marked as used for call ${callSid}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking script as used:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Submit feedback for a script
+ * POST /api/scripts/:scriptId/feedback
+ * Body: { callSid: string, helpful: boolean, outcome?: string }
+ */
+app.post('/api/scripts/:scriptId/feedback', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { scriptId } = req.params;
+    const { callSid, helpful, outcome } = req.body;
+
+    // Update the call_script_usage record
+    const updateData = { was_helpful: helpful };
+    if (outcome) updateData.call_outcome = outcome;
+
+    await supabase
+      .from('call_script_usage')
+      .update(updateData)
+      .eq('script_id', scriptId)
+      .eq('call_sid', callSid)
+      .order('shown_at', { ascending: false })
+      .limit(1);
+
+    // If outcome is 'booked' or 'converted', increment times_converted
+    if (outcome === 'booked' || outcome === 'converted') {
+      const { data: script } = await supabase
+        .from('scripts')
+        .select('times_converted')
+        .eq('id', scriptId)
+        .single();
+
+      await supabase
+        .from('scripts')
+        .update({ times_converted: (script?.times_converted || 0) + 1 })
+        .eq('id', scriptId);
+    }
+
+    console.log(`Feedback recorded for script ${scriptId}: helpful=${helpful}, outcome=${outcome}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error recording script feedback:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get script performance analytics
+ * GET /api/scripts/analytics
+ */
+app.get('/api/scripts/analytics', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('scripts')
+      .select(`
+        id,
+        title,
+        category,
+        times_shown,
+        times_used,
+        times_converted,
+        conversion_rate,
+        knowledge_bases!inner(name)
+      `)
+      .gt('times_shown', 0)
+      .order('conversion_rate', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, analytics: data });
+  } catch (error) {
+    console.error('Error fetching script analytics:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Create a new knowledge base
+ * POST /api/knowledge-bases
+ */
+app.post('/api/knowledge-bases', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { name, description, industry, is_default } = req.body;
+
+    // If setting as default, unset other defaults first
+    if (is_default) {
+      await supabase.from('knowledge_bases').update({ is_default: false }).eq('is_default', true);
+    }
+
+    const { data, error } = await supabase
+      .from('knowledge_bases')
+      .insert({ name, description, industry, is_default: is_default || false, is_active: true })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, knowledgeBase: data });
+  } catch (error) {
+    console.error('Error creating knowledge base:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update a knowledge base
+ * PUT /api/knowledge-bases/:id
+ */
+app.put('/api/knowledge-bases/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { name, description, industry, is_default } = req.body;
+
+    // If setting as default, unset other defaults first
+    if (is_default) {
+      await supabase.from('knowledge_bases').update({ is_default: false }).eq('is_default', true);
+    }
+
+    const { data, error } = await supabase
+      .from('knowledge_bases')
+      .update({ name, description, industry, is_default, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, knowledgeBase: data });
+  } catch (error) {
+    console.error('Error updating knowledge base:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete a knowledge base
+ * DELETE /api/knowledge-bases/:id
+ */
+app.delete('/api/knowledge-bases/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('knowledge_bases')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting knowledge base:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Create a new script
+ * POST /api/scripts
+ */
+app.post('/api/scripts', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { knowledge_base_id, category, title, trigger_phrases, script_text, story_text, tips } = req.body;
+
+    const { data, error } = await supabase
+      .from('scripts')
+      .insert({
+        knowledge_base_id,
+        category,
+        title,
+        trigger_phrases,
+        script_text,
+        story_text,
+        tips,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, script: data });
+  } catch (error) {
+    console.error('Error creating script:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update a script
+ * PUT /api/scripts/:id
+ */
+app.put('/api/scripts/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { category, title, trigger_phrases, script_text, story_text, tips } = req.body;
+
+    const { data, error } = await supabase
+      .from('scripts')
+      .update({
+        category,
+        title,
+        trigger_phrases,
+        script_text,
+        story_text,
+        tips,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, script: data });
+  } catch (error) {
+    console.error('Error updating script:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete a script
+ * DELETE /api/scripts/:id
+ */
+app.delete('/api/scripts/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('scripts')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting script:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Legacy: Make an outbound call (server-initiated)
 app.post('/make-call', async (req, res) => {
@@ -1553,6 +2027,22 @@ wss.on('connection', (ws, req) => {
             console.log(`Supervisor ${identity} stopped listening`);
           }
         }
+
+        // Set knowledge base for AI coaching
+        if (msg.type === 'set_knowledge_base') {
+          const clientData = browserClients.get(clientId);
+          if (clientData) {
+            clientData.knowledgeBaseId = msg.knowledgeBaseId;
+            console.log(`Client ${identity} set knowledge base to: ${msg.knowledgeBaseId}`);
+
+            // Also update the active call if one exists
+            if (msg.callSid && activeCalls.has(msg.callSid)) {
+              const callData = activeCalls.get(msg.callSid);
+              callData.knowledgeBaseId = msg.knowledgeBaseId;
+              activeCalls.set(msg.callSid, callData);
+            }
+          }
+        }
       } catch (e) {
         // Ignore non-JSON messages
       }
@@ -1695,12 +2185,14 @@ wss.on('connection', (ws, req) => {
                 const transcriptCount = callTranscripts.get(callSid).length;
                 if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
                     transcriptCount % AI_COACHING_INTERVAL === 0) {
-                  const suggestion = await getAICoachingSuggestion(callSid, transcript);
-                  if (suggestion) {
+                  const callData = activeCalls.get(callSid);
+                  const knowledgeBaseId = callData?.knowledgeBaseId || null;
+                  const coachingResult = await getAICoachingSuggestion(callSid, transcript, knowledgeBaseId);
+                  if (coachingResult) {
                     const coachMsg = {
                       type: 'ai_coaching',
                       callSid,
-                      suggestion,
+                      ...coachingResult,
                       timestamp
                     };
                     broadcastToClients(coachMsg, (client) => client.role === 'rep');
@@ -1854,12 +2346,14 @@ wss.on('connection', (ws, req) => {
               const transcriptCount = callTranscripts.get(callSid).length;
               if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
                   transcriptCount % AI_COACHING_INTERVAL === 0) {
-                const suggestion = await getAICoachingSuggestion(callSid, transcript);
-                if (suggestion) {
+                const callData = activeCalls.get(callSid);
+                const knowledgeBaseId = callData?.knowledgeBaseId || null;
+                const coachingResult = await getAICoachingSuggestion(callSid, transcript, knowledgeBaseId);
+                if (coachingResult) {
                   const coachMsg = {
                     type: 'ai_coaching',
                     callSid,
-                    suggestion,
+                    ...coachingResult,
                     timestamp
                   };
                   // Send to rep on this call

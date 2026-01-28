@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base UI Design Mockups</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #e0e7ff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-100);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: var(--gray-800);
+    }
+
+    .intro {
+      text-align: center;
+      color: var(--gray-600);
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .design-selector {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .design-btn {
+      padding: 10px 20px;
+      border: 2px solid var(--gray-300);
+      background: white;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .design-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .design-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .mockup-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .mockup-header {
+      padding: 20px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .mockup-header h2 {
+      color: var(--gray-800);
+      margin-bottom: 5px;
+    }
+
+    .mockup-header p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .mockup-content {
+      padding: 20px;
+      min-height: 500px;
+    }
+
+    .design-section {
+      display: none;
+    }
+
+    .design-section.active {
+      display: block;
+    }
+
+    /* Common elements */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5558e3;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--gray-600);
+    }
+
+    .btn-ghost:hover {
+      background: var(--gray-100);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background: var(--gray-200);
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .badge-category {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .badge-objection { background: #fef3c7; color: #92400e; }
+    .badge-story { background: #dbeafe; color: #1e40af; }
+    .badge-close { background: #dcfce7; color: #166534; }
+    .badge-opener { background: #f3e8ff; color: #7c3aed; }
+
+    /* ========== DESIGN 1: Master-Detail Split ========== */
+    .split-view {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      height: 460px;
+    }
+
+    .split-left {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .split-left-header {
+      padding: 15px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .split-left-header h4 {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .split-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .split-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .split-item:hover {
+      background: var(--gray-50);
+    }
+
+    .split-item.selected {
+      background: var(--primary-light);
+      border-left: 3px solid var(--primary);
+    }
+
+    .split-item-info h5 {
+      font-size: 0.875rem;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .split-item-info p {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .split-item-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .split-item:hover .split-item-actions,
+    .split-item.selected .split-item-actions {
+      opacity: 1;
+    }
+
+    .split-right {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .split-right-header {
+      padding: 15px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .split-right-header h4 {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .split-right-tabs {
+      display: flex;
+      gap: 5px;
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .split-tab {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      color: var(--gray-500);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .split-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .split-scripts {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .script-card {
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+    }
+
+    .script-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .script-card-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .script-card-text {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      margin-top: 8px;
+    }
+
+    /* ========== DESIGN 2: Accordion/Expandable ========== */
+    .accordion-list {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .accordion-item {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .accordion-item:last-child {
+      border-bottom: none;
+    }
+
+    .accordion-header {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .accordion-header:hover {
+      background: var(--gray-50);
+    }
+
+    .accordion-header.expanded {
+      background: var(--primary-light);
+    }
+
+    .accordion-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .accordion-title h4 {
+      font-size: 0.9375rem;
+      color: var(--gray-800);
+    }
+
+    .accordion-chevron {
+      font-size: 1.25rem;
+      color: var(--gray-400);
+      transition: transform 0.2s;
+    }
+
+    .accordion-header.expanded .accordion-chevron {
+      transform: rotate(180deg);
+    }
+
+    .accordion-meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .accordion-count {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .accordion-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .accordion-content {
+      display: none;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .accordion-content.expanded {
+      display: block;
+    }
+
+    .accordion-content-header {
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .accordion-content-header h5 {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+    }
+
+    .accordion-scripts {
+      padding: 15px 20px;
+    }
+
+    .accordion-script {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: white;
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+
+    .accordion-script:last-child {
+      margin-bottom: 0;
+    }
+
+    .accordion-script-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .accordion-script-title {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    /* ========== DESIGN 3: Tab Navigation ========== */
+    .tab-container {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .tab-header {
+      display: flex;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 15px;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .kb-tab {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+
+    .kb-tab:hover {
+      color: var(--gray-700);
+    }
+
+    .kb-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: white;
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+    }
+
+    .kb-tab-add {
+      padding: 8px;
+      background: transparent;
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+      margin-left: auto;
+    }
+
+    .kb-tab-add:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .tab-content {
+      padding: 20px;
+    }
+
+    .tab-content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .tab-kb-info h3 {
+      font-size: 1.125rem;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .tab-kb-info p {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .tab-kb-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-script-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .tab-script-card {
+      padding: 15px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+    }
+
+    .tab-script-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .tab-script-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .tab-script-text {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ========== DESIGN 4: Drawer/Slideout ========== */
+    .drawer-container {
+      position: relative;
+      height: 460px;
+      overflow: hidden;
+    }
+
+    .drawer-main {
+      height: 100%;
+      transition: transform 0.3s ease;
+    }
+
+    .drawer-main.shifted {
+      transform: translateX(-200px);
+    }
+
+    .drawer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      padding: 10px;
+    }
+
+    .drawer-kb-card {
+      padding: 20px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .drawer-kb-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    .drawer-kb-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .drawer-kb-card h4 {
+      font-size: 1rem;
+      color: var(--gray-800);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drawer-kb-card p {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      margin-bottom: 12px;
+    }
+
+    .drawer-kb-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .drawer-panel {
+      position: absolute;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100%;
+      background: white;
+      border-left: 1px solid var(--gray-200);
+      box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer-panel.open {
+      right: 0;
+    }
+
+    .drawer-panel-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .drawer-panel-header h3 {
+      font-size: 1.125rem;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .drawer-panel-header p {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .drawer-close {
+      padding: 8px;
+      background: var(--gray-100);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .drawer-panel-actions {
+      padding: 15px 20px;
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .drawer-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px 20px;
+    }
+
+    .drawer-script {
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+    }
+
+    .drawer-script-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .drawer-script-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .drawer-script-text {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+    }
+
+    /* ========== DESIGN 5: Inline Edit Cards ========== */
+    .inline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .inline-header h3 {
+      font-size: 1rem;
+      color: var(--gray-700);
+    }
+
+    .inline-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .inline-kb-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .inline-kb-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: linear-gradient(to right, var(--gray-50), white);
+    }
+
+    .inline-kb-info h4 {
+      font-size: 1.125rem;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .inline-kb-info p {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .inline-kb-meta {
+      margin-top: 8px;
+      display: flex;
+      gap: 15px;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .inline-kb-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .inline-scripts-toggle {
+      padding: 10px 20px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .inline-scripts-toggle:hover {
+      background: var(--gray-100);
+    }
+
+    .inline-scripts-toggle span {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+    }
+
+    .inline-scripts {
+      display: none;
+      padding: 15px 20px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .inline-scripts.expanded {
+      display: block;
+    }
+
+    .inline-scripts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .inline-scripts-tabs {
+      display: flex;
+      gap: 5px;
+    }
+
+    .inline-script-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      background: white;
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .inline-script-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .inline-script-title {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .inline-script-preview {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Pros/Cons section */
+    .pros-cons {
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+    }
+
+    .pros-cons h4 {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      margin-bottom: 10px;
+    }
+
+    .pros-cons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .pros h5, .cons h5 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .pros h5 { color: var(--success); }
+    .cons h5 { color: var(--danger); }
+
+    .pros ul, .cons ul {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      padding-left: 18px;
+    }
+
+    .pros li, .cons li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Knowledge Base UI - Design Options</h1>
+  <p class="intro">Click each design to preview. These are interactive mockups showing different ways to organize the Knowledge Base + Scripts workflow.</p>
+
+  <div class="design-selector">
+    <button class="design-btn active" onclick="showDesign(1)">1. Split View</button>
+    <button class="design-btn" onclick="showDesign(2)">2. Accordion</button>
+    <button class="design-btn" onclick="showDesign(3)">3. Tab Navigation</button>
+    <button class="design-btn" onclick="showDesign(4)">4. Slide Drawer</button>
+    <button class="design-btn" onclick="showDesign(5)">5. Inline Expand</button>
+  </div>
+
+  <div class="mockup-container">
+    <!-- DESIGN 1: Master-Detail Split View -->
+    <div class="design-section active" id="design1">
+      <div class="mockup-header">
+        <h2>Design 1: Master-Detail Split View</h2>
+        <p>Knowledge bases on the left, scripts on the right. Click to select, edit/delete buttons appear on hover.</p>
+      </div>
+      <div class="mockup-content">
+        <div class="split-view">
+          <div class="split-left">
+            <div class="split-left-header">
+              <h4>Knowledge Bases</h4>
+              <button class="btn btn-primary btn-sm">+ Add</button>
+            </div>
+            <div class="split-list">
+              <div class="split-item selected" onclick="selectSplitItem(this)">
+                <div class="split-item-info">
+                  <h5>Cleaning Services <span class="badge">Default</span></h5>
+                  <p>Scripts for residential cleaning</p>
+                </div>
+                <div class="split-item-actions">
+                  <button class="btn-icon" title="Edit">✏️</button>
+                  <button class="btn-icon" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="split-item" onclick="selectSplitItem(this)">
+                <div class="split-item-info">
+                  <h5>Solar Sales</h5>
+                  <p>Solar panel installation scripts</p>
+                </div>
+                <div class="split-item-actions">
+                  <button class="btn-icon" title="Edit">✏️</button>
+                  <button class="btn-icon" title="Delete">🗑️</button>
+                </div>
+              </div>
+              <div class="split-item" onclick="selectSplitItem(this)">
+                <div class="split-item-info">
+                  <h5>Insurance</h5>
+                  <p>Life and health insurance</p>
+                </div>
+                <div class="split-item-actions">
+                  <button class="btn-icon" title="Edit">✏️</button>
+                  <button class="btn-icon" title="Delete">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="split-right">
+            <div class="split-right-header">
+              <h4>Scripts - Cleaning Services</h4>
+              <button class="btn btn-primary btn-sm">+ Add Script</button>
+            </div>
+            <div class="split-right-tabs">
+              <button class="split-tab active">All</button>
+              <button class="split-tab">Objections</button>
+              <button class="split-tab">Stories</button>
+              <button class="split-tab">Closes</button>
+              <button class="split-tab">Openers</button>
+            </div>
+            <div class="split-scripts">
+              <div class="script-card">
+                <div class="script-card-header">
+                  <span class="badge-category badge-objection">Objection</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="script-card-title">Price Too High</div>
+                <div class="script-card-text">I understand price is important. Let me ask - if we could find a way to fit this into your budget, would you be ready to move forward today?</div>
+              </div>
+              <div class="script-card">
+                <div class="script-card-header">
+                  <span class="badge-category badge-story">Story</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="script-card-title">The Busy Mom</div>
+                <div class="script-card-text">I had a client, Sarah, who was a working mom of three. She said the same thing about not having time...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <h4>Design Analysis</h4>
+          <div class="pros-cons-grid">
+            <div class="pros">
+              <h5>✓ Pros</h5>
+              <ul>
+                <li>Always see both lists at once</li>
+                <li>Clear visual hierarchy</li>
+                <li>Quick navigation between KBs</li>
+                <li>Edit buttons visible on hover (not confusing)</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h5>✗ Cons</h5>
+              <ul>
+                <li>Takes more horizontal space</li>
+                <li>May feel cramped on smaller screens</li>
+                <li>Scripts area may be narrow</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN 2: Accordion/Expandable -->
+    <div class="design-section" id="design2">
+      <div class="mockup-header">
+        <h2>Design 2: Accordion / Expandable</h2>
+        <p>Each knowledge base expands inline to show its scripts. Click the row to expand, edit button is separate.</p>
+      </div>
+      <div class="mockup-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3 style="font-size: 1rem; color: var(--gray-700);">Knowledge Bases</h3>
+          <button class="btn btn-primary btn-sm">+ Add Knowledge Base</button>
+        </div>
+        <div class="accordion-list">
+          <div class="accordion-item">
+            <div class="accordion-header expanded" onclick="toggleAccordion(this)">
+              <div class="accordion-title">
+                <span class="accordion-chevron">▼</span>
+                <h4>Cleaning Services <span class="badge">Default</span></h4>
+              </div>
+              <div class="accordion-meta">
+                <span class="accordion-count">12 scripts</span>
+                <div class="accordion-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-ghost btn-sm">Edit</button>
+                  <button class="btn btn-ghost btn-sm" style="color: var(--danger);">Delete</button>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-content expanded">
+              <div class="accordion-content-header">
+                <h5>Scripts</h5>
+                <button class="btn btn-primary btn-sm">+ Add Script</button>
+              </div>
+              <div class="accordion-scripts">
+                <div class="accordion-script">
+                  <div class="accordion-script-info">
+                    <span class="badge-category badge-objection">Objection</span>
+                    <span class="accordion-script-title">Price Too High</span>
+                  </div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="accordion-script">
+                  <div class="accordion-script-info">
+                    <span class="badge-category badge-story">Story</span>
+                    <span class="accordion-script-title">The Busy Mom</span>
+                  </div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="accordion-script">
+                  <div class="accordion-script-info">
+                    <span class="badge-category badge-close">Close</span>
+                    <span class="accordion-script-title">Assumptive Close</span>
+                  </div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <div class="accordion-title">
+                <span class="accordion-chevron">▼</span>
+                <h4>Solar Sales</h4>
+              </div>
+              <div class="accordion-meta">
+                <span class="accordion-count">8 scripts</span>
+                <div class="accordion-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-ghost btn-sm">Edit</button>
+                  <button class="btn btn-ghost btn-sm" style="color: var(--danger);">Delete</button>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-content"></div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <div class="accordion-title">
+                <span class="accordion-chevron">▼</span>
+                <h4>Insurance</h4>
+              </div>
+              <div class="accordion-meta">
+                <span class="accordion-count">15 scripts</span>
+                <div class="accordion-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-ghost btn-sm">Edit</button>
+                  <button class="btn btn-ghost btn-sm" style="color: var(--danger);">Delete</button>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-content"></div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <h4>Design Analysis</h4>
+          <div class="pros-cons-grid">
+            <div class="pros">
+              <h5>✓ Pros</h5>
+              <ul>
+                <li>Everything in one vertical flow</li>
+                <li>Clear separation: click row = expand, click edit = edit</li>
+                <li>Uses full width for script content</li>
+                <li>Familiar accordion pattern</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h5>✗ Cons</h5>
+              <ul>
+                <li>Can get long with many KBs</li>
+                <li>Only one KB visible at a time</li>
+                <li>Lots of scrolling needed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN 3: Tab Navigation -->
+    <div class="design-section" id="design3">
+      <div class="mockup-header">
+        <h2>Design 3: Tab Navigation</h2>
+        <p>Each knowledge base is a tab. Clicking a tab shows its details and scripts below.</p>
+      </div>
+      <div class="mockup-content">
+        <div class="tab-container">
+          <div class="tab-header">
+            <button class="kb-tab active">
+              Cleaning Services
+              <span class="badge">Default</span>
+            </button>
+            <button class="kb-tab">Solar Sales</button>
+            <button class="kb-tab">Insurance</button>
+            <button class="kb-tab-add" title="Add Knowledge Base">+ Add</button>
+          </div>
+          <div class="tab-content">
+            <div class="tab-content-header">
+              <div class="tab-kb-info">
+                <h3>Cleaning Services</h3>
+                <p>Scripts for residential and commercial cleaning services</p>
+              </div>
+              <div class="tab-kb-actions">
+                <button class="btn btn-ghost btn-sm">✏️ Edit KB</button>
+                <button class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑️ Delete KB</button>
+                <button class="btn btn-primary btn-sm">+ Add Script</button>
+              </div>
+            </div>
+            <div class="tab-script-grid">
+              <div class="tab-script-card">
+                <div class="tab-script-header">
+                  <span class="badge-category badge-objection">Objection</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="tab-script-title">Price Too High</div>
+                <div class="tab-script-text">I understand price is important. Let me ask - if we could find a way to fit this into your budget...</div>
+              </div>
+              <div class="tab-script-card">
+                <div class="tab-script-header">
+                  <span class="badge-category badge-story">Story</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="tab-script-title">The Busy Mom</div>
+                <div class="tab-script-text">I had a client, Sarah, who was a working mom of three. She said the same thing...</div>
+              </div>
+              <div class="tab-script-card">
+                <div class="tab-script-header">
+                  <span class="badge-category badge-close">Close</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="tab-script-title">Assumptive Close</div>
+                <div class="tab-script-text">Great! So let's go ahead and get you scheduled. What day works better for you...</div>
+              </div>
+              <div class="tab-script-card">
+                <div class="tab-script-header">
+                  <span class="badge-category badge-opener">Opener</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="tab-script-title">Referral Intro</div>
+                <div class="tab-script-text">Hi, this is [Name] calling from [Company]. Your neighbor [Referrer] suggested I reach out...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <h4>Design Analysis</h4>
+          <div class="pros-cons-grid">
+            <div class="pros">
+              <h5>✓ Pros</h5>
+              <ul>
+                <li>Very fast switching between KBs</li>
+                <li>All KBs visible as tabs</li>
+                <li>Clean, app-like feel</li>
+                <li>Edit/Delete clearly separate from selection</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h5>✗ Cons</h5>
+              <ul>
+                <li>Limited tab space (many KBs = problem)</li>
+                <li>KB details visible but less prominent</li>
+                <li>Tab overflow needs handling</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN 4: Drawer/Slideout -->
+    <div class="design-section" id="design4">
+      <div class="mockup-header">
+        <h2>Design 4: Slide-Out Drawer</h2>
+        <p>Knowledge bases as cards. Click a card to open a drawer panel with scripts and edit options.</p>
+      </div>
+      <div class="mockup-content">
+        <div class="drawer-container">
+          <div class="drawer-main" id="drawerMain">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px;">
+              <h3 style="font-size: 1rem; color: var(--gray-700);">Knowledge Bases</h3>
+              <button class="btn btn-primary btn-sm">+ Add Knowledge Base</button>
+            </div>
+            <div class="drawer-grid">
+              <div class="drawer-kb-card selected" onclick="openDrawer()">
+                <h4>Cleaning Services <span class="badge">Default</span></h4>
+                <p>Scripts for residential cleaning</p>
+                <div class="drawer-kb-stats">
+                  <span>12 scripts</span>
+                  <span>•</span>
+                  <span>Industry: Cleaning</span>
+                </div>
+              </div>
+              <div class="drawer-kb-card" onclick="openDrawer()">
+                <h4>Solar Sales</h4>
+                <p>Solar panel installation scripts</p>
+                <div class="drawer-kb-stats">
+                  <span>8 scripts</span>
+                  <span>•</span>
+                  <span>Industry: Energy</span>
+                </div>
+              </div>
+              <div class="drawer-kb-card" onclick="openDrawer()">
+                <h4>Insurance</h4>
+                <p>Life and health insurance</p>
+                <div class="drawer-kb-stats">
+                  <span>15 scripts</span>
+                  <span>•</span>
+                  <span>Industry: Insurance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="drawer-panel" id="drawerPanel">
+            <div class="drawer-panel-header">
+              <div>
+                <h3>Cleaning Services</h3>
+                <p>Scripts for residential cleaning</p>
+              </div>
+              <button class="drawer-close" onclick="closeDrawer()">×</button>
+            </div>
+            <div class="drawer-panel-actions">
+              <button class="btn btn-ghost btn-sm">✏️ Edit Knowledge Base</button>
+              <button class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑️ Delete</button>
+              <button class="btn btn-primary btn-sm" style="margin-left: auto;">+ Add Script</button>
+            </div>
+            <div class="drawer-panel-content">
+              <div class="drawer-script">
+                <div class="drawer-script-header">
+                  <span class="badge-category badge-objection">Objection</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="drawer-script-title">Price Too High</div>
+                <div class="drawer-script-text">I understand price is important...</div>
+              </div>
+              <div class="drawer-script">
+                <div class="drawer-script-header">
+                  <span class="badge-category badge-story">Story</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="drawer-script-title">The Busy Mom</div>
+                <div class="drawer-script-text">I had a client, Sarah, who was a working mom...</div>
+              </div>
+              <div class="drawer-script">
+                <div class="drawer-script-header">
+                  <span class="badge-category badge-close">Close</span>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon btn-sm">✏️</button>
+                    <button class="btn-icon btn-sm">🗑️</button>
+                  </div>
+                </div>
+                <div class="drawer-script-title">Assumptive Close</div>
+                <div class="drawer-script-text">Great! So let's go ahead and get you scheduled...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <h4>Design Analysis</h4>
+          <div class="pros-cons-grid">
+            <div class="pros">
+              <h5>✓ Pros</h5>
+              <ul>
+                <li>Cards give great visual overview</li>
+                <li>Drawer keeps context visible</li>
+                <li>Edit actions clearly in drawer</li>
+                <li>Modern, app-like interaction</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h5>✗ Cons</h5>
+              <ul>
+                <li>Drawer can feel hidden</li>
+                <li>Requires click to see scripts</li>
+                <li>More complex interaction pattern</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN 5: Inline Expand Cards -->
+    <div class="design-section" id="design5">
+      <div class="mockup-header">
+        <h2>Design 5: Inline Expandable Cards</h2>
+        <p>Each KB is a full-width card with Edit/Delete buttons visible. Click "Show Scripts" to expand inline.</p>
+      </div>
+      <div class="mockup-content">
+        <div class="inline-header">
+          <h3>Knowledge Bases</h3>
+          <button class="btn btn-primary btn-sm">+ Add Knowledge Base</button>
+        </div>
+        <div class="inline-grid">
+          <div class="inline-kb-card">
+            <div class="inline-kb-header">
+              <div class="inline-kb-info">
+                <h4>Cleaning Services <span class="badge">Default</span></h4>
+                <p>Scripts for residential and commercial cleaning services</p>
+                <div class="inline-kb-meta">
+                  <span>12 scripts</span>
+                  <span>•</span>
+                  <span>Industry: Cleaning</span>
+                </div>
+              </div>
+              <div class="inline-kb-actions">
+                <button class="btn btn-ghost btn-sm">✏️ Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑️ Delete</button>
+              </div>
+            </div>
+            <div class="inline-scripts-toggle" onclick="toggleInlineScripts(this)">
+              <span>📋 Show Scripts (12)</span>
+              <span style="color: var(--gray-400);">▼</span>
+            </div>
+            <div class="inline-scripts expanded">
+              <div class="inline-scripts-header">
+                <div class="inline-scripts-tabs">
+                  <button class="split-tab active">All</button>
+                  <button class="split-tab">Objections</button>
+                  <button class="split-tab">Stories</button>
+                  <button class="split-tab">Closes</button>
+                </div>
+                <button class="btn btn-primary btn-sm">+ Add Script</button>
+              </div>
+              <div class="inline-script-item">
+                <div class="inline-script-info">
+                  <span class="badge-category badge-objection">Objection</span>
+                  <div>
+                    <div class="inline-script-title">Price Too High</div>
+                    <div class="inline-script-preview">I understand price is important. Let me ask...</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="btn-icon btn-sm">✏️</button>
+                  <button class="btn-icon btn-sm">🗑️</button>
+                </div>
+              </div>
+              <div class="inline-script-item">
+                <div class="inline-script-info">
+                  <span class="badge-category badge-story">Story</span>
+                  <div>
+                    <div class="inline-script-title">The Busy Mom</div>
+                    <div class="inline-script-preview">I had a client, Sarah, who was a working mom of three...</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="btn-icon btn-sm">✏️</button>
+                  <button class="btn-icon btn-sm">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="inline-kb-card">
+            <div class="inline-kb-header">
+              <div class="inline-kb-info">
+                <h4>Solar Sales</h4>
+                <p>Solar panel installation and financing scripts</p>
+                <div class="inline-kb-meta">
+                  <span>8 scripts</span>
+                  <span>•</span>
+                  <span>Industry: Energy</span>
+                </div>
+              </div>
+              <div class="inline-kb-actions">
+                <button class="btn btn-ghost btn-sm">✏️ Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑️ Delete</button>
+              </div>
+            </div>
+            <div class="inline-scripts-toggle" onclick="toggleInlineScripts(this)">
+              <span>📋 Show Scripts (8)</span>
+              <span style="color: var(--gray-400);">▼</span>
+            </div>
+            <div class="inline-scripts"></div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <h4>Design Analysis</h4>
+          <div class="pros-cons-grid">
+            <div class="pros">
+              <h5>✓ Pros</h5>
+              <ul>
+                <li>Edit/Delete always visible, not hidden</li>
+                <li>Clear "Show Scripts" action</li>
+                <li>Full width for all content</li>
+                <li>No confusion about what clicking does</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h5>✗ Cons</h5>
+              <ul>
+                <li>Takes more vertical space</li>
+                <li>Can only view one KB's scripts at a time</li>
+                <li>More clicks to see scripts</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showDesign(num) {
+      // Update buttons
+      document.querySelectorAll('.design-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === num - 1);
+      });
+
+      // Update sections
+      document.querySelectorAll('.design-section').forEach((section, i) => {
+        section.classList.toggle('active', i === num - 1);
+      });
+    }
+
+    function selectSplitItem(el) {
+      document.querySelectorAll('.split-item').forEach(item => item.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function toggleAccordion(header) {
+      const wasExpanded = header.classList.contains('expanded');
+
+      // Close all
+      document.querySelectorAll('.accordion-header').forEach(h => h.classList.remove('expanded'));
+      document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('expanded'));
+
+      // Open clicked if it wasn't open
+      if (!wasExpanded) {
+        header.classList.add('expanded');
+        header.nextElementSibling.classList.add('expanded');
+      }
+    }
+
+    function openDrawer() {
+      document.getElementById('drawerMain').classList.add('shifted');
+      document.getElementById('drawerPanel').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawerMain').classList.remove('shifted');
+      document.getElementById('drawerPanel').classList.remove('open');
+    }
+
+    function toggleInlineScripts(toggle) {
+      const scripts = toggle.nextElementSibling;
+      const isExpanded = scripts.classList.contains('expanded');
+      scripts.classList.toggle('expanded');
+      toggle.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+      toggle.querySelector('span:first-child').textContent = isExpanded ? '📋 Show Scripts' : '📋 Hide Scripts';
+    }
+  </script>
+</body>
+</html>
