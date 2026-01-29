@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab v2 - Design Mockup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1f2937;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Call Selector Bar */
+    .call-selector {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .call-selector label {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .call-selector select {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .call-info {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .call-info-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Main Layout - Two Columns */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Panel Styles */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 220px);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .panel-header h2 {
+      font-size: 15px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header.coaching {
+      background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-header.coaching h2 {
+      color: white;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ========== TRANSCRIPT SIDE ========== */
+    .transcript-panel .panel-content {
+      padding: 0;
+    }
+
+    /* Timeline Item */
+    .timeline-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f3f4f6;
+      position: relative;
+    }
+
+    .timeline-item:hover {
+      background: #f9fafb;
+    }
+
+    /* Timestamp */
+    .timestamp {
+      position: absolute;
+      left: 20px;
+      top: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: 'Monaco', monospace;
+    }
+
+    /* Message */
+    .message {
+      margin-left: 50px;
+    }
+
+    .message-speaker {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-speaker.customer { color: #b45309; }
+    .message-speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    /* Objection Badge on Customer Message */
+    .objection-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .objection-badge.price { background: #fef3c7; color: #b45309; }
+    .objection-badge.authority { background: #f3e8ff; color: #7c3aed; }
+    .objection-badge.timing { background: #dbeafe; color: #1d4ed8; }
+    .objection-badge.trust { background: #fce7f3; color: #be185d; }
+
+    /* ========== AI COACHING INLINE ========== */
+    .ai-coaching-inline {
+      margin: 8px 0 8px 50px;
+      background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+      border: 2px solid #3b82f6;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .ai-coaching-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .ai-coaching-label {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-coaching-category {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .ai-coaching-body {
+      padding: 12px 14px;
+    }
+
+    .ai-coaching-script {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #1f2937;
+      font-style: italic;
+    }
+
+    .ai-coaching-meta {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Rep Response After AI */
+    .rep-response-section {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #d1d5db;
+    }
+
+    .rep-response-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 4px;
+    }
+
+    .rep-response-text {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .match-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .match-indicator.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .match-indicator.partial {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .match-indicator.missed {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* ========== COACHING PANEL (RIGHT SIDE) ========== */
+    .coaching-panel .panel-content {
+      padding: 20px;
+    }
+
+    /* Selected Context */
+    .selected-context {
+      background: #fef3c7;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .selected-context-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #b45309;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .selected-context-time {
+      font-size: 12px;
+      color: #92400e;
+      margin-bottom: 8px;
+      font-family: 'Monaco', monospace;
+    }
+
+    .selected-context-text {
+      font-size: 14px;
+      color: #1f2937;
+      line-height: 1.5;
+    }
+
+    /* Full AI Suggestion Card */
+    .stn-card {
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .stn-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stn-label {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .stn-category {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .stn-progress {
+      padding: 10px 16px;
+      background: #f0f9ff;
+      border-bottom: 1px solid #e0f2fe;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+
+    .progress-dot.active { background: #3b82f6; }
+    .progress-dot.completed { background: #22c55e; }
+
+    .stn-body {
+      padding: 16px;
+    }
+
+    .stn-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .stn-tip {
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #713f12;
+      margin-bottom: 12px;
+    }
+
+    .stn-listen {
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .stn-listen-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .response-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .response-chip {
+      padding: 6px 12px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      font-size: 12px;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    .response-chip:hover {
+      background: #e2e8f0;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+      margin-bottom: 20px;
+    }
+
+    .comparison-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .comparison-box {
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .comparison-box.suggested {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .comparison-box.actual {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+    }
+
+    .comparison-box-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .comparison-box.suggested .comparison-box-label { color: #166534; }
+    .comparison-box.actual .comparison-box-label { color: #1d4ed8; }
+
+    .comparison-box-text {
+      font-size: 12px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .match-score-bar {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .match-score-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .match-score-value.good { color: #22c55e; }
+    .match-score-value.partial { color: #f59e0b; }
+    .match-score-value.low { color: #ef4444; }
+
+    .match-score-details {
+      flex: 1;
+    }
+
+    .match-score-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .match-score-hint {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    /* Edit Section */
+    .edit-section {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .edit-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .edit-section textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .edit-section textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .edit-actions .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    /* Keywords Section */
+    .keywords-section {
+      margin-top: 16px;
+      padding: 14px;
+      background: #1f2937;
+      border-radius: 8px;
+    }
+
+    .keywords-section h4 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .keyword-tag {
+      padding: 4px 10px;
+      background: #374151;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #d1d5db;
+    }
+
+    .keyword-tag.matched {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .add-keyword-btn {
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px dashed #6b7280;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .add-keyword-btn:hover {
+      border-color: #9ca3af;
+      color: #d1d5db;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    /* Input at bottom */
+    .input-section {
+      padding: 16px 20px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .speaker-label {
+      padding: 12px 16px;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b45309;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP v2</strong> - Coaching Lab with inline AI coaching timestamps. See exactly when AI stepped in.
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 Coaching Lab</h1>
+      <div class="header-controls">
+        <select>
+          <option>Knowledge Base: Solar Sales Playbook</option>
+          <option>Knowledge Base: Roofing v2</option>
+        </select>
+        <button class="btn">Switch KB & Re-run</button>
+        <button class="btn btn-primary">Export Report</button>
+      </div>
+    </div>
+
+    <!-- Call Selector -->
+    <div class="call-selector">
+      <label>Call:</label>
+      <select>
+        <option>+1 (555) 123-4567 - Jan 28, 2026 2:34 PM</option>
+        <option>+1 (555) 987-6543 - Jan 28, 2026 11:15 AM</option>
+        <option>+1 (555) 456-7890 - Jan 27, 2026 4:45 PM</option>
+      </select>
+      <div class="call-info">
+        <span class="call-info-item">⏱ 4:32</span>
+        <span class="call-info-item">💬 12 turns</span>
+        <span class="call-info-item">🤖 3 coaching moments</span>
+        <span class="call-info-item">💰 Price 💼 Authority</span>
+      </div>
+      <button class="btn">Paste Transcript</button>
+    </div>
+
+    <!-- Main Two-Column Layout -->
+    <div class="main-layout">
+
+      <!-- LEFT: Transcript with Inline AI Coaching -->
+      <div class="panel transcript-panel">
+        <div class="panel-header">
+          <h2>📞 Call Timeline</h2>
+        </div>
+
+        <div class="panel-content">
+
+          <!-- Turn 1: Rep -->
+          <div class="timeline-item">
+            <div class="timestamp">0:00</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 2: Customer -->
+          <div class="timeline-item">
+            <div class="timestamp">0:05</div>
+            <div class="message">
+              <div class="message-speaker customer">🏠 Customer</div>
+              <div class="message-text">
+                Yeah, what is this about?
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 3: Rep -->
+          <div class="timeline-item">
+            <div class="timestamp">0:08</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                We're offering free solar assessments in your area. I wanted to see if you had a few minutes to discuss how much you could save.
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 4: Customer with OBJECTION -->
+          <div class="timeline-item" style="background: #fffbeb;">
+            <div class="timestamp">0:18</div>
+            <div class="message">
+              <div class="message-speaker customer">
+                🏠 Customer
+                <span class="objection-badge price">💰 PRICE</span>
+              </div>
+              <div class="message-text">
+                Look, I've already gotten quotes from two other companies and honestly your prices seem really high.
+              </div>
+            </div>
+
+            <!-- AI COACHING APPEARED HERE -->
+            <div class="ai-coaching-inline">
+              <div class="ai-coaching-header">
+                <span class="ai-coaching-label">🤖 AI COACHING</span>
+                <span class="ai-coaching-category">💰 Price Objection - Step 1</span>
+              </div>
+              <div class="ai-coaching-body">
+                <div class="ai-coaching-script">
+                  "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+                </div>
+                <div class="ai-coaching-meta">
+                  <span>⏱ Appeared at 0:18</span>
+                  <span>🎯 Confidence: 94%</span>
+                </div>
+
+                <!-- What rep actually said -->
+                <div class="rep-response-section">
+                  <div class="rep-response-label">👤 Rep responded at 0:28:</div>
+                  <div class="rep-response-text">
+                    "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+                  </div>
+                  <div class="match-indicator partial">
+                    ⚡ 68% match - Asked about price instead of reframing to value
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 5: Rep -->
+          <div class="timeline-item">
+            <div class="timestamp">0:28</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                I appreciate you being upfront about that. Can I ask what the other companies quoted you?
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 6: Customer -->
+          <div class="timeline-item">
+            <div class="timestamp">0:35</div>
+            <div class="message">
+              <div class="message-speaker customer">🏠 Customer</div>
+              <div class="message-text">
+                They were around 20 thousand. You guys are at 28.
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 7: Rep -->
+          <div class="timeline-item">
+            <div class="timestamp">0:42</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                I see. Well, there's actually a reason for that difference. Our panels have a 25-year warranty compared to their 10-year...
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 8: Customer with OBJECTION -->
+          <div class="timeline-item" style="background: #faf5ff;">
+            <div class="timestamp">0:58</div>
+            <div class="message">
+              <div class="message-speaker customer">
+                🏠 Customer
+                <span class="objection-badge authority">👥 AUTHORITY</span>
+              </div>
+              <div class="message-text">
+                I don't know, I need to talk to my wife about this.
+              </div>
+            </div>
+
+            <!-- AI COACHING APPEARED HERE -->
+            <div class="ai-coaching-inline" style="border-color: #8b5cf6;">
+              <div class="ai-coaching-header" style="background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%);">
+                <span class="ai-coaching-label">🤖 AI COACHING</span>
+                <span class="ai-coaching-category">👥 Authority Objection - Step 1</span>
+              </div>
+              <div class="ai-coaching-body">
+                <div class="ai-coaching-script">
+                  "Absolutely, she should definitely be part of this decision. What if I scheduled a quick 15-minute call when you're both available? That way she can ask questions directly."
+                </div>
+                <div class="ai-coaching-meta">
+                  <span>⏱ Appeared at 0:58</span>
+                  <span>🎯 Confidence: 91%</span>
+                </div>
+
+                <!-- What rep actually said -->
+                <div class="rep-response-section">
+                  <div class="rep-response-label">👤 Rep responded at 1:05:</div>
+                  <div class="rep-response-text">
+                    "Of course, that makes sense. When do you think you two could sit down together?"
+                  </div>
+                  <div class="match-indicator partial">
+                    ⚡ 72% match - Good intent but weaker close
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 9: Rep -->
+          <div class="timeline-item">
+            <div class="timestamp">1:05</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                Of course, that makes sense. When do you think you two could sit down together?
+              </div>
+            </div>
+          </div>
+
+          <!-- More turns... -->
+          <div class="timeline-item">
+            <div class="timestamp">1:15</div>
+            <div class="message">
+              <div class="message-speaker customer">🏠 Customer</div>
+              <div class="message-text">
+                Maybe this weekend? I'll talk to her tonight.
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">1:22</div>
+            <div class="message">
+              <div class="message-speaker rep">👤 Sales Rep</div>
+              <div class="message-text">
+                Perfect. How about Saturday at 10am? I can call you both then.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input to add/test -->
+        <div class="input-section">
+          <div class="input-row">
+            <span class="speaker-label">🏠 Customer says:</span>
+            <input type="text" placeholder="Type what customer says to test AI response...">
+            <button class="btn btn-primary">Test</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Selected Coaching Detail -->
+      <div class="panel coaching-panel">
+        <div class="panel-header coaching">
+          <h2>🤖 Coaching Details</h2>
+        </div>
+
+        <div class="panel-content">
+
+          <!-- Selected Context -->
+          <div class="selected-context">
+            <div class="selected-context-label">Selected: Customer Objection</div>
+            <div class="selected-context-time">⏱ 0:18 into call</div>
+            <div class="selected-context-text">
+              "Look, I've already gotten quotes from two other companies and honestly your prices seem really high."
+            </div>
+          </div>
+
+          <!-- Full AI Suggestion Card -->
+          <div class="stn-card">
+            <div class="stn-header">
+              <span class="stn-label">AI SUGGESTED</span>
+              <span class="stn-category">💰 Price Objection</span>
+            </div>
+            <div class="stn-progress">
+              <div class="progress-dots">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+              </div>
+              <span>Step 1 of 4 - Acknowledge & Reframe</span>
+            </div>
+            <div class="stn-body">
+              <div class="stn-script">
+                "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+              </div>
+              <div class="stn-tip">
+                💡 Reframe from price to value. Don't defend the price directly - redirect to what makes you different.
+              </div>
+              <div class="stn-listen">
+                <div class="stn-listen-label">Listen for:</div>
+                <div class="response-chips">
+                  <span class="response-chip">"No they didn't"</span>
+                  <span class="response-chip">"I'm not sure"</span>
+                  <span class="response-chip">"Yes they did"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparison -->
+          <div class="comparison-section">
+            <div class="comparison-title">AI Suggested vs Rep Said</div>
+            <div class="comparison-row">
+              <div class="comparison-box suggested">
+                <div class="comparison-box-label">✨ AI Suggested</div>
+                <div class="comparison-box-text">
+                  "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty..."
+                </div>
+              </div>
+              <div class="comparison-box actual">
+                <div class="comparison-box-label">👤 Rep Said</div>
+                <div class="comparison-box-text">
+                  "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+                </div>
+              </div>
+            </div>
+            <div class="match-score-bar">
+              <div class="match-score-value partial">68%</div>
+              <div class="match-score-details">
+                <div class="match-score-label">Partial Match</div>
+                <div class="match-score-hint">Rep acknowledged objection but asked about price instead of reframing to value</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit / Improve -->
+          <div class="edit-section">
+            <h4>✏️ Improve this coaching:</h4>
+            <textarea>I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?</textarea>
+            <div class="edit-actions">
+              <button class="btn">Save to Knowledge Base</button>
+              <button class="btn btn-primary">Test New Version</button>
+            </div>
+          </div>
+
+          <!-- Keywords that triggered -->
+          <div class="keywords-section">
+            <h4>Keywords that triggered this match:</h4>
+            <div class="keywords-list">
+              <span class="keyword-tag matched">prices</span>
+              <span class="keyword-tag matched">high</span>
+              <span class="keyword-tag">expensive</span>
+              <span class="keyword-tag">cost</span>
+              <span class="keyword-tag">afford</span>
+              <span class="keyword-tag">budget</span>
+              <button class="add-keyword-btn">+ Add keyword</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 What's New in This Design:</h3>
+      <ul>
+        <li><strong>Timestamps on everything:</strong> Every message shows minutes:seconds into the call</li>
+        <li><strong>AI coaching INLINE in timeline:</strong> See exactly when AI stepped in, right after the customer's objection</li>
+        <li><strong>Rep response shown in context:</strong> Below each AI coaching, see what rep actually said + match score</li>
+        <li><strong>Color-coded objections:</strong> Yellow for price, purple for authority, blue for timing</li>
+        <li><strong>Click to expand:</strong> Click any coaching moment in timeline → full details on right panel</li>
+        <li><strong>Edit & save:</strong> Modify the coaching text, save back to KB, test new version</li>
+        <li><strong>Keywords panel:</strong> See which words triggered the match, add new keywords</li>
+        <li><strong>Test input at bottom:</strong> Add more customer messages to test how AI would respond</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

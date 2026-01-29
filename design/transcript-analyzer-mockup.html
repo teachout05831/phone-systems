@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcript Analyzer - Design Mockup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #1f2937;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .header-controls select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    /* ========== TABS ========== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .tab:hover {
+      color: #374151;
+    }
+
+    .tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    /* ========== UPLOAD VIEW ========== */
+    .upload-view {
+      display: none;
+    }
+
+    .upload-view.active {
+      display: block;
+    }
+
+    .upload-area {
+      background: white;
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 60px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .upload-area:hover {
+      border-color: #3b82f6;
+      background: #f0f9ff;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .upload-area h3 {
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .upload-area p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .or-divider {
+      color: #9ca3af;
+      margin: 24px 0;
+      font-size: 14px;
+    }
+
+    .paste-area {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .paste-area h3 {
+      margin-bottom: 16px;
+      color: #1f2937;
+    }
+
+    .paste-area textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .paste-area textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .paste-hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .paste-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* ========== ANALYSIS VIEW ========== */
+    .analysis-view {
+      display: none;
+    }
+
+    .analysis-view.active {
+      display: block;
+    }
+
+    /* Summary Bar */
+    .summary-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 32px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .stat-value.price { color: #f59e0b; }
+    .stat-value.timing { color: #3b82f6; }
+    .stat-value.authority { color: #8b5cf6; }
+
+    .summary-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Main Analysis Layout */
+    .analysis-layout {
+      display: grid;
+      grid-template-columns: 1fr 450px;
+      gap: 24px;
+    }
+
+    /* Transcript Panel */
+    .transcript-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h2 {
+      font-size: 16px;
+      color: #1f2937;
+    }
+
+    .playback-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .playback-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .playback-btn:hover {
+      background: #f3f4f6;
+    }
+
+    .playback-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .transcript-content {
+      max-height: calc(100vh - 350px);
+      overflow-y: auto;
+    }
+
+    /* Transcript Turns */
+    .turn {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.15s;
+    }
+
+    .turn:hover {
+      background: #f9fafb;
+    }
+
+    .turn.highlighted {
+      background: #fef3c7;
+    }
+
+    .turn.has-coaching {
+      background: #f0fdf4;
+    }
+
+    .turn.has-coaching:hover {
+      background: #dcfce7;
+    }
+
+    .turn-header {
+      padding: 12px 20px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .turn-speaker {
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .turn-speaker.customer { color: #b45309; }
+    .turn-speaker.rep { color: #1d4ed8; }
+
+    .turn-time {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .turn-text {
+      padding: 0 20px 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    /* Coaching Indicator in Transcript */
+    .turn-coaching-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #166534;
+      cursor: pointer;
+    }
+
+    .turn-coaching-badge:hover {
+      background: #bbf7d0;
+    }
+
+    /* What Rep Actually Said */
+    .turn-rep-response {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      border-radius: 4px;
+    }
+
+    .turn-rep-response-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 4px;
+    }
+
+    .turn-rep-response-text {
+      font-size: 13px;
+      color: #1f2937;
+    }
+
+    /* ========== COACHING DETAIL PANEL ========== */
+    .coaching-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: sticky;
+      top: 24px;
+    }
+
+    .coaching-panel-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      color: white;
+    }
+
+    .coaching-panel-header h2 {
+      font-size: 16px;
+    }
+
+    .coaching-panel-content {
+      padding: 20px;
+      max-height: calc(100vh - 350px);
+      overflow-y: auto;
+    }
+
+    /* Selected Turn Info */
+    .selected-turn-info {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .selected-turn-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .selected-turn-text {
+      font-size: 14px;
+      color: #1f2937;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* SAY THIS NOW Card */
+    .stn-card {
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .stn-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stn-label {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .stn-category {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .stn-body {
+      padding: 16px;
+    }
+
+    .stn-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .stn-tip {
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #713f12;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .comparison-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .comparison-box {
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .comparison-box.suggested {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .comparison-box.actual {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+    }
+
+    .comparison-box-label {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .comparison-box.suggested .comparison-box-label { color: #166534; }
+    .comparison-box.actual .comparison-box-label { color: #1d4ed8; }
+
+    .comparison-box-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    /* Match Quality */
+    .match-quality {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .match-score {
+      font-size: 24px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+
+    .match-score.medium { color: #f59e0b; }
+    .match-score.low { color: #ef4444; }
+
+    .match-details {
+      flex: 1;
+    }
+
+    .match-details-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .match-details-text {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* Edit Suggestion */
+    .edit-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .edit-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .edit-actions .btn {
+      flex: 1;
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    /* No Selection State */
+    .no-selection {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .no-selection-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .no-selection h3 {
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 40px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    /* ========== WORKFLOW DIAGRAM ========== */
+    .workflow-section {
+      margin-top: 40px;
+      padding-top: 40px;
+      border-top: 2px dashed #d1d5db;
+    }
+
+    .workflow-section h2 {
+      text-align: center;
+      color: #374151;
+      margin-bottom: 24px;
+    }
+
+    .workflow-diagram {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .workflow-steps {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .workflow-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .workflow-step::after {
+      content: '→';
+      position: absolute;
+      right: -20px;
+      top: 30px;
+      font-size: 24px;
+      color: #9ca3af;
+    }
+
+    .workflow-step:last-child::after {
+      display: none;
+    }
+
+    .workflow-step-icon {
+      width: 60px;
+      height: 60px;
+      background: #eff6ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 12px;
+    }
+
+    .workflow-step-title {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .workflow-step-desc {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP</strong> - Transcript Analyzer: Upload real calls, see what AI would coach, compare & improve.
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1>Transcript Analyzer</h1>
+      <div class="header-controls">
+        <select>
+          <option>Knowledge Base: Solar Sales Playbook</option>
+          <option>Knowledge Base: Roofing Sales v2</option>
+        </select>
+        <button class="btn">Import Transcript</button>
+        <button class="btn btn-primary">Re-Analyze All</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab">Upload Transcript</button>
+      <button class="tab active">Analysis View</button>
+      <button class="tab">Coaching Summary</button>
+    </div>
+
+    <!-- ========== UPLOAD VIEW ========== -->
+    <div class="upload-view">
+      <div class="upload-area">
+        <div class="upload-icon">📄</div>
+        <h3>Drop a transcript file here</h3>
+        <p>Supports .txt, .json, or Twilio transcript exports</p>
+        <button class="btn btn-primary">Browse Files</button>
+      </div>
+
+      <div class="or-divider">— or paste transcript directly —</div>
+
+      <div class="paste-area">
+        <h3>Paste Transcript</h3>
+        <textarea placeholder="Rep: Hi, this is Mike from Solar Solutions...
+Customer: Yeah, I got your flyer in the mail.
+Rep: Great! So you saw our offer for the free solar consultation...
+Customer: Look, I've already talked to three solar companies and honestly the prices are all over the place.
+Rep: I totally understand...">Rep: Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.
+Customer: Yeah, what is this about?
+Rep: We're offering free solar assessments in your area. I wanted to see if you had a few minutes to discuss how much you could save.
+Customer: Look, I've already gotten quotes from two other companies and honestly your prices seem really high.
+Rep: I appreciate you being upfront about that. Can I ask what the other companies quoted you?
+Customer: They were around 20 thousand. You guys are at 28.
+Rep: I see. Well, there's actually a reason for that difference. Our panels have a 25-year warranty compared to their 10-year...
+Customer: I don't know, I need to talk to my wife about this.
+Rep: Of course, that makes sense. When do you think you two could sit down together?</textarea>
+        <div class="paste-hint">
+          Format: Each line should start with "Rep:" or "Customer:" (or we'll auto-detect speakers)
+        </div>
+        <div class="paste-actions">
+          <button class="btn">Clear</button>
+          <button class="btn btn-primary">Analyze Transcript</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ANALYSIS VIEW ========== -->
+    <div class="analysis-view active">
+
+      <!-- Summary Stats Bar -->
+      <div class="summary-bar">
+        <div class="summary-stats">
+          <div class="stat">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Total Turns</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Coaching Moments</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value price">2</div>
+            <div class="stat-label">Price Objections</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value authority">1</div>
+            <div class="stat-label">Authority Objections</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" style="color: #22c55e;">78%</div>
+            <div class="stat-label">Coaching Match Rate</div>
+          </div>
+        </div>
+        <div class="summary-actions">
+          <button class="btn">Export Report</button>
+          <button class="btn btn-primary">Switch KB & Re-run</button>
+        </div>
+      </div>
+
+      <!-- Main Analysis Layout -->
+      <div class="analysis-layout">
+
+        <!-- Left: Transcript with coaching indicators -->
+        <div class="transcript-panel">
+          <div class="panel-header">
+            <h2>Call Transcript</h2>
+            <div class="playback-controls">
+              <button class="playback-btn" title="Previous">⏮</button>
+              <button class="playback-btn active" title="Auto-play coaching moments">▶</button>
+              <button class="playback-btn" title="Next">⏭</button>
+            </div>
+          </div>
+
+          <div class="transcript-content">
+            <!-- Turn 1 -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker rep">👤 Sales Rep</span>
+                <span class="turn-time">0:00</span>
+              </div>
+              <div class="turn-text">
+                Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.
+              </div>
+            </div>
+
+            <!-- Turn 2 -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker customer">🏠 Customer</span>
+                <span class="turn-time">0:05</span>
+              </div>
+              <div class="turn-text">
+                Yeah, what is this about?
+              </div>
+            </div>
+
+            <!-- Turn 3 -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker rep">👤 Sales Rep</span>
+                <span class="turn-time">0:08</span>
+              </div>
+              <div class="turn-text">
+                We're offering free solar assessments in your area. I wanted to see if you had a few minutes to discuss how much you could save.
+              </div>
+            </div>
+
+            <!-- Turn 4 - COACHING MOMENT -->
+            <div class="turn has-coaching highlighted">
+              <div class="turn-header">
+                <span class="turn-speaker customer">🏠 Customer</span>
+                <span class="turn-time">0:18</span>
+              </div>
+              <div class="turn-text">
+                Look, I've already gotten quotes from two other companies and honestly your prices seem really high.
+
+                <div class="turn-coaching-badge">
+                  💡 Coaching: Price Objection — Click to view
+                </div>
+              </div>
+            </div>
+
+            <!-- Turn 5 - Rep Response -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker rep">👤 Sales Rep</span>
+                <span class="turn-time">0:28</span>
+              </div>
+              <div class="turn-text">
+                I appreciate you being upfront about that. Can I ask what the other companies quoted you?
+              </div>
+            </div>
+
+            <!-- Turn 6 -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker customer">🏠 Customer</span>
+                <span class="turn-time">0:35</span>
+              </div>
+              <div class="turn-text">
+                They were around 20 thousand. You guys are at 28.
+              </div>
+            </div>
+
+            <!-- Turn 7 -->
+            <div class="turn has-coaching">
+              <div class="turn-header">
+                <span class="turn-speaker rep">👤 Sales Rep</span>
+                <span class="turn-time">0:42</span>
+              </div>
+              <div class="turn-text">
+                I see. Well, there's actually a reason for that difference. Our panels have a 25-year warranty compared to their 10-year...
+
+                <div class="turn-coaching-badge">
+                  ✓ Used similar to suggestion
+                </div>
+              </div>
+            </div>
+
+            <!-- Turn 8 - COACHING MOMENT -->
+            <div class="turn has-coaching">
+              <div class="turn-header">
+                <span class="turn-speaker customer">🏠 Customer</span>
+                <span class="turn-time">0:58</span>
+              </div>
+              <div class="turn-text">
+                I don't know, I need to talk to my wife about this.
+
+                <div class="turn-coaching-badge">
+                  💡 Coaching: Authority Objection — Click to view
+                </div>
+              </div>
+            </div>
+
+            <!-- Turn 9 -->
+            <div class="turn">
+              <div class="turn-header">
+                <span class="turn-speaker rep">👤 Sales Rep</span>
+                <span class="turn-time">1:05</span>
+              </div>
+              <div class="turn-text">
+                Of course, that makes sense. When do you think you two could sit down together?
+
+                <div class="turn-rep-response">
+                  <div class="turn-rep-response-label">Compared to AI suggestion:</div>
+                  <div class="turn-rep-response-text">Rep used a weaker close. AI suggested: "Absolutely, she should be part of this decision. What if I scheduled a quick 15-minute call when you're both available?"</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Coaching Detail Panel -->
+        <div class="coaching-panel">
+          <div class="coaching-panel-header">
+            <h2>🤖 Coaching Detail</h2>
+          </div>
+
+          <div class="coaching-panel-content">
+            <!-- What triggered this -->
+            <div class="selected-turn-info">
+              <div class="selected-turn-label">Customer said:</div>
+              <div class="selected-turn-text">
+                "Look, I've already gotten quotes from two other companies and honestly your prices seem really high."
+              </div>
+            </div>
+
+            <!-- AI Suggestion -->
+            <div class="stn-card">
+              <div class="stn-header">
+                <span class="stn-label">AI SUGGESTED</span>
+                <span class="stn-category">💰 Price Objection</span>
+              </div>
+              <div class="stn-body">
+                <div class="stn-script">
+                  "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+                </div>
+                <div class="stn-tip">
+                  💡 Reframe from price to value. Don't defend the price directly.
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparison -->
+            <div class="comparison-section">
+              <div class="comparison-title">Compare: AI vs What Rep Said</div>
+
+              <div class="comparison-box suggested">
+                <div class="comparison-box-label">✨ AI Suggested:</div>
+                <div class="comparison-box-text">
+                  "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+                </div>
+              </div>
+
+              <div class="comparison-box actual">
+                <div class="comparison-box-label">👤 Rep Actually Said:</div>
+                <div class="comparison-box-text">
+                  "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+                </div>
+              </div>
+
+              <div class="match-quality">
+                <div class="match-score medium">72%</div>
+                <div class="match-details">
+                  <div class="match-details-title">Partial Match</div>
+                  <div class="match-details-text">Rep acknowledged but asked about price instead of reframing to value</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit / What If -->
+            <div class="edit-section">
+              <h4>🔧 What if we tried this instead?</h4>
+              <textarea class="edit-textarea">I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?</textarea>
+              <div class="edit-actions">
+                <button class="btn">Save to KB</button>
+                <button class="btn btn-primary">Test This Response</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== DESIGN NOTES ========== -->
+    <div class="design-notes">
+      <h3>🎨 Design Decisions & Questions:</h3>
+      <ul>
+        <li><strong>Transcript format:</strong> Auto-detect "Rep:" / "Customer:" or use Twilio's JSON export directly?</li>
+        <li><strong>Coaching badges in transcript:</strong> Show inline where coaching would trigger - click to see details on right</li>
+        <li><strong>Comparison view:</strong> Side-by-side what AI suggested vs what rep actually said</li>
+        <li><strong>Match score:</strong> Shows how close rep's response was to AI suggestion (for training insights)</li>
+        <li><strong>"What if" editing:</strong> Modify suggestions, save back to KB, re-run analysis</li>
+        <li><strong>Playback controls:</strong> Jump between coaching moments in long transcripts</li>
+        <li><strong>Switch KB & Re-run:</strong> Test same transcript against different knowledge bases</li>
+        <li><strong>Stats bar:</strong> Quick overview of objection types detected in this call</li>
+      </ul>
+    </div>
+
+    <!-- ========== WORKFLOW DIAGRAM ========== -->
+    <div class="workflow-section">
+      <h2>How It Works</h2>
+      <div class="workflow-diagram">
+        <div class="workflow-steps">
+          <div class="workflow-step">
+            <div class="workflow-step-icon">📄</div>
+            <div class="workflow-step-title">1. Upload Transcript</div>
+            <div class="workflow-step-desc">Paste a real call transcript or import from Twilio</div>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-step-icon">🔍</div>
+            <div class="workflow-step-title">2. Auto-Analyze</div>
+            <div class="workflow-step-desc">System detects objections and shows what coaching would appear</div>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-step-icon">⚖️</div>
+            <div class="workflow-step-title">3. Compare</div>
+            <div class="workflow-step-desc">See AI suggestion vs what rep actually said</div>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-step-icon">✏️</div>
+            <div class="workflow-step-title">4. Tweak & Test</div>
+            <div class="workflow-step-desc">Edit suggestions, save to KB, re-run to improve</div>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-step-icon">🔄</div>
+            <div class="workflow-step-title">5. Switch KB</div>
+            <div class="workflow-step-desc">Test same call against different knowledge bases</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab v5 - Connected Triggers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1f2937;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+
+    .btn-primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .btn-success { background: #22c55e; color: white; border-color: #22c55e; }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Call Selector */
+    .call-selector {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Coaching Summary Bar */
+    .coaching-summary {
+      background: linear-gradient(135deg, #1e40af, #7c3aed);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      color: white;
+    }
+
+    .coaching-summary-label {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .coaching-summary-items {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .coaching-summary-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .coaching-summary-item:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .coaching-summary-item.active {
+      background: rgba(255,255,255,0.3);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+    }
+
+    .coaching-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .coaching-number.c1 { background: #f59e0b; }
+    .coaching-number.c2 { background: #8b5cf6; }
+    .coaching-number.c3 { background: #14b8a6; }
+
+    .coaching-summary-text {
+      font-size: 13px;
+    }
+
+    .coaching-summary-time {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    /* Main 3-Column Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 420px 380px;
+      gap: 20px;
+    }
+
+    /* Panel */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 300px);
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .panel-header h2 {
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .panel-header.blue {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-header.blue h2 { color: white; }
+
+    .panel-header.purple {
+      background: linear-gradient(135deg, #5b21b6, #8b5cf6);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-header.purple h2 { color: white; }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    /* ========== TIMELINE WITH CONNECTORS ========== */
+    .timeline-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      position: relative;
+    }
+
+    .timeline-item:hover {
+      background: #fafafa;
+    }
+
+    .timeline-item.selected {
+      background: #fef3c7;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: 'Monaco', monospace;
+      margin-bottom: 4px;
+    }
+
+    .message-speaker {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .message-speaker.customer { color: #b45309; }
+    .message-speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    /* Highlighted trigger words */
+    .trigger-word {
+      background: #fef3c7;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      border-bottom: 2px solid #f59e0b;
+    }
+
+    .trigger-word.price { background: #fef3c7; border-color: #f59e0b; }
+    .trigger-word.authority { background: #f3e8ff; border-color: #8b5cf6; }
+
+    /* Coaching Trigger Connector */
+    .coaching-trigger-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .coaching-trigger-box.c1 {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #f59e0b;
+    }
+
+    .coaching-trigger-box.c2 {
+      background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+      border: 2px solid #8b5cf6;
+    }
+
+    .coaching-trigger-box:hover {
+      transform: translateX(4px);
+    }
+
+    .coaching-trigger-box.active {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .trigger-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .trigger-number.c1 { background: #f59e0b; }
+    .trigger-number.c2 { background: #8b5cf6; }
+
+    .trigger-info {
+      flex: 1;
+    }
+
+    .trigger-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .trigger-keywords {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .trigger-arrow {
+      font-size: 16px;
+      color: #9ca3af;
+    }
+
+    /* ========== COACHING PANEL (MIDDLE) ========== */
+    .coaching-card {
+      margin: 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.15s;
+    }
+
+    .coaching-card.active {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+
+    .coaching-card.c1.active { border-color: #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); }
+    .coaching-card.c2.active { border-color: #8b5cf6; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2); }
+
+    .coaching-card-header {
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .coaching-card.c1 .coaching-card-header {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    .coaching-card.c2 .coaching-card-header {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+    }
+
+    .coaching-card-number {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .card-number-badge {
+      width: 22px;
+      height: 22px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .coaching-card-time {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .coaching-card-body {
+      padding: 14px;
+    }
+
+    .coaching-script {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1f2937;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 3px solid #d1d5db;
+      margin-bottom: 12px;
+    }
+
+    .coaching-card.c1 .coaching-script { border-left-color: #f59e0b; }
+    .coaching-card.c2 .coaching-script { border-left-color: #8b5cf6; }
+
+    .coaching-tip {
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #713f12;
+      margin-bottom: 10px;
+    }
+
+    /* Rep Response in Card */
+    .rep-said-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #e5e7eb;
+    }
+
+    .rep-said-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .rep-said-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d4ed8;
+    }
+
+    .match-badge {
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .match-badge.partial { background: #fef3c7; color: #b45309; }
+    .match-badge.good { background: #dcfce7; color: #166534; }
+
+    .rep-said-text {
+      font-size: 12px;
+      color: #374151;
+      background: #eff6ff;
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .card-action {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .card-action:hover { background: #f3f4f6; }
+    .card-action.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+    /* ========== REASONING PANEL (RIGHT) ========== */
+    .reasoning-content {
+      padding: 16px;
+    }
+
+    .reasoning-section {
+      margin-bottom: 16px;
+    }
+
+    .reasoning-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Trigger Words Found */
+    .trigger-words-box {
+      background: #1f2937;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .trigger-words-header {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .trigger-words-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tw-tag {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .tw-tag.found {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .tw-tag.not-found {
+      background: #374151;
+      color: #6b7280;
+    }
+
+    /* Confidence */
+    .confidence-box {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .confidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .confidence-score {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .confidence-score.c1 { color: #f59e0b; }
+    .confidence-score.c2 { color: #8b5cf6; }
+
+    .confidence-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .confidence-fill.c1 { background: #f59e0b; }
+    .confidence-fill.c2 { background: #8b5cf6; }
+
+    .confidence-reason {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    /* Source */
+    .source-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .source-row {
+      font-size: 12px;
+      margin-bottom: 4px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .source-label { color: #6b7280; }
+    .source-value { color: #1f2937; font-weight: 500; }
+
+    /* Alternatives */
+    .alternatives-box {
+      background: #fef3c7;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .alt-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #fde68a;
+    }
+
+    .alt-item:last-child { border-bottom: none; }
+
+    .alt-score { color: #92400e; font-weight: 600; }
+
+    /* ========== VISUAL CONNECTOR ========== */
+    .connector-line {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      width: 20px;
+      height: 2px;
+      background: #f59e0b;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP v5</strong> - Connected Triggers: See exactly which words triggered which coaching
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 Coaching Lab</h1>
+      <div class="header-controls">
+        <select><option>KB: Solar Sales Playbook</option></select>
+        <button class="btn btn-success">💾 Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Call Selector -->
+    <div class="call-selector">
+      <label style="font-weight: 500;">Call:</label>
+      <select style="flex: 1; max-width: 400px;">
+        <option>+1 (555) 123-4567 - Jan 28, 2026 2:34 PM</option>
+      </select>
+      <span style="font-size: 13px; color: #6b7280;">⏱ 4:32 • 💬 12 turns</span>
+    </div>
+
+    <!-- Coaching Summary Bar - Jump to any coaching moment -->
+    <div class="coaching-summary">
+      <span class="coaching-summary-label">Coaching moments:</span>
+      <div class="coaching-summary-items">
+        <div class="coaching-summary-item active">
+          <span class="coaching-number c1">1</span>
+          <div>
+            <div class="coaching-summary-text">💰 Price Objection</div>
+            <div class="coaching-summary-time">@ 0:18</div>
+          </div>
+        </div>
+        <div class="coaching-summary-item">
+          <span class="coaching-number c2">2</span>
+          <div>
+            <div class="coaching-summary-text">👥 Authority Objection</div>
+            <div class="coaching-summary-time">@ 0:58</div>
+          </div>
+        </div>
+        <div class="coaching-summary-item">
+          <span class="coaching-number c3">3</span>
+          <div>
+            <div class="coaching-summary-text">⏰ Timing Concern</div>
+            <div class="coaching-summary-time">@ 2:45</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main 3-Column Layout -->
+    <div class="main-layout">
+
+      <!-- LEFT: Timeline with trigger highlights -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📞 Timeline</h2>
+        </div>
+        <div class="panel-content">
+
+          <div class="timeline-item">
+            <div class="timestamp">0:00</div>
+            <div class="message-speaker rep">👤 Rep</div>
+            <div class="message-text">Hi, this is Mike from Solar Solutions...</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:05</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">Yeah, what is this about?</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:08</div>
+            <div class="message-speaker rep">👤 Rep</div>
+            <div class="message-text">We're offering free solar assessments in your area.</div>
+          </div>
+
+          <!-- COACHING TRIGGER #1 -->
+          <div class="timeline-item selected">
+            <div class="timestamp">0:18</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              Look, I've already gotten quotes from two other companies and honestly your <span class="trigger-word price">prices</span> seem really <span class="trigger-word price">high</span>.
+            </div>
+
+            <!-- Connector to coaching -->
+            <div class="coaching-trigger-box c1 active">
+              <span class="trigger-number c1">1</span>
+              <div class="trigger-info">
+                <div class="trigger-label">💰 Price Objection Triggered</div>
+                <div class="trigger-keywords">Keywords: "prices", "high"</div>
+              </div>
+              <span class="trigger-arrow">→</span>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:28</div>
+            <div class="message-speaker rep">👤 Rep</div>
+            <div class="message-text">I appreciate you being upfront about that. Can I ask what the other companies quoted you?</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:35</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">They were around 20 thousand. You guys are at 28.</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:42</div>
+            <div class="message-speaker rep">👤 Rep</div>
+            <div class="message-text">Our panels have a 25-year warranty compared to their 10-year...</div>
+          </div>
+
+          <!-- COACHING TRIGGER #2 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:58</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              I don't know, I need to <span class="trigger-word authority">talk to my wife</span> about this.
+            </div>
+
+            <!-- Connector to coaching -->
+            <div class="coaching-trigger-box c2">
+              <span class="trigger-number c2">2</span>
+              <div class="trigger-info">
+                <div class="trigger-label">👥 Authority Objection Triggered</div>
+                <div class="trigger-keywords">Keywords: "talk to my wife"</div>
+              </div>
+              <span class="trigger-arrow">→</span>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">1:05</div>
+            <div class="message-speaker rep">👤 Rep</div>
+            <div class="message-text">Of course, that makes sense. When do you think you two could sit down together?</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MIDDLE: Coaching Cards -->
+      <div class="panel">
+        <div class="panel-header blue">
+          <h2>🤖 AI Coaching</h2>
+        </div>
+        <div class="panel-content">
+
+          <!-- Coaching Card #1 - Active -->
+          <div class="coaching-card c1 active">
+            <div class="coaching-card-header">
+              <div class="coaching-card-number">
+                <span class="card-number-badge">1</span>
+                💰 Price Objection
+              </div>
+              <div class="coaching-card-time">@ 0:18</div>
+            </div>
+            <div class="coaching-card-body">
+              <div class="coaching-script">
+                "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+              </div>
+              <div class="coaching-tip">
+                💡 Reframe from price to value. Don't defend directly.
+              </div>
+
+              <!-- What rep said -->
+              <div class="rep-said-section">
+                <div class="rep-said-header">
+                  <span class="rep-said-label">👤 Rep said @ 0:28:</span>
+                  <span class="match-badge partial">68% match</span>
+                </div>
+                <div class="rep-said-text">
+                  "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="card-action">✏️ Edit</button>
+                <button class="card-action primary">🧪 Test</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coaching Card #2 -->
+          <div class="coaching-card c2">
+            <div class="coaching-card-header">
+              <div class="coaching-card-number">
+                <span class="card-number-badge">2</span>
+                👥 Authority Objection
+              </div>
+              <div class="coaching-card-time">@ 0:58</div>
+            </div>
+            <div class="coaching-card-body">
+              <div class="coaching-script">
+                "Absolutely, she should definitely be part of this decision. What if I scheduled a quick 15-minute call when you're both available?"
+              </div>
+
+              <div class="rep-said-section">
+                <div class="rep-said-header">
+                  <span class="rep-said-label">👤 Rep said @ 1:05:</span>
+                  <span class="match-badge partial">72% match</span>
+                </div>
+                <div class="rep-said-text">
+                  "Of course, that makes sense. When do you think you two could sit down together?"
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="card-action">✏️ Edit</button>
+                <button class="card-action primary">🧪 Test</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Reasoning -->
+      <div class="panel">
+        <div class="panel-header purple">
+          <h2>🧠 Why This Triggered</h2>
+        </div>
+        <div class="panel-content">
+          <div class="reasoning-content">
+
+            <!-- Currently viewing -->
+            <div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+              <strong>Viewing: Coaching #1</strong> - Price Objection @ 0:18
+            </div>
+
+            <!-- Trigger Words -->
+            <div class="reasoning-section">
+              <div class="reasoning-title">🔍 Trigger Words Found</div>
+              <div class="trigger-words-box">
+                <div class="trigger-words-header">
+                  <span>In: "your prices seem really high"</span>
+                </div>
+                <div class="trigger-words-list">
+                  <span class="tw-tag found">"prices" ✓</span>
+                  <span class="tw-tag found">"high" ✓</span>
+                  <span class="tw-tag not-found">expensive</span>
+                  <span class="tw-tag not-found">cost</span>
+                  <span class="tw-tag not-found">afford</span>
+                  <span class="tw-tag not-found">budget</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confidence -->
+            <div class="reasoning-section">
+              <div class="reasoning-title">📊 Confidence Score</div>
+              <div class="confidence-box">
+                <div class="confidence-header">
+                  <span class="confidence-score c1">94%</span>
+                  <span style="font-size: 12px; color: #6b7280;">Price Objection</span>
+                </div>
+                <div class="confidence-bar">
+                  <div class="confidence-fill c1" style="width: 94%;"></div>
+                </div>
+                <div class="confidence-reason">
+                  <strong>Why 94%:</strong><br>
+                  • "prices" is a primary trigger word (+40%)<br>
+                  • "high" is a modifier word (+30%)<br>
+                  • Mentioned "other companies" = comparison context (+15%)<br>
+                  • No conflicting signals (+9%)
+                </div>
+              </div>
+            </div>
+
+            <!-- Source -->
+            <div class="reasoning-section">
+              <div class="reasoning-title">📚 Response Source</div>
+              <div class="source-box">
+                <div class="source-row">
+                  <span class="source-label">KB:</span>
+                  <span class="source-value">Solar Sales Playbook</span>
+                </div>
+                <div class="source-row">
+                  <span class="source-label">Flow:</span>
+                  <span class="source-value">Price Objection Flow</span>
+                </div>
+                <div class="source-row">
+                  <span class="source-label">Step:</span>
+                  <span class="source-value">1 of 4 - Acknowledge & Reframe</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alternatives -->
+            <div class="reasoning-section">
+              <div class="reasoning-title">🤔 Other Matches Considered</div>
+              <div class="alternatives-box">
+                <div class="alt-item">
+                  <span>💼 Competitor Objection</span>
+                  <span class="alt-score">45%</span>
+                </div>
+                <div class="alt-item">
+                  <span>🤔 Trust/Skepticism</span>
+                  <span class="alt-score">28%</span>
+                </div>
+                <div style="font-size: 11px; color: #92400e; margin-top: 8px; font-style: italic;">
+                  Price won because "prices" and "high" are direct price indicators.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 What's New in v5 - Connected Triggers:</h3>
+      <ul>
+        <li><strong>Trigger words highlighted:</strong> The actual words that triggered coaching are highlighted in the customer's message</li>
+        <li><strong>Numbered badges:</strong> #1, #2, #3 connect timeline triggers to coaching cards</li>
+        <li><strong>Coaching summary bar:</strong> Jump to any coaching moment quickly at the top</li>
+        <li><strong>Color coding:</strong> Orange = Price, Purple = Authority - consistent throughout</li>
+        <li><strong>Click trigger box → coaching card highlights:</strong> Visual connection between trigger and response</li>
+        <li><strong>Reasoning shows exact words:</strong> "In: 'your prices seem really high'" with found/not-found keywords</li>
+        <li><strong>Why this confidence:</strong> Plain English breakdown of score calculation</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

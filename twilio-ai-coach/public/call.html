@@ -5362,7 +5362,6 @@ What do you say?`
         try {
           const { data, error } = await supabase.from('contact_notes').insert({
             contact_id: contactId,
-            company_id: companyId,
             content: noteText,
             created_by: currentUser.id,
             is_pinned: false
@@ -5686,7 +5685,6 @@ What do you say?`
           .from('contact_notes')
           .select('*')
           .eq('contact_id', contactId)
-          .eq('company_id', companyId)
           .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(20);
@@ -7493,12 +7491,11 @@ What do you say?`
 
       try {
         // Try to save to contact_notes if we have a contact
-        if (currentContact && currentContact.id && companyId && currentUser) {
+        if (currentContact && currentContact.id && currentUser) {
           const { error } = await supabase
             .from('contact_notes')
             .insert({
               contact_id: currentContact.id,
-              company_id: companyId,
               content: noteText,
               created_by: currentUser.id,
               is_pinned: false

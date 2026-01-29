@@ -951,6 +951,503 @@
       color: #34d399;
       font-family: 'Monaco', 'Menlo', monospace;
     }
+
+    /* ============================================ */
+    /* FLOATING CHAT ASSISTANT                      */
+    /* ============================================ */
+
+    /* Minimized Bubble */
+    .chat-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 99999;
+      display: block;
+    }
+
+    .chat-bubble-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .chat-bubble-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5);
+    }
+
+    .chat-bubble-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+
+    .chat-bubble-btn::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.3);
+      animation: chat-pulse 2s infinite;
+    }
+
+    @keyframes chat-pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .bubble-hint {
+      position: absolute;
+      right: 76px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: white;
+      padding: 10px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      white-space: nowrap;
+      font-size: 13px;
+      color: #374151;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .bubble-hint::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-left-color: white;
+    }
+
+    .chat-bubble:hover .bubble-hint {
+      opacity: 1;
+    }
+
+    .bubble-hint strong {
+      color: #8b5cf6;
+    }
+
+    /* Expanded Chat Window */
+    .chat-window {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 420px;
+      height: 580px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      z-index: 9999;
+      overflow: hidden;
+      animation: chat-slideUp 0.3s ease;
+    }
+
+    .chat-window.open {
+      display: flex;
+    }
+
+    @keyframes chat-slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .chat-title {
+      flex: 1;
+    }
+
+    .chat-title h4 {
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .chat-title span {
+      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+    }
+
+    .chat-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-control-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .chat-control-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .chat-context-bar {
+      background: #f8fafc;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .chat-context-label {
+      font-weight: 600;
+      color: #8b5cf6;
+      margin-bottom: 4px;
+    }
+
+    .chat-context-items {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chat-context-tag {
+      background: #ede9fe;
+      color: #7c3aed;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .quick-actions {
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .quick-action-btn:hover {
+      border-color: #8b5cf6;
+      color: #8b5cf6;
+      background: #faf5ff;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-message {
+      max-width: 85%;
+      animation: chat-fadeIn 0.3s ease;
+    }
+
+    @keyframes chat-fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+    }
+
+    .chat-message.assistant {
+      align-self: flex-start;
+    }
+
+    .chat-message-content {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .chat-message.user .chat-message-content {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.assistant .chat-message-content {
+      background: #f1f5f9;
+      color: #334155;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-message-time {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .chat-message.user .chat-message-time {
+      text-align: right;
+    }
+
+    .chat-message-highlight {
+      background: #fef3c7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #92400e;
+    }
+
+    .chat-message-list {
+      margin: 8px 0;
+      padding-left: 16px;
+    }
+
+    .chat-message-list li {
+      margin-bottom: 4px;
+    }
+
+    /* Ticket suggestion in chat */
+    .ticket-suggestion {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+
+    .ticket-suggestion-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #166534;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .ticket-suggestion p {
+      font-size: 12px;
+      color: #15803d;
+      margin-bottom: 10px;
+    }
+
+    .ticket-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ticket-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .ticket-btn.primary {
+      background: #22c55e;
+      color: white;
+    }
+
+    .ticket-btn.primary:hover {
+      background: #16a34a;
+    }
+
+    .ticket-btn.secondary {
+      background: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+    }
+
+    /* Ticket Created Success */
+    .ticket-created {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ticket-created-icon {
+      width: 32px;
+      height: 32px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ticket-created-text {
+      flex: 1;
+    }
+
+    .ticket-created-text strong {
+      color: #166534;
+      font-size: 13px;
+      display: block;
+    }
+
+    .ticket-created-text span {
+      font-size: 11px;
+      color: #15803d;
+    }
+
+    /* Chat Input */
+    .chat-input-area {
+      padding: 16px;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      resize: none;
+      min-height: 44px;
+      max-height: 100px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: #8b5cf6;
+    }
+
+    .chat-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .chat-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .chat-send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .chat-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #f1f5f9;
+      border-radius: 16px;
+      width: fit-content;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: #94a3b8;
+      border-radius: 50%;
+      animation: chat-typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes chat-typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    .chat-bubble.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -1286,6 +1783,70 @@
           </div>
         </div>
       </main>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- FLOATING CHAT ASSISTANT                      -->
+  <!-- ============================================ -->
+
+  <!-- Minimized Bubble -->
+  <div class="chat-bubble" id="chat-bubble">
+    <div class="bubble-hint">
+      <strong>Ask me anything</strong> about the coaching system
+    </div>
+    <button class="chat-bubble-btn" onclick="openChatWindow()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Expanded Chat Window -->
+  <div class="chat-window" id="chat-window">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-title">
+        <h4>Coaching Assistant</h4>
+        <span>I can explain how the system works</span>
+      </div>
+      <div class="chat-controls">
+        <button class="chat-control-btn" onclick="closeChatWindow()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-context-bar" id="chat-context-bar">
+      <div class="chat-context-label">Current Context</div>
+      <div class="chat-context-items" id="chat-context-items">
+        <span class="chat-context-tag" id="chat-context-phase">Phase: intro</span>
+        <span class="chat-context-tag" id="chat-context-kb">KB: Loading...</span>
+        <span class="chat-context-tag" id="chat-context-msgs">0 messages</span>
+      </div>
+    </div>
+
+    <div class="quick-actions" id="chat-quick-actions">
+      <button class="quick-action-btn" onclick="askQuickQuestion('why_script')">Why this script?</button>
+      <button class="quick-action-btn" onclick="askQuickQuestion('phase')">What phase am I in?</button>
+      <button class="quick-action-btn" onclick="askQuickQuestion('improve')">Suggest improvements</button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <!-- Welcome message will be added by JavaScript -->
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <textarea class="chat-input" id="chat-input" placeholder="Ask why something triggered..." rows="1" onkeypress="handleChatKeypress(event)"></textarea>
+        <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2327,6 +2888,411 @@
         document.getElementById('message-input').focus();
       }
     }
+
+    // ============================================
+    // CHAT ASSISTANT FUNCTIONALITY
+    // ============================================
+
+    let chatOpen = false;
+    let chatMessages = [];
+    let chatSessionToken = null;
+    let isChatLoading = false;
+    let pendingTicket = null;
+
+    // Generate session token
+    function generateSessionToken() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Open chat window
+    function openChatWindow() {
+      chatOpen = true;
+      document.getElementById('chat-bubble').classList.add('hidden');
+      document.getElementById('chat-window').classList.add('open');
+
+      // Initialize session if needed
+      if (!chatSessionToken) {
+        chatSessionToken = generateSessionToken();
+        addWelcomeMessage();
+      }
+
+      // Update context bar
+      updateChatContextBar();
+
+      // Focus input
+      setTimeout(() => {
+        document.getElementById('chat-input').focus();
+      }, 100);
+    }
+
+    // Close chat window
+    function closeChatWindow() {
+      chatOpen = false;
+      document.getElementById('chat-window').classList.remove('open');
+      document.getElementById('chat-bubble').classList.remove('hidden');
+    }
+
+    // Add welcome message
+    function addWelcomeMessage() {
+      const welcomeHtml = `
+        Hi! I'm your Coaching Assistant. I can help you understand:
+        <ul class="chat-message-list">
+          <li>Why certain scripts triggered</li>
+          <li>How phase detection works</li>
+          <li>What keywords are being matched</li>
+          <li>How to improve the coaching responses</li>
+        </ul>
+        Ask me anything about what you're seeing!
+      `;
+      addChatMessage('assistant', welcomeHtml);
+    }
+
+    // Update context bar in chat
+    function updateChatContextBar() {
+      const phaseTag = document.getElementById('chat-context-phase');
+      const kbTag = document.getElementById('chat-context-kb');
+      const msgsTag = document.getElementById('chat-context-msgs');
+
+      // Get current phase
+      const phase = contextData.phase || 'intro';
+      phaseTag.textContent = `Phase: ${phase}`;
+
+      // Get current KB name
+      const kbSelect = document.getElementById('kb-select');
+      const kbName = kbSelect?.selectedOptions[0]?.text || 'None';
+      kbTag.textContent = `KB: ${kbName}`;
+
+      // Get message count
+      msgsTag.textContent = `${conversation.length} messages`;
+    }
+
+    // Add message to chat
+    function addChatMessage(role, content, time = null) {
+      const messagesContainer = document.getElementById('chat-messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${role}`;
+
+      const displayTime = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      messageDiv.innerHTML = `
+        <div class="chat-message-content">${content}</div>
+        <div class="chat-message-time">${displayTime}</div>
+      `;
+
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      chatMessages.push({ role, content, time: displayTime });
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+      const messagesContainer = document.getElementById('chat-messages');
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'chat-message assistant';
+      typingDiv.id = 'typing-indicator';
+      typingDiv.innerHTML = `
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
+      messagesContainer.appendChild(typingDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Remove typing indicator
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    // Handle chat input keypress
+    function handleChatKeypress(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendChatMessage();
+      }
+    }
+
+    // Quick questions
+    function askQuickQuestion(type) {
+      let question = '';
+      switch (type) {
+        case 'why_script':
+          const lastCoaching = coachingMoments[coachingMoments.length - 1];
+          if (lastCoaching) {
+            question = `Why did the script "${lastCoaching.coaching?.scriptTitle || 'last script'}" trigger?`;
+          } else {
+            question = "Why did the last script trigger?";
+          }
+          break;
+        case 'phase':
+          question = "What phase of the call am I currently in and why?";
+          break;
+        case 'improve':
+          question = "What improvements could be made to the coaching system based on what you've seen?";
+          break;
+        default:
+          question = type;
+      }
+
+      document.getElementById('chat-input').value = question;
+      sendChatMessage();
+    }
+
+    // Fetch available scripts for context
+    async function fetchAvailableScripts() {
+      if (!currentKnowledgeBaseId) return [];
+      try {
+        const response = await fetch(`/api/knowledge-bases/${currentKnowledgeBaseId}/scripts`);
+        const data = await response.json();
+        if (data.success && data.scripts) {
+          return data.scripts.map(s => ({
+            id: s.id,
+            title: s.title,
+            category: s.category_name || s.category,
+            triggers: s.trigger_keywords || [],
+            applicablePhases: s.applicable_phases || ['all']
+          }));
+        }
+      } catch (e) {
+        console.error('Error fetching scripts for chat context:', e);
+      }
+      return [];
+    }
+
+    // Build rich context for chat
+    async function buildChatContext() {
+      // Get available scripts from KB
+      const availableScripts = await fetchAvailableScripts();
+
+      // Get the last coaching moment with full details
+      const lastMoment = coachingMoments.length > 0 ? coachingMoments[coachingMoments.length - 1] : null;
+
+      // Build detailed context
+      return {
+        // Basic info
+        phase: contextData.phase,
+        knowledgeBaseId: currentKnowledgeBaseId,
+        knowledgeBaseName: document.getElementById('kb-select')?.selectedOptions[0]?.text,
+        conversationLength: conversation.length,
+
+        // Available scripts in KB (so AI knows what exists)
+        availableScripts: availableScripts.slice(0, 20), // Limit to 20 for token management
+
+        // Phase detection info
+        phaseKeywords: {
+          intro: ['hello', 'hi', 'calling from', 'my name is', 'how are you'],
+          discovery: ['tell me about', 'what challenges', 'currently using', 'what are you looking for'],
+          presentation: ['let me show you', 'our solution', 'benefit', 'feature', 'how it works'],
+          pricing: ['price', 'cost', 'budget', 'how much', 'investment', 'afford'],
+          objection_handling: ['too expensive', 'think about it', 'not sure', 'concerned', 'but'],
+          closing: ['ready to start', 'sign up', 'next steps', 'move forward', 'get started']
+        },
+
+        // Last coaching trigger with FULL details
+        lastCoachingTrigger: lastMoment ? {
+          messageId: lastMoment.messageId,
+          type: lastMoment.type,
+          category: {
+            name: lastMoment.category?.name,
+            displayName: lastMoment.category?.displayName,
+            icon: lastMoment.category?.icon
+          },
+          coaching: {
+            scriptId: lastMoment.coaching?.id,
+            scriptTitle: lastMoment.coaching?.scriptTitle,
+            scriptText: lastMoment.coaching?.scriptText?.substring(0, 200) + '...', // Truncate for tokens
+            tips: lastMoment.coaching?.tips
+          },
+          why: {
+            matchMethod: lastMoment.why?.matchMethod,
+            confidence: lastMoment.why?.confidence,
+            keywordsFound: lastMoment.why?.keywordsFound || [],
+            keywordsChecked: lastMoment.why?.keywordsChecked || [],
+            phase: lastMoment.why?.phase,
+            confidenceBreakdown: lastMoment.why?.confidenceBreakdown || [],
+            source: lastMoment.why?.source,
+            alternatives: lastMoment.why?.alternatives || []
+          },
+          customerSaid: conversation.find(m => m.id === lastMoment.messageId)?.text
+        } : null,
+
+        // Recent coaching moments (last 5) with details
+        recentCoachingMoments: coachingMoments.slice(-5).map(m => ({
+          messageId: m.messageId,
+          category: m.category?.displayName,
+          scriptTitle: m.coaching?.scriptTitle,
+          matchMethod: m.why?.matchMethod,
+          confidence: m.why?.confidence,
+          keywordsFound: m.why?.keywordsFound || [],
+          customerSaid: conversation.find(c => c.id === m.messageId)?.text?.substring(0, 100)
+        })),
+
+        // Context summary if available
+        contextSummary: contextData.summary,
+        contextTopics: contextData.topics,
+        contextSentiment: contextData.sentiment,
+        contextInsights: contextData.insights
+      };
+    }
+
+    // Send chat message
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+
+      if (!message || isChatLoading) return;
+
+      input.value = '';
+      isChatLoading = true;
+
+      // Add user message
+      addChatMessage('user', message);
+
+      // Disable send button
+      const sendBtn = document.getElementById('chat-send-btn');
+      sendBtn.disabled = true;
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      // Update context bar
+      updateChatContextBar();
+
+      try {
+        // Build rich context (async to fetch scripts)
+        const contextSnapshot = await buildChatContext();
+
+        const response = await fetch('/api/coaching-lab/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionToken: chatSessionToken,
+            message: message,
+            knowledgeBaseId: currentKnowledgeBaseId,
+            contextSnapshot: contextSnapshot,
+            conversationHistory: conversation.slice(-10).map(m => ({
+              speaker: m.speaker,
+              text: m.text
+            }))
+          })
+        });
+
+        const data = await response.json();
+
+        removeTypingIndicator();
+
+        if (data.success) {
+          // Process response
+          let responseHtml = data.response.replace(/\n/g, '<br>');
+
+          // Check if there's a ticket suggestion
+          if (data.ticketSuggestion) {
+            pendingTicket = data.ticketSuggestion;
+            responseHtml += `
+              <div class="ticket-suggestion">
+                <div class="ticket-suggestion-header">Suggested Improvement</div>
+                <p>${data.ticketSuggestion.title}</p>
+                <div class="ticket-actions">
+                  <button class="ticket-btn primary" onclick="createTicketFromChat()">Create Ticket</button>
+                  <button class="ticket-btn secondary" onclick="dismissTicket()">Dismiss</button>
+                </div>
+              </div>
+            `;
+          }
+
+          addChatMessage('assistant', responseHtml);
+        } else {
+          addChatMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+          console.error('Chat error:', data.error);
+        }
+      } catch (error) {
+        removeTypingIndicator();
+        addChatMessage('assistant', 'Sorry, I couldn\'t connect to the server. Please try again.');
+        console.error('Chat error:', error);
+      }
+
+      isChatLoading = false;
+      sendBtn.disabled = false;
+    }
+
+    // Create ticket from chat
+    async function createTicketFromChat() {
+      if (!pendingTicket) return;
+
+      try {
+        const response = await fetch('/api/coaching-lab/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionToken: chatSessionToken,
+            title: pendingTicket.title,
+            description: pendingTicket.description,
+            suggestedFix: pendingTicket.suggestedFix,
+            category: pendingTicket.category || 'script_improvement',
+            priority: pendingTicket.priority || 'medium',
+            knowledgeBaseId: currentKnowledgeBaseId,
+            contextSnapshot: {
+              phase: contextData.phase,
+              conversation: conversation.slice(-5),
+              coachingMoments: coachingMoments.slice(-3)
+            }
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Replace ticket suggestion with success message
+          const ticketHtml = `
+            <div class="ticket-created">
+              <div class="ticket-created-icon">✓</div>
+              <div class="ticket-created-text">
+                <strong>Ticket #${data.ticket.ticket_number} Created</strong>
+                <span>${pendingTicket.title} • ${pendingTicket.priority || 'Medium'} Priority</span>
+              </div>
+            </div>
+          `;
+          addChatMessage('assistant', ticketHtml + '<br>I\'ve created the ticket with full context. The team will be notified and can review the conversation that led to this suggestion.');
+        } else {
+          addChatMessage('assistant', 'Sorry, I couldn\'t create the ticket. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error creating ticket:', error);
+        addChatMessage('assistant', 'Sorry, I couldn\'t create the ticket. Please try again.');
+      }
+
+      pendingTicket = null;
+    }
+
+    // Dismiss ticket suggestion
+    function dismissTicket() {
+      pendingTicket = null;
+      addChatMessage('assistant', 'No problem! Let me know if you have any other questions about the coaching system.');
+    }
+
+    // Update chat context when conversation changes
+    const originalRenderMessage = renderMessage;
+    renderMessage = function(message, coachingData = null) {
+      originalRenderMessage(message, coachingData);
+      if (chatOpen) {
+        updateChatContextBar();
+      }
+    };
+
+    // Also update when coaching moments are added
+    const originalRenderCoachingCard = renderCoachingCard;
+    renderCoachingCard = function(moment) {
+      originalRenderCoachingCard(moment);
+      if (chatOpen) {
+        updateChatContextBar();
+      }
+    };
   </script>
 </body>
 </html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KB Modal Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { color: #333; }
+    .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+    .result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Knowledge Base Edit Modal Test</h1>
+  <div class="test-section" id="testResults"></div>
+
+  <!-- Modal HTML from settings.html -->
+  <div class="modal-overlay" id="kbModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="kbModalTitle">Add Knowledge Base</h3>
+        <button class="modal-close" onclick="closeKbModal()">&times;</button>
+      </div>
+      <form id="kbForm" onsubmit="saveKnowledgeBase(event)">
+        <input type="hidden" id="kbId">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input type="text" class="input" id="kbName" required placeholder="e.g., Cleaning Services">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="input" id="kbDescription" rows="2" placeholder="Describe this knowledge base..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <input type="text" class="input" id="kbIndustry" placeholder="e.g., cleaning, solar, insurance">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="kbIsDefault">
+            <span>Set as default knowledge base</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeKbModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let knowledgeBasesList = [];
+    
+    function addResult(title, content, isSuccess) {
+      const div = document.createElement('div');
+      div.className = 'result ' + (isSuccess ? 'success' : 'error');
+      div.innerHTML = '<strong>' + title + ':</strong> ' + content;
+      document.getElementById('testResults').appendChild(div);
+      console.log(title + ': ' + content);
+    }
+    
+    window.closeKbModal = function() {
+      document.getElementById('kbModal').classList.remove('show');
+    }
+    
+    window.editKnowledgeBase = function(kbId) {
+      console.log('[editKnowledgeBase] Called with kbId:', kbId);
+      console.log('[editKnowledgeBase] knowledgeBasesList:', knowledgeBasesList);
+
+      const kb = knowledgeBasesList.find(k => String(k.id) === String(kbId));
+      console.log('[editKnowledgeBase] Found KB:', kb);
+
+      if (!kb) {
+        console.error('[editKnowledgeBase] KB not found for id:', kbId);
+        return;
+      }
+
+      document.getElementById('kbModalTitle').textContent = 'Edit Knowledge Base';
+      document.getElementById('kbId').value = kb.id;
+      document.getElementById('kbName').value = kb.name;
+      document.getElementById('kbDescription').value = kb.description || '';
+      document.getElementById('kbIndustry').value = kb.industry || '';
+      document.getElementById('kbIsDefault').checked = kb.is_default;
+
+      const modal = document.getElementById('kbModal');
+      console.log('[editKnowledgeBase] Modal element:', modal);
+      modal.classList.add('show');
+      console.log('[editKnowledgeBase] Modal classes after show:', modal.className);
+    }
+    
+    // Run tests
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('\n===== KNOWLEDGE BASE EDIT MODAL TEST =====\n');
+      
+      addResult('Test 1', 'Modal element exists: ' + (document.getElementById('kbModal') !== null), true);
+      
+      const testKB = {
+        id: 123,
+        name: 'Test Knowledge Base',
+        description: 'This is a test KB',
+        industry: 'Technology',
+        is_default: true
+      };
+      
+      knowledgeBasesList = [testKB];
+      addResult('Test 2', 'Test data loaded', true);
+      
+      editKnowledgeBase(123);
+      
+      const modal = document.getElementById('kbModal');
+      const hasShow = modal.classList.contains('show');
+      const nameValue = document.getElementById('kbName').value;
+      const descValue = document.getElementById('kbDescription').value;
+      const titleText = document.getElementById('kbModalTitle').textContent;
+      
+      addResult('Test 3', 'Modal has "show" class: ' + hasShow, hasShow);
+      add Result('Test 4', 'Modal title is "Edit Knowledge Base": ' + (titleText === 'Edit Knowledge Base'), titleText === 'Edit Knowledge Base');
+      addResult('Test 5', 'Name field populated: "' + nameValue + '"', nameValue === testKB.name);
+      addResult('Test 6', 'Description field populated: "' + descValue + '"', descValue === testKB.description);
+      
+      if (hasShow && nameValue === testKB.name && titleText === 'Edit Knowledge Base') {
+        addResult('OVERALL', 'SUCCESS - Edit modal works correctly!', true);
+      } else {
+        addResult('OVERALL', 'ERROR - Modal not working as expected', false);
+      }
+    });
+  </script>
+</body>
+</html>

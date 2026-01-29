@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Page Redesign Mockups</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #1a1a2e;
+    }
+
+    .design-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .design-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .design-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .design-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .design-description {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .pros, .cons {
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .pros {
+      background: #e8f5e9;
+    }
+
+    .cons {
+      background: #ffebee;
+    }
+
+    .pros h4, .cons h4 {
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .pros h4 { color: #2e7d32; }
+    .cons h4 { color: #c62828; }
+
+    .pros ul, .cons ul {
+      list-style: none;
+      font-size: 0.85rem;
+    }
+
+    .pros li::before { content: "+ "; color: #2e7d32; font-weight: bold; }
+    .cons li::before { content: "- "; color: #c62828; font-weight: bold; }
+
+    /* Mockup Wireframe Styles */
+    .mockup {
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 400px;
+    }
+
+    .mockup-layout {
+      display: grid;
+      gap: 8px;
+      height: 380px;
+    }
+
+    .panel {
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      font-weight: 600;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(0,0,0,0.2);
+      margin-bottom: 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .panel-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .placeholder {
+      background: rgba(0,0,0,0.08);
+      border-radius: 4px;
+      padding: 6px;
+      font-size: 9px;
+      color: #666;
+    }
+
+    .placeholder.compact {
+      padding: 4px;
+    }
+
+    /* Panel Colors */
+    .queue { background: #e3f2fd; border: 1px solid #90caf9; }
+    .dialer { background: #fff3e0; border: 1px solid #ffcc80; }
+    .customer { background: #f3e5f5; border: 1px solid #ce93d8; }
+    .ai-coach { background: #e8f5e9; border: 1px solid #a5d6a7; }
+    .transcript { background: #fce4ec; border: 1px solid #f48fb1; }
+    .stats { background: #e0f7fa; border: 1px solid #80deea; }
+    .tabs { background: #fff8e1; border: 1px solid #ffe082; }
+
+    /* Design 1 */
+    .design1 {
+      grid-template-columns: 240px 280px 1fr;
+    }
+
+    .design1 .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design1 .right-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Design 2 */
+    .design2 {
+      grid-template-columns: 200px 1fr 1fr;
+    }
+
+    .design2 .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design2 .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design2 .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Design 3 */
+    .design3 {
+      grid-template-columns: 220px 1fr;
+      position: relative;
+    }
+
+    .design3 .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design3 .right-col {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+    }
+
+    .design3 .main-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .floating-dialer {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 180px;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Design 4 */
+    .design4 {
+      grid-template-columns: 260px 1fr 1fr;
+    }
+
+    .design4 .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design4 .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design4 .right-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Design 5 */
+    .design5 {
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 1fr;
+    }
+
+    .design5 .top-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 200px;
+      gap: 8px;
+      height: 120px;
+    }
+
+    .design5 .bottom-row {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 8px;
+    }
+
+    .design5 .bottom-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .design5 .bottom-right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Vote buttons */
+    .vote-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .vote-btn {
+      padding: 10px 24px;
+      border: 2px solid #667eea;
+      background: white;
+      color: #667eea;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .vote-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .vote-btn.selected {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <h1>Call Page Redesign - 5 Layout Options</h1>
+
+  <!-- Design 1 -->
+  <div class="design-section">
+    <div class="design-header">
+      <div class="design-number">1</div>
+      <div>
+        <div class="design-title">Compact Dialer + Customer Feed Below</div>
+      </div>
+    </div>
+
+    <p class="design-description">
+      <strong>Key Changes:</strong> Reduces the dialer size by making the number pad collapsible (show/hide).
+      Adds a Customer Feed panel directly below the dialer showing customer activity, notes history, and contact details.
+      Session Stats stays in the queue panel but is collapsed by default with a click-to-expand header.
+    </p>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Minimal change from current layout</li>
+          <li>Customer info is front and center</li>
+          <li>Dial pad can be hidden when not needed</li>
+          <li>Easy to implement</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Center column can get long/scrolly</li>
+          <li>Customer feed competes for space with dialer</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-layout design1">
+        <!-- Left: Queue -->
+        <div class="panel queue">
+          <div class="panel-header">Call Queue (240px)</div>
+          <div class="panel-content">
+            <div class="placeholder">Auto-dial toggle</div>
+            <div class="placeholder" style="flex: 1;">Queue list (scrollable)</div>
+            <div class="placeholder">Add to queue</div>
+            <div class="placeholder compact" style="background: #80deea; cursor: pointer;">
+              Session Stats (collapsed) [click to expand]
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Dialer + Customer -->
+        <div class="center-col">
+          <div class="panel dialer" style="height: auto;">
+            <div class="panel-header">Compact Dialer (280px)</div>
+            <div class="panel-content">
+              <div class="placeholder">Phone number display + timer</div>
+              <div class="placeholder compact" style="text-align: center;">
+                Dial pad [collapsible - hidden by default]
+              </div>
+              <div class="placeholder">Call / End / Mute buttons</div>
+              <div class="placeholder compact">Lead Source (compact)</div>
+            </div>
+          </div>
+
+          <div class="panel customer" style="flex: 1;">
+            <div class="panel-header">Customer Feed (NEW)</div>
+            <div class="panel-content">
+              <div class="placeholder">Customer name + photo + phone</div>
+              <div class="placeholder">Tags: Lead source, status, value</div>
+              <div class="placeholder" style="flex: 1;">
+                Activity Feed:
+                - Previous calls
+                - SMS history
+                - Notes
+                - Outcomes
+              </div>
+              <div class="placeholder">Quick note input</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: AI + Transcript -->
+        <div class="right-col">
+          <div class="panel ai-coach">
+            <div class="panel-header">AI Coach (50%)</div>
+            <div class="panel-content">
+              <div class="placeholder">Knowledge base selector</div>
+              <div class="placeholder" style="flex: 1;">Real-time coaching tips</div>
+            </div>
+          </div>
+
+          <div class="panel transcript">
+            <div class="panel-header">Transcript (50%)</div>
+            <div class="panel-content">
+              <div class="placeholder">Search bar</div>
+              <div class="placeholder" style="flex: 1;">Live transcript messages</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design 2 -->
+  <div class="design-section">
+    <div class="design-header">
+      <div class="design-number">2</div>
+      <div>
+        <div class="design-title">Customer-First Layout (Stacked Right)</div>
+      </div>
+    </div>
+
+    <p class="design-description">
+      <strong>Key Changes:</strong> Prioritizes the customer profile by giving it a full center column.
+      Moves the dialer to a smaller left column combined with the queue.
+      AI Coach and Transcript are stacked vertically on the right instead of side-by-side.
+      Session stats becomes a collapsible bar at the top of the queue.
+    </p>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Customer info gets prime real estate</li>
+          <li>More vertical space for AI Coach and Transcript</li>
+          <li>Queue + Dialer grouped logically</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>AI Coach and Transcript narrower</li>
+          <li>Bigger layout change to implement</li>
+          <li>Queue column might feel cramped</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-layout design2">
+        <!-- Left: Queue + Dialer Combined -->
+        <div class="left-col">
+          <div class="panel stats" style="height: auto; padding: 4px 8px;">
+            <div style="font-size: 9px; display: flex; justify-content: space-between; align-items: center;">
+              <span><strong>Session:</strong> 1:23:45</span>
+              <span style="cursor: pointer;">expand</span>
+            </div>
+          </div>
+
+          <div class="panel queue" style="flex: 1;">
+            <div class="panel-header">Queue (200px)</div>
+            <div class="panel-content">
+              <div class="placeholder compact">Auto-dial</div>
+              <div class="placeholder" style="flex: 1;">Queue list</div>
+            </div>
+          </div>
+
+          <div class="panel dialer">
+            <div class="panel-header">Mini Dialer</div>
+            <div class="panel-content">
+              <div class="placeholder compact">+1 (555) 123-4567</div>
+              <div class="placeholder compact" style="display: flex; gap: 4px; justify-content: center;">
+                <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 4px;">Call</span>
+                <span style="background: #f44336; color: white; padding: 2px 8px; border-radius: 4px;">End</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Customer Profile -->
+        <div class="center-col">
+          <div class="panel customer" style="flex: 1;">
+            <div class="panel-header">Customer Profile (Full Width)</div>
+            <div class="panel-content">
+              <div class="placeholder" style="display: flex; gap: 8px; align-items: center;">
+                <div style="width: 40px; height: 40px; background: #ce93d8; border-radius: 50%;"></div>
+                <div>
+                  <div style="font-weight: 600;">John Smith</div>
+                  <div style="font-size: 8px; color: #666;">+1 (555) 123-4567</div>
+                </div>
+              </div>
+              <div class="placeholder">
+                <strong>Lead Source:</strong> Facebook Ad - Summer Campaign
+              </div>
+              <div class="placeholder">
+                <strong>Tags:</strong> Hot Lead, Solar Interest, Homeowner
+              </div>
+              <div class="placeholder" style="flex: 1;">
+                <strong>Activity Feed</strong><br>
+                - Called 3 days ago (No answer)<br>
+                - SMS sent: "Following up..."<br>
+                - Note: "Interested in 6kW system"<br>
+                - Created from FB lead form
+              </div>
+              <div class="placeholder">
+                <strong>Quick Actions:</strong> Add Note | Schedule | Send SMS
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: AI Coach + Transcript Stacked -->
+        <div class="right-col">
+          <div class="panel ai-coach" style="flex: 1;">
+            <div class="panel-header">AI Coach</div>
+            <div class="panel-content">
+              <div class="placeholder" style="flex: 1;">Coaching tips (vertical scroll)</div>
+            </div>
+          </div>
+
+          <div class="panel transcript" style="flex: 1;">
+            <div class="panel-header">Transcript</div>
+            <div class="panel-content">
+              <div class="placeholder" style="flex: 1;">Live transcript (vertical scroll)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design 3 -->
+  <div class="design-section">
+    <div class="design-header">
+      <div class="design-number">3</div>
+      <div>
+        <div class="design-title">Floating Dialer (Minimal Footprint)</div>
+      </div>
+    </div>
+
+    <p class="design-description">
+      <strong>Key Changes:</strong> The dialer becomes a small floating widget in the bottom-right corner that stays visible
+      during calls. This frees up a full column for the Customer Profile. Session stats appears as a collapsible
+      top bar. Queue stays on the left. AI Coach and Transcript get more horizontal space.
+    </p>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Maximum space for customer & AI content</li>
+          <li>Dialer always accessible but not intrusive</li>
+          <li>Modern, app-like feel</li>
+          <li>Clean two-column main area</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Floating element can obscure content</li>
+          <li>May feel unfamiliar to users</li>
+          <li>Dial pad requires expanding/clicking</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-layout design3">
+        <!-- Left: Queue -->
+        <div class="left-col">
+          <div class="panel queue" style="flex: 1;">
+            <div class="panel-header">Queue (220px)</div>
+            <div class="panel-content">
+              <div class="placeholder compact">Session: 1:23:45 | Talk: 45:00 [expand]</div>
+              <div class="placeholder compact">Auto-dial toggle</div>
+              <div class="placeholder" style="flex: 1;">Queue list</div>
+              <div class="placeholder compact">Add to queue</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Customer Profile + AI/Transcript -->
+        <div class="right-col">
+          <div class="panel customer" style="height: auto;">
+            <div class="panel-header">Customer Profile Bar</div>
+            <div class="panel-content" style="flex-direction: row; gap: 12px; align-items: center;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="width: 36px; height: 36px; background: #ce93d8; border-radius: 50%;"></div>
+                <div>
+                  <div style="font-weight: 600;">John Smith</div>
+                  <div style="font-size: 8px;">FB Ad | Hot Lead | $5,000 value</div>
+                </div>
+              </div>
+              <div style="flex: 1; font-size: 9px; color: #666;">
+                Last: Called 3 days ago | Note: "Interested in solar"
+              </div>
+              <div style="display: flex; gap: 4px;">
+                <span style="background: #e0e0e0; padding: 2px 6px; border-radius: 4px; font-size: 8px;">View Full</span>
+                <span style="background: #e0e0e0; padding: 2px 6px; border-radius: 4px; font-size: 8px;">Add Note</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-area">
+            <div class="panel ai-coach">
+              <div class="panel-header">AI Coach (50%)</div>
+              <div class="panel-content">
+                <div class="placeholder" style="flex: 1;">
+                  Real-time coaching tips<br><br>
+                  Scrollable content area
+                </div>
+              </div>
+            </div>
+
+            <div class="panel transcript">
+              <div class="panel-header">Transcript (50%)</div>
+              <div class="panel-content">
+                <div class="placeholder compact">Search</div>
+                <div class="placeholder" style="flex: 1;">
+                  Live transcript<br><br>
+                  Scrollable
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Dialer -->
+        <div class="panel dialer floating-dialer">
+          <div class="panel-header">Dialer (floating)</div>
+          <div class="panel-content">
+            <div class="placeholder compact" style="font-size: 11px; font-weight: 600; text-align: center;">
+              +1 (555) 123-4567
+            </div>
+            <div class="placeholder compact" style="text-align: center;">
+              0:45 | Ringing...
+            </div>
+            <div class="placeholder compact" style="display: flex; gap: 4px; justify-content: center;">
+              <span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px;">End</span>
+              <span style="background: #9e9e9e; color: white; padding: 4px 8px; border-radius: 20px; font-size: 10px;">Mute</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design 4 -->
+  <div class="design-section">
+    <div class="design-header">
+      <div class="design-number">4</div>
+      <div>
+        <div class="design-title">Tabbed Customer Panel</div>
+      </div>
+    </div>
+
+    <p class="design-description">
+      <strong>Key Changes:</strong> Customer info gets a dedicated center column with tabs (Profile | Activity | Notes | History).
+      The dialer is compacted and placed at the top of the queue column. Session stats is inline with queue header.
+      AI Coach and Transcript split the right area.
+    </p>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Organized customer information</li>
+          <li>Tabs reduce visual clutter</li>
+          <li>Each info type has dedicated space</li>
+          <li>Logical information hierarchy</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Requires clicking tabs to see info</li>
+          <li>Can't see all customer info at once</li>
+          <li>More clicks to access information</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-layout design4">
+        <!-- Left: Queue + Dialer -->
+        <div class="left-col">
+          <div class="panel dialer" style="height: auto;">
+            <div class="panel-header">Compact Dialer</div>
+            <div class="panel-content">
+              <div class="placeholder compact" style="text-align: center; font-weight: 600;">
+                +1 (555) 123-4567
+              </div>
+              <div class="placeholder compact" style="text-align: center;">0:00 | Ready</div>
+              <div class="placeholder compact" style="display: flex; gap: 4px; justify-content: center;">
+                <span style="background: #4caf50; color: white; padding: 4px 16px; border-radius: 20px;">Call</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel queue" style="flex: 1;">
+            <div class="panel-header" style="display: flex; justify-content: space-between;">
+              <span>Queue</span>
+              <span style="font-size: 8px; color: #666;">Session: 1:23:45</span>
+            </div>
+            <div class="panel-content">
+              <div class="placeholder compact">Auto-dial | Delay: 3s</div>
+              <div class="placeholder" style="flex: 1;">Queue list</div>
+              <div class="placeholder compact">Add numbers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Tabbed Customer Panel -->
+        <div class="center-col">
+          <div class="panel customer" style="flex: 1;">
+            <div class="panel-header">Customer Info</div>
+            <div class="panel-content">
+              <!-- Tabs -->
+              <div class="placeholder tabs" style="display: flex; gap: 0; padding: 0; background: transparent; border: none;">
+                <span style="background: #fff8e1; border: 1px solid #ffe082; padding: 4px 12px; border-radius: 4px 4px 0 0; font-weight: 600;">Profile</span>
+                <span style="background: #f5f5f5; border: 1px solid #e0e0e0; padding: 4px 12px; border-radius: 4px 4px 0 0; border-bottom: none;">Activity</span>
+                <span style="background: #f5f5f5; border: 1px solid #e0e0e0; padding: 4px 12px; border-radius: 4px 4px 0 0; border-bottom: none;">Notes</span>
+                <span style="background: #f5f5f5; border: 1px solid #e0e0e0; padding: 4px 12px; border-radius: 4px 4px 0 0; border-bottom: none;">History</span>
+              </div>
+
+              <!-- Tab Content -->
+              <div class="placeholder" style="flex: 1; border-radius: 0 4px 4px 4px;">
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                  <div style="width: 50px; height: 50px; background: #ce93d8; border-radius: 50%;"></div>
+                  <div>
+                    <div style="font-weight: 600; font-size: 12px;">John Smith</div>
+                    <div style="font-size: 9px; color: #666;">+1 (555) 123-4567</div>
+                    <div style="font-size: 9px; color: #666;">john@email.com</div>
+                  </div>
+                </div>
+                <div style="font-size: 9px; margin-bottom: 4px;"><strong>Lead Source:</strong> Facebook Ad</div>
+                <div style="font-size: 9px; margin-bottom: 4px;"><strong>Campaign:</strong> Summer 2025</div>
+                <div style="font-size: 9px; margin-bottom: 4px;"><strong>Status:</strong> Hot Lead</div>
+                <div style="font-size: 9px; margin-bottom: 4px;"><strong>Value:</strong> $5,000</div>
+                <div style="font-size: 9px;"><strong>Created:</strong> Jan 25, 2025</div>
+              </div>
+
+              <div class="placeholder compact" style="display: flex; gap: 4px;">
+                <span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px;">Edit</span>
+                <span style="background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 9px;">Send SMS</span>
+                <span style="background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 9px;">Schedule</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: AI Coach + Transcript -->
+        <div class="right-col">
+          <div class="panel ai-coach">
+            <div class="panel-header">AI Coach</div>
+            <div class="panel-content">
+              <div class="placeholder" style="flex: 1;">Real-time tips</div>
+            </div>
+          </div>
+
+          <div class="panel transcript">
+            <div class="panel-header">Transcript</div>
+            <div class="panel-content">
+              <div class="placeholder" style="flex: 1;">Live transcript</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design 5 -->
+  <div class="design-section">
+    <div class="design-header">
+      <div class="design-number">5</div>
+      <div>
+        <div class="design-title">Dashboard Grid Layout</div>
+      </div>
+    </div>
+
+    <p class="design-description">
+      <strong>Key Changes:</strong> Complete restructure into a dashboard-style grid. Top row has compact dialer,
+      session stats, and quick actions. Bottom left has the queue + customer profile. Bottom right has AI Coach
+      and Transcript side by side. Everything is visible at a glance.
+    </p>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Everything visible at once</li>
+          <li>Session stats always visible (not hidden)</li>
+          <li>Dashboard feel - modern and clean</li>
+          <li>Clear visual hierarchy</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Biggest change from current layout</li>
+          <li>Less vertical space for each panel</li>
+          <li>May feel information-dense</li>
+          <li>Queue gets less dedicated space</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-layout design5">
+        <!-- Top Row -->
+        <div class="top-row">
+          <div class="panel dialer">
+            <div class="panel-header">Compact Dialer</div>
+            <div class="panel-content" style="justify-content: center; text-align: center;">
+              <div style="font-weight: 600;">+1 (555) 123-4567</div>
+              <div style="font-size: 10px; color: #666;">Ready to call</div>
+              <div style="display: flex; gap: 4px; justify-content: center; margin-top: 4px;">
+                <span style="background: #4caf50; color: white; padding: 6px 20px; border-radius: 20px;">Call</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel stats">
+            <div class="panel-header">Session Stats</div>
+            <div class="panel-content" style="flex-direction: row; justify-content: space-around; align-items: center;">
+              <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 700;">1:23:45</div>
+                <div style="font-size: 8px; color: #666;">Working</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 700; color: #4caf50;">45:00</div>
+                <div style="font-size: 8px; color: #666;">Talk Time</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 700;">23</div>
+                <div style="font-size: 8px; color: #666;">Calls</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 700; color: #667eea;">78%</div>
+                <div style="font-size: 8px; color: #666;">Productivity</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="background: #f5f5f5; border: 1px solid #e0e0e0;">
+            <div class="panel-header">Quick Actions</div>
+            <div class="panel-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+              <div class="placeholder compact" style="text-align: center;">Break</div>
+              <div class="placeholder compact" style="text-align: center;">End Session</div>
+              <div class="placeholder compact" style="text-align: center;">Add Lead</div>
+              <div class="placeholder compact" style="text-align: center;">Settings</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="bottom-row">
+          <div class="bottom-left">
+            <div class="panel queue" style="height: 120px;">
+              <div class="panel-header">Queue (5 remaining)</div>
+              <div class="panel-content">
+                <div class="placeholder compact">Auto-dial: ON | Delay: 3s</div>
+                <div class="placeholder" style="flex: 1;">Queue list (compact)</div>
+              </div>
+            </div>
+
+            <div class="panel customer" style="flex: 1;">
+              <div class="panel-header">Current Customer</div>
+              <div class="panel-content">
+                <div class="placeholder" style="display: flex; gap: 8px; align-items: center;">
+                  <div style="width: 40px; height: 40px; background: #ce93d8; border-radius: 50%;"></div>
+                  <div>
+                    <div style="font-weight: 600;">John Smith</div>
+                    <div style="font-size: 8px;">FB Ad | Hot Lead</div>
+                  </div>
+                </div>
+                <div class="placeholder" style="flex: 1;">
+                  Activity feed / notes preview
+                </div>
+                <div class="placeholder compact">View Full Profile | Add Note</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-right">
+            <div class="panel ai-coach">
+              <div class="panel-header">AI Coach</div>
+              <div class="panel-content">
+                <div class="placeholder" style="flex: 1;">
+                  Real-time coaching tips
+                </div>
+              </div>
+            </div>
+
+            <div class="panel transcript">
+              <div class="panel-header">Transcript</div>
+              <div class="panel-content">
+                <div class="placeholder compact">Search</div>
+                <div class="placeholder" style="flex: 1;">Live transcript</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="design-section" style="background: linear-gradient(135deg, #667eea20, #764ba220);">
+    <h2 style="margin-bottom: 16px;">Summary Comparison</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="background: #667eea; color: white;">
+          <th style="padding: 12px; text-align: left;">Design</th>
+          <th style="padding: 12px; text-align: left;">Dialer</th>
+          <th style="padding: 12px; text-align: left;">Customer Info</th>
+          <th style="padding: 12px; text-align: left;">Session Stats</th>
+          <th style="padding: 12px; text-align: left;">Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid #e0e0e0;">
+          <td style="padding: 12px; font-weight: 600;">1. Compact + Feed Below</td>
+          <td style="padding: 12px;">Collapsible dial pad</td>
+          <td style="padding: 12px;">Feed below dialer</td>
+          <td style="padding: 12px;">In queue (collapsed)</td>
+          <td style="padding: 12px;">Minimal change, quick win</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e0e0e0; background: #f8f9fa;">
+          <td style="padding: 12px; font-weight: 600;">2. Customer-First</td>
+          <td style="padding: 12px;">Mini in queue column</td>
+          <td style="padding: 12px;">Full center column</td>
+          <td style="padding: 12px;">Collapsible top bar</td>
+          <td style="padding: 12px;">Customer-centric workflows</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e0e0e0;">
+          <td style="padding: 12px; font-weight: 600;">3. Floating Dialer</td>
+          <td style="padding: 12px;">Floating widget</td>
+          <td style="padding: 12px;">Top bar + expandable</td>
+          <td style="padding: 12px;">In queue header</td>
+          <td style="padding: 12px;">Maximum content space</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e0e0e0; background: #f8f9fa;">
+          <td style="padding: 12px; font-weight: 600;">4. Tabbed Panel</td>
+          <td style="padding: 12px;">Compact above queue</td>
+          <td style="padding: 12px;">Tabbed center panel</td>
+          <td style="padding: 12px;">In queue header</td>
+          <td style="padding: 12px;">Organized, lots of info</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; font-weight: 600;">5. Dashboard Grid</td>
+          <td style="padding: 12px;">Top row compact</td>
+          <td style="padding: 12px;">Bottom left panel</td>
+          <td style="padding: 12px;">Always visible top row</td>
+          <td style="padding: 12px;">Dashboard lovers, metrics focus</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 24px; padding: 16px; background: white; border-radius: 8px;">
+      <h3 style="margin-bottom: 12px;">My Recommendation</h3>
+      <p style="line-height: 1.6;">
+        <strong>Design 1</strong> is the safest and quickest to implement - it keeps the familiar layout while addressing
+        your main concerns (smaller dialer, customer feed below, collapsible stats).
+        <br><br>
+        <strong>Design 4 (Tabbed)</strong> or <strong>Design 5 (Dashboard)</strong> would be more impactful but require
+        more development effort. Design 5 gives the best "at a glance" experience.
+        <br><br>
+        Which direction appeals to you most?
+      </p>
+    </div>
+  </div>
+</body>
+</html>

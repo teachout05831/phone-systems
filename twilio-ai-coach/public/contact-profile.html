@@ -1769,12 +1769,9 @@ async function loadContactCalls() {
   }
 }
 
-// ISSUE-305 FIX: Added company_id filter to notes query
 async function loadContactNotes() {
   try {
-    const { companyId } = await getCompanyMembership();
-    if (!companyId) return;
-
+    // RLS policy ensures only contacts from user's company are accessible
     const { data, error } = await supabase
       .from('contact_notes')
       .select(`
@@ -1782,7 +1779,6 @@ async function loadContactNotes() {
         created_by:users(id, full_name, email)
       `)
       .eq('contact_id', contactId)
-      .eq('company_id', companyId) // ISSUE-305 FIX: Added company_id filter
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(50);
@@ -1808,7 +1804,7 @@ async function loadContactActivity() {
 
     const { data, error } = await supabase
       .from('activity_log')
-      .select('id, action, entity_type, metadata, created_at')
+      .select('id, action:activity_type, entity_type, metadata, created_at')
       .eq('contact_id', contactId)
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
@@ -2120,7 +2116,6 @@ async function handleAddNote() {
       .from('contact_notes')
       .insert({
         contact_id: contactId,
-        company_id: companyId,
         content: content,
         is_pinned: isPinned,
         created_by: user.id

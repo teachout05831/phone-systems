@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab v7 - With Manual Input</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1f2937;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+
+    .btn-primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .btn-success { background: #22c55e; color: white; border-color: #22c55e; }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* ========== SOURCE TOGGLE ========== */
+    .source-toggle {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .source-tabs {
+      display: flex;
+      background: #e5e7eb;
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .source-tab {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .source-tab.active {
+      background: white;
+      color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .call-select {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .call-select.hidden {
+      display: none;
+    }
+
+    /* ========== 2-Column Layout ========== */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 280px);
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ========== TIMELINE ========== */
+    .timeline-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: 'Monaco', monospace;
+      margin-bottom: 4px;
+    }
+
+    .speaker {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .speaker.customer { color: #b45309; }
+    .speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    .trigger-word {
+      background: #fef3c7;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      border-bottom: 2px solid #f59e0b;
+    }
+
+    /* Coaching Trigger */
+    .coaching-trigger-inline {
+      margin-top: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 10px;
+    }
+
+    .trigger-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .trigger-badge {
+      width: 24px;
+      height: 24px;
+      background: #f59e0b;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .trigger-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+    }
+
+    .trigger-keywords {
+      font-size: 11px;
+      color: #b45309;
+    }
+
+    /* ========== MANUAL INPUT SECTION ========== */
+    .manual-input {
+      padding: 16px 18px;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .input-speaker-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .speaker-btn {
+      padding: 8px 16px;
+      border: 2px solid #e5e7eb;
+      background: white;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .speaker-btn.active.customer {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #b45309;
+    }
+
+    .speaker-btn.active.rep {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    /* ========== COACHING CARD ========== */
+    .coaching-full-card {
+      margin: 16px;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .cfc-header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cfc-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .cfc-badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .cfc-time {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .cfc-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .cfc-section:last-child {
+      border-bottom: none;
+    }
+
+    .cfc-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .cfc-customer-said {
+      font-size: 14px;
+      color: #374151;
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #f59e0b;
+      line-height: 1.5;
+    }
+
+    /* WHY Section */
+    .cfc-why {
+      background: #1f2937;
+      padding: 14px 16px;
+      color: white;
+    }
+
+    .cfc-why-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .why-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .why-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .why-content {
+      flex: 1;
+    }
+
+    .why-label {
+      color: #9ca3af;
+      font-size: 11px;
+    }
+
+    .why-value {
+      color: #d1d5db;
+    }
+
+    .why-highlight {
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .why-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .why-keyword {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .why-keyword.found {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .why-keyword.not-found {
+      background: #374151;
+      color: #6b7280;
+    }
+
+    /* AI Suggestion */
+    .cfc-suggestion {
+      background: #f0f9ff;
+    }
+
+    .cfc-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1f2937;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .cfc-tip {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      font-size: 12px;
+      color: #713f12;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* Edit */
+    .cfc-edit {
+      background: #f9fafb;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 80px;
+      resize: vertical;
+      margin-bottom: 10px;
+    }
+
+    .edit-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .edit-btn.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .edit-btn.success { background: #22c55e; color: white; border-color: #22c55e; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 {
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    /* Clear button */
+    .clear-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .clear-btn:hover {
+      background: #f3f4f6;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP v7</strong> - Load previous calls OR type manually to test. Same tool, two modes.
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 Coaching Lab</h1>
+      <div style="display: flex; gap: 12px;">
+        <select><option>KB: Solar Sales Playbook</option></select>
+        <button class="btn btn-success">💾 Save All</button>
+      </div>
+    </div>
+
+    <!-- Source Toggle: Previous Call vs Manual -->
+    <div class="source-toggle">
+      <div class="source-tabs">
+        <button class="source-tab">
+          📞 Previous Call
+        </button>
+        <button class="source-tab active">
+          ✍️ Manual Test
+        </button>
+      </div>
+
+      <!-- Call selector (hidden in manual mode) -->
+      <div class="call-select hidden">
+        <label>Call:</label>
+        <select style="flex: 1;">
+          <option>+1 (555) 123-4567 - Jan 28, 2026</option>
+        </select>
+      </div>
+
+      <!-- Manual mode hint -->
+      <div style="font-size: 13px; color: #6b7280;">
+        Type customer messages below to test coaching responses
+      </div>
+    </div>
+
+    <!-- 2-Column Layout -->
+    <div class="main-layout">
+
+      <!-- LEFT: Conversation (can be typed or loaded) -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>💬 Conversation</span>
+          <button class="clear-btn">Clear All</button>
+        </div>
+        <div class="panel-content">
+
+          <!-- Example typed conversation -->
+          <div class="timeline-item">
+            <div class="timestamp">Message 1</div>
+            <div class="speaker rep">👤 Rep</div>
+            <div class="message-text">Hi, this is Mike from Solar Solutions. I wanted to follow up on your quote request.</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">Message 2</div>
+            <div class="speaker customer">🏠 Customer</div>
+            <div class="message-text">Yeah, I got the quote. Honestly it's <span class="trigger-word">way too expensive</span> for us right now.</div>
+
+            <div class="coaching-trigger-inline">
+              <div class="trigger-header">
+                <span class="trigger-badge">1</span>
+                <span class="trigger-title">💰 Price Objection Triggered</span>
+              </div>
+              <div class="trigger-keywords">
+                Detected: "expensive" → 92% confidence
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MANUAL INPUT - Always visible -->
+        <div class="manual-input">
+          <div class="input-speaker-toggle">
+            <button class="speaker-btn customer active">🏠 Customer</button>
+            <button class="speaker-btn rep">👤 Rep</button>
+          </div>
+          <div class="input-row">
+            <input type="text" placeholder="Type what customer says and press Enter to test...">
+            <button class="btn btn-primary">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Coaching Response -->
+      <div class="panel">
+        <div class="panel-header">🤖 Coaching Response</div>
+        <div class="panel-content">
+
+          <!-- Full coaching card for triggered message -->
+          <div class="coaching-full-card">
+            <div class="cfc-header">
+              <div class="cfc-title">
+                <span class="cfc-badge">1</span>
+                💰 Price Objection
+              </div>
+              <div class="cfc-time">Just now</div>
+            </div>
+
+            <div class="cfc-section">
+              <div class="cfc-section-label">Customer Said</div>
+              <div class="cfc-customer-said">
+                "Yeah, I got the quote. Honestly it's <strong>way too expensive</strong> for us right now."
+              </div>
+            </div>
+
+            <div class="cfc-why">
+              <div class="cfc-why-header">🧠 Why This Triggered</div>
+              <div class="why-row">
+                <span class="why-icon">🔍</span>
+                <div class="why-content">
+                  <div class="why-label">Keywords Found:</div>
+                  <div class="why-keywords">
+                    <span class="why-keyword found">"expensive" ✓</span>
+                    <span class="why-keyword not-found">prices</span>
+                    <span class="why-keyword not-found">cost</span>
+                    <span class="why-keyword not-found">afford</span>
+                  </div>
+                </div>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">📊</span>
+                <div class="why-content">
+                  <div class="why-label">Confidence:</div>
+                  <div class="why-value">
+                    <span class="why-highlight">92%</span> — "expensive" is primary price trigger (+50%), "too" intensifier (+20%), context (+22%)
+                  </div>
+                </div>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">📚</span>
+                <div class="why-content">
+                  <div class="why-label">Source:</div>
+                  <div class="why-value">Price Objection Flow → Step 1 of 4</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cfc-section cfc-suggestion">
+              <div class="cfc-section-label">Say This</div>
+              <div class="cfc-script">
+                "I hear you - and I want to make sure this makes sense for your budget. Quick question: what were you expecting to pay for a system like this?"
+              </div>
+              <div class="cfc-tip">
+                💡 Acknowledge first, then ask a question to understand their expectations.
+              </div>
+            </div>
+
+            <div class="cfc-section cfc-edit">
+              <div class="cfc-section-label">✏️ Edit This Response</div>
+              <textarea class="edit-textarea">"I hear you - and I want to make sure this makes sense for your budget. Quick question: what were you expecting to pay for a system like this?"</textarea>
+              <div class="edit-buttons">
+                <button class="edit-btn success">💾 Save to KB</button>
+                <button class="edit-btn primary">🧪 Test Again</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 What's New in v7 - Manual Input Mode:</h3>
+      <ul>
+        <li><strong>Two modes in one tool:</strong> Toggle between "Previous Call" and "Manual Test" at the top</li>
+        <li><strong>Type to test:</strong> Enter customer messages manually to see what coaching triggers</li>
+        <li><strong>Speaker toggle:</strong> Switch between Customer and Rep when typing</li>
+        <li><strong>Build a conversation:</strong> Keep adding messages to simulate a full call</li>
+        <li><strong>Instant feedback:</strong> See coaching trigger immediately when you send a message</li>
+        <li><strong>Edit and save:</strong> If the response isn't right, edit it and save back to KB</li>
+        <li><strong>Clear all:</strong> Start fresh with a new test conversation</li>
+        <li><strong>Same card format:</strong> Whether loaded or typed, coaching shows in the same self-contained card with WHY built in</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

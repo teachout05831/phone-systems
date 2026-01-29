@@ -701,7 +701,7 @@ window.markConnected = markConnected;
 
 // Save a note to the contact's profile
 async function saveNoteToContact(contactId, noteText) {
-  if (!contactId || !companyId) return;
+  if (!contactId) return;
 
   try {
     const { data: user } = await supabase.auth.getUser();
@@ -711,10 +711,8 @@ async function saveNoteToContact(contactId, noteText) {
       .from('contact_notes')
       .insert({
         contact_id: contactId,
-        company_id: companyId,
-        user_id: userId,
-        note: noteText,
-        created_at: new Date().toISOString()
+        created_by: userId,
+        content: noteText
       });
 
     if (error) {

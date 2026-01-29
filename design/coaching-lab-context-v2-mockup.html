@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab - Context Window V2 Mockup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #1f2937;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .kb-select {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      min-width: 180px;
+    }
+
+    /* Toggle Bar */
+    .toggle-bar {
+      background: white;
+      padding: 12px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .source-tabs {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 4px;
+    }
+    .source-tab {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #6b7280;
+    }
+    .source-tab.active {
+      background: white;
+      color: #1f2937;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .toggle-divider {
+      width: 1px;
+      height: 24px;
+      background: #e5e7eb;
+    }
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .toggle-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+    .toggle-badge {
+      background: #10b981;
+      color: white;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .phase-select {
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      min-width: 130px;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 20px 24px;
+    }
+
+    /* Layout - 2 columns with expandable context */
+    .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      transition: all 0.3s ease;
+    }
+    .lab-layout.with-context {
+      grid-template-columns: 1fr 1fr 360px;
+    }
+
+    /* Panels */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 200px);
+    }
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Context Toggle Button */
+    .context-toggle-btn {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+    .context-toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+    }
+    .context-toggle-btn.active {
+      background: linear-gradient(135deg, #d97706, #b45309);
+    }
+
+    /* Conversation Panel */
+    .message {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f9fafb;
+      cursor: pointer;
+    }
+    .message:hover {
+      background: #fafafa;
+    }
+    .message.selected {
+      background: #fffbeb;
+    }
+    .message.has-context-update {
+      border-left: 3px solid #f59e0b;
+      background: linear-gradient(to right, #fef3c7 0%, white 20%);
+    }
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .speaker {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .speaker.customer { color: #b45309; }
+    .speaker.rep { color: #1d4ed8; }
+    .timestamp {
+      font-size: 10px;
+      color: #9ca3af;
+      font-family: monospace;
+    }
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+    .message-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .msg-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .msg-badge.context {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .msg-badge.phase {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Manual Input */
+    .manual-input {
+      padding: 12px 18px;
+      border-top: 1px solid #f3f4f6;
+      background: #fafafa;
+    }
+    .speaker-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .speaker-btn {
+      padding: 6px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      background: white;
+    }
+    .speaker-btn.active {
+      background: #1f2937;
+      color: white;
+      border-color: #1f2937;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    /* Coaching Panel */
+    .coaching-card {
+      padding: 16px;
+    }
+    .cfc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .cfc-badge {
+      background: #10b981;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    .cfc-title {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+    }
+    .cfc-section {
+      margin-bottom: 16px;
+    }
+    .cfc-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .cfc-customer-said {
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #92400e;
+    }
+    .cfc-script {
+      background: #ecfdf5;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #065f46;
+      font-style: italic;
+      border-left: 3px solid #10b981;
+    }
+    .cfc-tip {
+      background: #f0f9ff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #0369a1;
+      margin-top: 10px;
+    }
+
+    /* WHY Section */
+    .cfc-why {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .cfc-why-header {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    .why-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .why-row:last-child { margin-bottom: 0; }
+    .why-icon { flex-shrink: 0; }
+    .why-label { color: #6b7280; min-width: 100px; }
+    .why-value { color: #1f2937; font-weight: 500; }
+    .why-highlight {
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Edit Section */
+    .cfc-edit {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .edit-field {
+      margin-bottom: 12px;
+    }
+    .edit-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .edit-textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+    }
+    .edit-textarea-sm {
+      min-height: 50px;
+    }
+    .edit-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .edit-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .edit-btn.success {
+      background: #10b981;
+      color: white;
+    }
+    .edit-btn.primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    /* ============ CONTEXT PANEL ============ */
+    .context-panel {
+      background: linear-gradient(180deg, #fffbeb 0%, white 100%);
+      border-left: 3px solid #f59e0b;
+    }
+    .context-panel .panel-header {
+      background: #fef3c7;
+      border-bottom: 1px solid #fcd34d;
+    }
+    .context-header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .context-count-badge {
+      background: #f59e0b;
+      color: white;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .settings-btn {
+      background: transparent;
+      border: 1px solid #fcd34d;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #92400e;
+    }
+    .settings-btn:hover {
+      background: #fef3c7;
+    }
+
+    /* Context Tabs */
+    .context-tabs {
+      display: flex;
+      border-bottom: 1px solid #fde68a;
+    }
+    .context-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 500;
+      color: #92400e;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .context-tab.active {
+      background: white;
+      border-bottom-color: #f59e0b;
+    }
+
+    /* Current Context View */
+    .context-current {
+      padding: 16px;
+    }
+    .context-section {
+      margin-bottom: 16px;
+    }
+    .context-section:last-child { margin-bottom: 0; }
+    .context-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #92400e;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .context-timestamp {
+      font-weight: 400;
+      font-size: 9px;
+      color: #b45309;
+    }
+    .context-summary-box {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #1f2937;
+    }
+    .topics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .topic-tag {
+      background: white;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    .sentiment-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+    }
+    .sentiment-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .sentiment-dot.negative { background: #ef4444; }
+    .sentiment-dot.neutral { background: #f59e0b; }
+    .sentiment-dot.positive { background: #10b981; }
+    .sentiment-dot.mixed { background: linear-gradient(135deg, #f59e0b 50%, #10b981 50%); }
+    .sentiment-text {
+      font-size: 12px;
+      color: #374151;
+    }
+    .insights-box {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+      overflow: hidden;
+    }
+    .insight-row {
+      padding: 8px 12px;
+      border-bottom: 1px solid #fef3c7;
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .insight-row:last-child { border-bottom: none; }
+    .insight-label { color: #6b7280; min-width: 90px; }
+    .insight-value { color: #1f2937; }
+
+    /* Source Reference */
+    .source-ref {
+      background: #fefce8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px dashed #fcd34d;
+    }
+    .source-ref-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 6px;
+    }
+    .source-ref-detail {
+      font-size: 11px;
+      color: #713f12;
+    }
+
+    /* History View */
+    .context-history {
+      padding: 0;
+    }
+    .history-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #fef3c7;
+      cursor: pointer;
+    }
+    .history-item:hover {
+      background: #fffbeb;
+    }
+    .history-item.current {
+      background: #fef3c7;
+      border-left: 3px solid #f59e0b;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .history-number {
+      background: #f59e0b;
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .history-number.old {
+      background: #d1d5db;
+    }
+    .history-timing {
+      font-size: 10px;
+      color: #92400e;
+    }
+    .history-summary {
+      font-size: 12px;
+      color: #374151;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Settings View */
+    .context-settings {
+      padding: 16px;
+    }
+    .settings-section {
+      margin-bottom: 20px;
+    }
+    .settings-section:last-child { margin-bottom: 0; }
+    .settings-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+    .settings-help {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .settings-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #fcd34d;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      background: white;
+    }
+    .settings-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #fef3c7;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-label {
+      font-size: 12px;
+      color: #374151;
+    }
+    .settings-value {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* Hidden class */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>Coaching Lab</h1>
+    <div class="header-controls">
+      <select class="kb-select">
+        <option>Solar Sales Scripts</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Toggle Bar -->
+  <div class="toggle-bar">
+    <div class="source-tabs">
+      <button class="source-tab">📞 Previous Call</button>
+      <button class="source-tab active">✍️ Manual Test</button>
+    </div>
+
+    <div class="toggle-divider"></div>
+
+    <label class="toggle-item">
+      <input type="checkbox" checked id="liveModeCheck" onchange="toggleLiveMode()">
+      Live Mode
+      <span class="toggle-badge" id="liveBadge">ON</span>
+    </label>
+
+    <div class="toggle-item">
+      <span>Phase:</span>
+      <select class="phase-select">
+        <option value="">Auto-detect</option>
+        <option value="intro">Intro</option>
+        <option value="discovery">Discovery</option>
+        <option value="presentation">Presentation</option>
+        <option value="pricing">Pricing</option>
+        <option value="objection_handling" selected>Objection Handling</option>
+        <option value="closing">Closing</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="lab-layout with-context" id="labLayout">
+
+      <!-- LEFT: Conversation Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>💬 Conversation</span>
+          <button style="background: none; border: none; font-size: 12px; color: #6b7280; cursor: pointer;">Clear All</button>
+        </div>
+        <div class="panel-content">
+          <!-- Messages -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">00:00</span>
+            </div>
+            <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested.</div>
+          </div>
+
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">00:08</span>
+            </div>
+            <div class="message-text">Yeah, I got the quote in my email.</div>
+          </div>
+
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">00:15</span>
+            </div>
+            <div class="message-text">Great! What did you think? Any questions I can answer?</div>
+          </div>
+
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">00:22</span>
+            </div>
+            <div class="message-text">Well, it seems like a lot upfront. We weren't expecting $25,000.</div>
+            <div class="message-badges">
+              <span class="msg-badge phase">Phase → Pricing</span>
+            </div>
+          </div>
+
+          <!-- More messages... -->
+          <div class="message has-context-update">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">01:05</span>
+            </div>
+            <div class="message-text">With our financing, you'd pay around $150 a month and your electric bill drops to $20.</div>
+            <div class="message-badges">
+              <span class="msg-badge context">📋 Context #1</span>
+            </div>
+          </div>
+
+          <div class="message selected">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">01:55</span>
+            </div>
+            <div class="message-text">I need to talk to my wife about this. Can you send me the information?</div>
+            <div class="message-badges">
+              <span class="msg-badge phase">Phase → Objection</span>
+              <span class="msg-badge context">📋 Context #2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Input -->
+        <div class="manual-input">
+          <div class="speaker-toggle">
+            <button class="speaker-btn">👤 Rep</button>
+            <button class="speaker-btn active">🏠 Customer</button>
+          </div>
+          <div class="input-row">
+            <input type="text" placeholder="Type what customer says and press Enter...">
+            <button class="btn btn-primary">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: Coaching Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>🤖 Coaching Response</span>
+          <span class="msg-badge phase">📍 Objection Handling</span>
+        </div>
+        <div class="panel-content">
+          <div class="coaching-card">
+            <div class="cfc-header">
+              <div class="cfc-title">
+                <span class="cfc-badge">2</span>
+                💰 Spouse Objection
+              </div>
+              <span style="font-size: 11px; color: #6b7280;">Just now</span>
+            </div>
+
+            <div class="cfc-section">
+              <div class="cfc-section-label">Customer Said</div>
+              <div class="cfc-customer-said">
+                "I need to <strong>talk to my wife</strong> about this. Can you <strong>send me the information</strong>?"
+              </div>
+            </div>
+
+            <!-- WHY Section - Now includes context info -->
+            <div class="cfc-why">
+              <div class="cfc-why-header">🧠 Why This Triggered</div>
+              <div class="why-row">
+                <span class="why-icon">🔍</span>
+                <span class="why-label">Keywords:</span>
+                <span class="why-value">"talk to my wife", "send me"</span>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">📊</span>
+                <span class="why-label">Confidence:</span>
+                <span class="why-value"><span class="why-highlight">95%</span></span>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">📍</span>
+                <span class="why-label">Phase:</span>
+                <span class="why-value">Objection Handling (auto-detected)</span>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">📋</span>
+                <span class="why-label">Context Used:</span>
+                <span class="why-value">Yes - customer concerned about price, interested in financing</span>
+              </div>
+              <div class="why-row">
+                <span class="why-icon">🤖</span>
+                <span class="why-label">Match Method:</span>
+                <span class="why-value">AI Selection (245ms)</span>
+              </div>
+            </div>
+
+            <div class="cfc-section">
+              <div class="cfc-section-label">💬 Say This</div>
+              <div class="cfc-script">
+                "I'd be happy to send that over! Since your wife handles the finances, would it help if I walked through the numbers with both of you? We have time slots tomorrow evening - would 6 or 7 PM work better?"
+              </div>
+              <div class="cfc-tip">
+                💡 Offer a joint call to include the spouse in the decision. Evening times work best for couples.
+              </div>
+            </div>
+
+            <!-- Edit Section -->
+            <div class="cfc-edit">
+              <div class="cfc-section-label">✏️ Edit This Response</div>
+
+              <div class="edit-field">
+                <label class="edit-field-label">💬 Script</label>
+                <textarea class="edit-textarea">I'd be happy to send that over! Since your wife handles the finances, would it help if I walked through the numbers with both of you? We have time slots tomorrow evening - would 6 or 7 PM work better?</textarea>
+              </div>
+
+              <div class="edit-field">
+                <label class="edit-field-label">💡 Tips</label>
+                <textarea class="edit-textarea edit-textarea-sm">Offer a joint call to include the spouse in the decision. Evening times work best for couples.</textarea>
+              </div>
+
+              <div class="edit-buttons">
+                <button class="edit-btn success">💾 Save to KB</button>
+                <button class="edit-btn primary">🧪 Test Again</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Context Panel (NEW) -->
+      <div class="panel context-panel" id="contextPanel">
+        <div class="panel-header">
+          <span>📋 Context Window</span>
+          <div class="context-header-actions">
+            <span class="context-count-badge">2 snapshots</span>
+            <button class="settings-btn" onclick="showContextSettings()">⚙️</button>
+          </div>
+        </div>
+
+        <!-- Context Tabs -->
+        <div class="context-tabs">
+          <button class="context-tab active" onclick="showContextView('current')">Current</button>
+          <button class="context-tab" onclick="showContextView('history')">History</button>
+          <button class="context-tab" onclick="showContextView('settings')">Settings</button>
+        </div>
+
+        <div class="panel-content">
+          <!-- Current Context View -->
+          <div class="context-current" id="contextCurrent">
+            <div class="context-section">
+              <div class="context-label">
+                Summary
+                <span class="context-timestamp">Updated after entry #6 • 5s ago</span>
+              </div>
+              <div class="context-summary-box">
+                Customer received $25k solar quote. Initially concerned about upfront cost but engaged when rep explained financing at $150/month. Currently hesitant and wants to involve spouse in decision.
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Topics Discussed</div>
+              <div class="topics-list">
+                <span class="topic-tag">Solar installation</span>
+                <span class="topic-tag">Financing</span>
+                <span class="topic-tag">Monthly payments</span>
+                <span class="topic-tag">Spouse buy-in</span>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Customer Sentiment</div>
+              <div class="sentiment-box">
+                <span class="sentiment-dot mixed"></span>
+                <span class="sentiment-text">Mixed - interested but hesitant</span>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Key Insights</div>
+              <div class="insights-box">
+                <div class="insight-row">
+                  <span>⚠️</span>
+                  <span class="insight-label">Concern:</span>
+                  <span class="insight-value">Upfront cost, needs spouse approval</span>
+                </div>
+                <div class="insight-row">
+                  <span>✅</span>
+                  <span class="insight-label">Buying Signal:</span>
+                  <span class="insight-value">Asked "how does that work"</span>
+                </div>
+                <div class="insight-row">
+                  <span>🚧</span>
+                  <span class="insight-label">Objections:</span>
+                  <span class="insight-value">Price, spouse decision</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Source</div>
+              <div class="source-ref">
+                <div class="source-ref-header">📝 Based on entries #1-6</div>
+                <div class="source-ref-detail">
+                  Generated using Claude Haiku • 1.8s response time
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- History View -->
+          <div class="context-history hidden" id="contextHistory">
+            <div class="history-item current">
+              <div class="history-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="history-number">2</span>
+                  <span style="font-size: 12px; font-weight: 600;">Current</span>
+                </div>
+                <span class="history-timing">After entry #6</span>
+              </div>
+              <div class="history-summary">
+                Customer received $25k solar quote. Initially concerned about upfront cost but engaged when rep explained financing...
+              </div>
+            </div>
+
+            <div class="history-item">
+              <div class="history-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="history-number old">1</span>
+                  <span style="font-size: 12px; font-weight: 600;">Earlier</span>
+                </div>
+                <span class="history-timing">After entry #4</span>
+              </div>
+              <div class="history-summary">
+                Customer received $25k solar quote. Expressed sticker shock about upfront cost. Rep beginning to explain financing options.
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings View -->
+          <div class="context-settings hidden" id="contextSettings">
+            <div class="settings-section">
+              <div class="settings-title">📊 Context Generation</div>
+              <div class="settings-row">
+                <span class="settings-label">Update every</span>
+                <span class="settings-value">12 transcript entries</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Timeout</span>
+                <span class="settings-value">2 seconds</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Model</span>
+                <span class="settings-value">Claude Haiku</span>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">📝 Summary Prompt</div>
+              <div class="settings-help">This is the prompt used to generate the summary. You can customize it to extract different information.</div>
+              <textarea class="settings-input settings-textarea" placeholder="Analyze this sales call excerpt and provide:
+1. A 1-2 sentence summary
+2. Topics discussed
+3. Customer sentiment
+4. Key insights (concerns, buying signals, objections)">Analyze this sales call excerpt and provide a brief context summary.
+
+CONVERSATION:
+{transcript}
+
+Respond in JSON format:
+{"summary":"1-2 sentence summary","topics":["topic1","topic2"],"sentiment":"positive|neutral|negative|mixed","insights":{"key_concern":"...","buying_signals":"...","objections":"..."}}</textarea>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">❓ What To Extract</div>
+              <div class="settings-help">Configure what information to pull from the conversation.</div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox" checked> Summary
+                </label>
+              </div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox" checked> Topics
+                </label>
+              </div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox" checked> Sentiment
+                </label>
+              </div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox" checked> Key Insights
+                </label>
+              </div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox"> Customer Name (if mentioned)
+                </label>
+              </div>
+              <div class="settings-row">
+                <label class="settings-label">
+                  <input type="checkbox"> Budget Mentioned
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Context Toggle Button -->
+  <button class="context-toggle-btn active" id="contextToggle" onclick="toggleContextPanel()">
+    📋 Context Window
+    <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px; font-size: 10px;">2</span>
+  </button>
+
+  <script>
+    function toggleLiveMode() {
+      const badge = document.getElementById('liveBadge');
+      const checked = document.getElementById('liveModeCheck').checked;
+      badge.style.display = checked ? 'inline-block' : 'none';
+    }
+
+    function toggleContextPanel() {
+      const layout = document.getElementById('labLayout');
+      const panel = document.getElementById('contextPanel');
+      const btn = document.getElementById('contextToggle');
+
+      layout.classList.toggle('with-context');
+      panel.classList.toggle('hidden');
+      btn.classList.toggle('active');
+    }
+
+    function showContextView(view) {
+      // Hide all views
+      document.getElementById('contextCurrent').classList.add('hidden');
+      document.getElementById('contextHistory').classList.add('hidden');
+      document.getElementById('contextSettings').classList.add('hidden');
+
+      // Show selected view
+      if (view === 'current') {
+        document.getElementById('contextCurrent').classList.remove('hidden');
+      } else if (view === 'history') {
+        document.getElementById('contextHistory').classList.remove('hidden');
+      } else if (view === 'settings') {
+        document.getElementById('contextSettings').classList.remove('hidden');
+      }
+
+      // Update tab styles
+      document.querySelectorAll('.context-tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

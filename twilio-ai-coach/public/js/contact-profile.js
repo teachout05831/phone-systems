@@ -264,7 +264,7 @@ async function loadContactActivity() {
 
     const { data, error } = await supabase
       .from('activity_log')
-      .select('id, action, entity_type, metadata, created_at')
+      .select('id, action:activity_type, entity_type, metadata, created_at')
       .eq('contact_id', contactId)
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })

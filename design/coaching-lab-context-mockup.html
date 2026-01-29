@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab - Context Window Mockup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+
+    /* Main Layout - 3 columns */
+    .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr 380px;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-content {
+      padding: 0;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    /* Conversation Timeline */
+    .message {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .message:hover {
+      background: #fafafa;
+    }
+    .message.has-context {
+      background: linear-gradient(to right, #fef3c7 0%, white 30%);
+      border-left: 3px solid #f59e0b;
+    }
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .speaker {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .speaker.customer { color: #b45309; }
+    .speaker.rep { color: #1d4ed8; }
+    .timestamp {
+      font-size: 10px;
+      color: #9ca3af;
+      font-family: monospace;
+    }
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+    .context-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* Coaching Card */
+    .coaching-card {
+      margin: 16px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 10px;
+      padding: 16px;
+      border-left: 4px solid #10b981;
+    }
+    .coaching-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .coaching-badge {
+      background: #10b981;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    .match-info {
+      font-size: 11px;
+      color: #047857;
+    }
+    .script-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #065f46;
+      font-style: italic;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+    }
+    .script-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #059669;
+    }
+
+    /* ============ CONTEXT WINDOW PANEL ============ */
+    .context-panel {
+      background: linear-gradient(180deg, #fffbeb 0%, white 100%);
+    }
+    .context-panel .panel-header {
+      background: #fef3c7;
+      border-bottom: 1px solid #fcd34d;
+    }
+    .context-header-badge {
+      background: #f59e0b;
+      color: white;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    /* Context Snapshot Card */
+    .context-snapshot {
+      padding: 16px;
+      border-bottom: 1px solid #fef3c7;
+    }
+    .context-snapshot:last-child {
+      border-bottom: none;
+    }
+    .context-snapshot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .snapshot-number {
+      background: #f59e0b;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .snapshot-timing {
+      font-size: 11px;
+      color: #92400e;
+      background: #fef3c7;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    /* Summary Section */
+    .context-section {
+      margin-bottom: 14px;
+    }
+    .context-section:last-child {
+      margin-bottom: 0;
+    }
+    .context-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #92400e;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .context-summary {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #1f2937;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+    }
+
+    /* Topics */
+    .topics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .topic-tag {
+      background: white;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    /* Sentiment */
+    .sentiment-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+    }
+    .sentiment-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .sentiment-dot.negative { background: #ef4444; }
+    .sentiment-dot.neutral { background: #f59e0b; }
+    .sentiment-dot.positive { background: #10b981; }
+    .sentiment-dot.mixed { background: linear-gradient(135deg, #ef4444 50%, #10b981 50%); }
+    .sentiment-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    /* Key Insights */
+    .insights-list {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+      overflow: hidden;
+    }
+    .insight-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #fef3c7;
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .insight-item:last-child {
+      border-bottom: none;
+    }
+    .insight-icon {
+      flex-shrink: 0;
+    }
+    .insight-label {
+      color: #6b7280;
+      min-width: 100px;
+    }
+    .insight-value {
+      color: #1f2937;
+      font-weight: 500;
+    }
+
+    /* Transcript Reference */
+    .transcript-ref {
+      background: #fefce8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #713f12;
+      border: 1px dashed #fcd34d;
+    }
+    .transcript-ref-header {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .transcript-entries {
+      color: #92400e;
+    }
+
+    /* Phase Badge in Context */
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #10b981;
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Empty Context State */
+    .context-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #9ca3af;
+    }
+    .context-empty-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .context-empty h4 {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .context-empty p {
+      font-size: 12px;
+    }
+
+    /* Connection Lines */
+    .context-connection {
+      position: relative;
+    }
+    .context-connection::before {
+      content: '';
+      position: absolute;
+      left: -30px;
+      top: 50%;
+      width: 20px;
+      height: 2px;
+      background: #fcd34d;
+    }
+
+    /* Legend */
+    .legend {
+      background: white;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 20px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Coaching Lab - Context Window Mockup</h1>
+    <p class="subtitle">See how the AI builds context from the conversation and uses it for coaching decisions</p>
+
+    <div class="lab-layout">
+      <!-- LEFT: Conversation Timeline -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>💬 Conversation</span>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            Live Mode
+          </div>
+        </div>
+        <div class="panel-content">
+          <!-- Message 1 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">00:00</span>
+            </div>
+            <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested for your home. Is this a good time?</div>
+          </div>
+
+          <!-- Message 2 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">00:08</span>
+            </div>
+            <div class="message-text">Yeah, I got the quote in my email. I've been looking it over.</div>
+          </div>
+
+          <!-- Message 3 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">00:15</span>
+            </div>
+            <div class="message-text">Great! What did you think? Any questions I can help answer?</div>
+          </div>
+
+          <!-- Message 4 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">00:22</span>
+            </div>
+            <div class="message-text">Well, I like the idea of solar but it seems like a lot upfront. We weren't expecting $25,000.</div>
+          </div>
+
+          <!-- Message 5 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">00:35</span>
+            </div>
+            <div class="message-text">I totally understand. That's a common reaction. Let me show you how the financing works - most of our customers pay less monthly than their current electric bill.</div>
+          </div>
+
+          <!-- Message 6 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">00:50</span>
+            </div>
+            <div class="message-text">Really? How does that work exactly? I pay about $180 a month for electricity now.</div>
+          </div>
+
+          <!-- Message 7 - Context was generated here -->
+          <div class="message has-context">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">01:05</span>
+            </div>
+            <div class="message-text">With our financing, you'd pay around $150 a month for the solar system, and your electric bill would drop to about $20. So you're actually saving $10 a month from day one.</div>
+            <div class="context-indicator">
+              📋 Context Snapshot #1 generated
+            </div>
+          </div>
+
+          <!-- Message 8 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">01:25</span>
+            </div>
+            <div class="message-text">That does sound better. But what if we move? We're not sure we'll be here more than 5 years.</div>
+          </div>
+
+          <!-- Message 9 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker rep">Rep</span>
+              <span class="timestamp">01:40</span>
+            </div>
+            <div class="message-text">Great question. Solar actually increases home value - homes with solar sell for about 4% more. And we can transfer the system to the new owner if needed.</div>
+          </div>
+
+          <!-- Message 10 -->
+          <div class="message">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">01:55</span>
+            </div>
+            <div class="message-text">Hmm, I need to talk to my wife about this. She handles most of the finances.</div>
+          </div>
+
+          <!-- Message 11 - Coaching triggered here -->
+          <div class="message has-context" style="background: linear-gradient(to right, #dcfce7 0%, white 30%); border-left-color: #10b981;">
+            <div class="message-header">
+              <span class="speaker customer">Customer</span>
+              <span class="timestamp">02:10</span>
+            </div>
+            <div class="message-text">Can you just send me the information and I'll look it over with her?</div>
+            <div class="context-indicator" style="background: #dcfce7; color: #166534;">
+              🤖 Coaching triggered • Phase: Objection Handling
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: Coaching Response -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>🤖 Coaching Response</span>
+          <span class="phase-badge">📍 Objection Handling</span>
+        </div>
+        <div class="panel-content">
+          <div class="coaching-card">
+            <div class="coaching-card-header">
+              <span class="coaching-badge">TRY THIS</span>
+              <span class="match-info">AI Match • 95% confidence</span>
+            </div>
+            <div class="script-text">
+              "I'd be happy to send that over! Actually, since you mentioned your wife handles the finances, it might be helpful if I could walk through the numbers with both of you. We have some time slots tomorrow evening - would 6 or 7 PM work better?"
+            </div>
+            <div class="script-meta">
+              <span>📂 Spouse Objection</span>
+              <span>⏱️ Response time: 245ms</span>
+            </div>
+          </div>
+
+          <!-- WHY Section -->
+          <div style="padding: 16px;">
+            <div class="context-label">Why This Script Was Selected</div>
+            <div class="insights-list" style="margin-top: 8px;">
+              <div class="insight-item">
+                <span class="insight-icon">🎯</span>
+                <span class="insight-label">Trigger:</span>
+                <span class="insight-value">"talk to my wife", "send me the information"</span>
+              </div>
+              <div class="insight-item">
+                <span class="insight-icon">📍</span>
+                <span class="insight-label">Phase:</span>
+                <span class="insight-value">Objection Handling (detected from "need to talk to")</span>
+              </div>
+              <div class="insight-item">
+                <span class="insight-icon">📋</span>
+                <span class="insight-label">Context Used:</span>
+                <span class="insight-value">Customer concerned about price, interested in financing</span>
+              </div>
+              <div class="insight-item">
+                <span class="insight-icon">🔄</span>
+                <span class="insight-label">Previous Scripts:</span>
+                <span class="insight-value">Price Objection (used, helpful)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Context Window -->
+      <div class="panel context-panel">
+        <div class="panel-header">
+          <span>📋 Context Window</span>
+          <span class="context-header-badge">2 snapshots</span>
+        </div>
+        <div class="panel-content">
+
+          <!-- Context Snapshot 2 (Latest) -->
+          <div class="context-snapshot">
+            <div class="context-snapshot-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="snapshot-number">2</span>
+                <span style="font-weight: 600; font-size: 13px;">Current Context</span>
+              </div>
+              <span class="snapshot-timing">After entry #11</span>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Summary</div>
+              <div class="context-summary">
+                Customer called about solar quote for $25k. Initially concerned about upfront cost. Rep explained $150/month financing that saves $10/month vs current $180 electric bill. Customer interested but worried about moving in 5 years. Now wants to involve spouse in decision.
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Topics Discussed</div>
+              <div class="topics-list">
+                <span class="topic-tag">Solar installation</span>
+                <span class="topic-tag">Financing</span>
+                <span class="topic-tag">Monthly savings</span>
+                <span class="topic-tag">Home value</span>
+                <span class="topic-tag">Moving concerns</span>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Customer Sentiment</div>
+              <div class="sentiment-indicator">
+                <span class="sentiment-dot mixed"></span>
+                <span class="sentiment-text">Mixed - interested but hesitant</span>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Key Insights</div>
+              <div class="insights-list">
+                <div class="insight-item">
+                  <span class="insight-icon">⚠️</span>
+                  <span class="insight-label">Main Concern:</span>
+                  <span class="insight-value">Upfront cost, spouse buy-in needed</span>
+                </div>
+                <div class="insight-item">
+                  <span class="insight-icon">✅</span>
+                  <span class="insight-label">Buying Signals:</span>
+                  <span class="insight-value">Asked "how does that work", engaged with numbers</span>
+                </div>
+                <div class="insight-item">
+                  <span class="insight-icon">🚧</span>
+                  <span class="insight-label">Objections:</span>
+                  <span class="insight-value">Price, moving timeline, spouse approval</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="transcript-ref">
+                <div class="transcript-ref-header">
+                  <span>📝</span>
+                  Source Transcript Entries
+                </div>
+                <div class="transcript-entries">
+                  Entries #1-11 • Last updated 5 seconds ago
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Context Snapshot 1 (Earlier) -->
+          <div class="context-snapshot" style="opacity: 0.7;">
+            <div class="context-snapshot-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="snapshot-number" style="background: #d1d5db;">1</span>
+                <span style="font-weight: 600; font-size: 13px;">Earlier Context</span>
+              </div>
+              <span class="snapshot-timing">After entry #7</span>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Summary</div>
+              <div class="context-summary">
+                Customer received $25k solar quote. Concerned about upfront cost but interested in financing option. Currently paying $180/month for electricity. Rep explaining how financing reduces monthly costs.
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Topics at This Point</div>
+              <div class="topics-list">
+                <span class="topic-tag">Solar quote</span>
+                <span class="topic-tag">Price concerns</span>
+                <span class="topic-tag">Financing</span>
+              </div>
+            </div>
+
+            <div class="context-section">
+              <div class="context-label">Sentiment at This Point</div>
+              <div class="sentiment-indicator">
+                <span class="sentiment-dot negative"></span>
+                <span class="sentiment-text">Negative - sticker shock</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(to right, #fef3c7 0%, white 100%);"></div>
+        <span>Context snapshot generated at this message</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(to right, #dcfce7 0%, white 100%);"></div>
+        <span>Coaching triggered at this message</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #f59e0b;"></div>
+        <span>Context panel shows AI-generated summaries</span>
+      </div>
+    </div>
+
+    <!-- Additional Notes -->
+    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-top: 16px; font-size: 13px; color: #6b7280;">
+      <strong>How It Works:</strong>
+      <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.8;">
+        <li><strong>Context snapshots</strong> are generated every ~12 transcript entries (configurable)</li>
+        <li>The <strong>summary</strong> is AI-generated using Claude Haiku (~2 second timeout)</li>
+        <li><strong>Topics, sentiment, and insights</strong> are extracted automatically</li>
+        <li>When coaching is triggered, the AI sees the <strong>current context summary</strong> to make better decisions</li>
+        <li>You can click on any snapshot to see what the AI "knew" at that point in the conversation</li>
+        <li>Messages highlighted in <span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px;">yellow</span> indicate where context was updated</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

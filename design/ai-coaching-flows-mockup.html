@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Coaching Flows - Design Mockup</title>
+  <style>
+    /* ========================================
+       CSS VARIABLES & BASE STYLES
+       ======================================== */
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #e0e7ff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --green-500: #22c55e;
+      --green-100: #dcfce7;
+      --red-500: #ef4444;
+      --red-100: #fee2e2;
+      --amber-500: #f59e0b;
+      --amber-100: #fef3c7;
+      --blue-500: #3b82f6;
+      --blue-100: #dbeafe;
+      --purple-500: #8b5cf6;
+      --purple-100: #ede9fe;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      line-height: 1.5;
+    }
+
+    /* ========================================
+       LAYOUT
+       ======================================== */
+    .mockup-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--spacing-lg);
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+      padding: var(--spacing-xl);
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .mockup-header h1 {
+      font-size: 1.75rem;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .mockup-header p {
+      color: var(--gray-600);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .section-subtitle {
+      color: var(--gray-600);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    /* ========================================
+       SECTION 1: SAY THIS NOW CARD DESIGN
+       ======================================== */
+    .card-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-xl);
+    }
+
+    .comparison-column h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-md);
+    }
+
+    /* Current Card Style (basic) */
+    .current-card {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-left: 4px solid var(--amber-500);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+    }
+
+    .current-card .tip-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #b45309;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .current-card .tip-text {
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    /* NEW: Say This Now Card */
+    .say-this-now-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      border: 2px solid var(--amber-500);
+    }
+
+    .stn-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: linear-gradient(135deg, var(--amber-500) 0%, #d97706 100%);
+      color: white;
+    }
+
+    .stn-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .stn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .stn-progress {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--amber-100);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      font-size: 0.8rem;
+      color: #92400e;
+      border-bottom: 1px solid #fcd34d;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fcd34d;
+    }
+
+    .progress-dot.active {
+      background: var(--amber-500);
+    }
+
+    .progress-dot.completed {
+      background: var(--green-500);
+    }
+
+    .stn-body {
+      padding: var(--spacing-lg);
+    }
+
+    .stn-script {
+      font-size: 1.125rem;
+      line-height: 1.6;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--gray-300);
+    }
+
+    .stn-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .stn-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--blue-100);
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .stn-listen-for {
+      border-top: 1px solid var(--gray-200);
+      padding-top: var(--spacing-md);
+    }
+
+    .stn-listen-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .stn-responses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+    }
+
+    .stn-response-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stn-response-chip:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .stn-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .stn-feedback {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .stn-feedback-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+
+    .stn-feedback-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .stn-feedback-btn.used {
+      background: var(--green-100);
+      border-color: var(--green-500);
+      color: #166534;
+    }
+
+    /* ========================================
+       SECTION 2: CONVERSATION FLOW DIAGRAM
+       ======================================== */
+    .flow-diagram {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      overflow-x: auto;
+    }
+
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+      min-width: 800px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-lg);
+    }
+
+    .flow-step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .flow-step-content {
+      flex: 1;
+      background: white;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+    }
+
+    .flow-step-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .flow-step-text {
+      font-size: 0.9rem;
+      color: var(--gray-800);
+    }
+
+    .flow-step-text.customer {
+      background: var(--red-100);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--red-500);
+    }
+
+    .flow-step-text.rep {
+      background: var(--green-100);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--green-500);
+    }
+
+    .flow-step-text.system {
+      background: var(--blue-100);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--blue-500);
+    }
+
+    .flow-connector {
+      width: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .flow-connector::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: var(--gray-300);
+    }
+
+    .flow-branch {
+      margin-left: 60px;
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .branch-option {
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      min-width: 200px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .branch-option:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .branch-option-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .branch-option-text {
+      font-size: 0.85rem;
+      color: var(--gray-700);
+    }
+
+    /* ========================================
+       SECTION 3: OBJECTION CATEGORIES
+       ======================================== */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .category-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      transition: all 0.15s ease;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .category-icon {
+      font-size: 2rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .category-name {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .category-keywords {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .category-keywords span {
+      display: inline-block;
+      background: var(--gray-100);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 2px;
+    }
+
+    /* Color-coded categories */
+    .category-card.price { border-left: 4px solid #f59e0b; }
+    .category-card.timing { border-left: 4px solid #3b82f6; }
+    .category-card.authority { border-left: 4px solid #8b5cf6; }
+    .category-card.trust { border-left: 4px solid #ec4899; }
+    .category-card.competitor { border-left: 4px solid #14b8a6; }
+    .category-card.no-need { border-left: 4px solid #6b7280; }
+
+    /* ========================================
+       SECTION 4: AI PROMPTING FLOW
+       ======================================== */
+    .ai-flow-diagram {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      padding: var(--spacing-xl);
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+    }
+
+    .ai-flow-box {
+      flex-shrink: 0;
+      min-width: 180px;
+      background: white;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+    }
+
+    .ai-flow-box.customer {
+      border-color: var(--red-500);
+      background: linear-gradient(135deg, white 0%, var(--red-100) 100%);
+    }
+
+    .ai-flow-box.system {
+      border-color: var(--blue-500);
+      background: linear-gradient(135deg, white 0%, var(--blue-100) 100%);
+    }
+
+    .ai-flow-box.ai {
+      border-color: var(--purple-500);
+      background: linear-gradient(135deg, white 0%, var(--purple-100) 100%);
+    }
+
+    .ai-flow-box.output {
+      border-color: var(--green-500);
+      background: linear-gradient(135deg, white 0%, var(--green-100) 100%);
+    }
+
+    .ai-flow-icon {
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ai-flow-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .ai-flow-text {
+      font-size: 0.85rem;
+      color: var(--gray-700);
+    }
+
+    .ai-flow-arrow {
+      font-size: 1.5rem;
+      color: var(--gray-400);
+      flex-shrink: 0;
+    }
+
+    /* ========================================
+       SECTION 5: FULL CALL UI MOCKUP
+       ======================================== */
+    .call-ui-mockup {
+      background: var(--gray-100);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      min-height: 500px;
+    }
+
+    .call-ui-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .call-status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .call-status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--green-500);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .call-timer {
+      font-family: 'SF Mono', Menlo, monospace;
+      font-size: 0.9rem;
+      color: var(--gray-600);
+    }
+
+    .call-main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      height: 450px;
+    }
+
+    .call-panel {
+      background: white;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+    }
+
+    /* Transcript in mockup */
+    .transcript-line {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .transcript-speaker {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin-bottom: 2px;
+    }
+
+    .transcript-text {
+      font-size: 0.85rem;
+      color: var(--gray-800);
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+    }
+
+    .transcript-line.customer .transcript-text {
+      background: var(--red-100);
+      border-left: 3px solid var(--red-500);
+    }
+
+    .transcript-line.rep .transcript-text {
+      background: var(--green-100);
+      border-left: 3px solid var(--green-500);
+    }
+
+    /* Mini say-this-now card for mockup */
+    .mini-stn-card {
+      background: white;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      border: 2px solid var(--amber-500);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .mini-stn-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--amber-500);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .mini-stn-progress {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background: var(--amber-100);
+      font-size: 0.7rem;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .mini-progress-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .mini-progress-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fcd34d;
+    }
+
+    .mini-progress-dot.active { background: var(--amber-500); }
+    .mini-progress-dot.completed { background: var(--green-500); }
+
+    .mini-stn-body {
+      padding: var(--spacing-md);
+    }
+
+    .mini-stn-script {
+      font-size: 0.85rem;
+      color: var(--gray-800);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .mini-stn-listen {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .mini-response-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+    }
+
+    .mini-response-chip {
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      background: var(--gray-100);
+      border-radius: 12px;
+      color: var(--gray-600);
+    }
+
+    /* ========================================
+       SECTION 6: SETTINGS PREVIEW
+       ======================================== */
+    .settings-preview {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+    }
+
+    .settings-tabs {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .settings-tab {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .settings-tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .settings-content {
+      background: white;
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+    }
+
+    .flow-builder {
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      min-height: 200px;
+    }
+
+    .flow-node {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      margin: var(--spacing-xs);
+      cursor: move;
+    }
+
+    .flow-node.entry { border-color: var(--amber-500); background: var(--amber-100); }
+    .flow-node.response { border-color: var(--green-500); background: var(--green-100); }
+    .flow-node.question { border-color: var(--blue-500); background: var(--blue-100); }
+
+    /* ========================================
+       NOTES & ANNOTATIONS
+       ======================================== */
+    .note {
+      background: var(--purple-100);
+      border: 1px solid var(--purple-500);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin: var(--spacing-md) 0;
+      font-size: 0.85rem;
+      color: #5b21b6;
+    }
+
+    .note-title {
+      font-weight: 600;
+      margin-bottom: var(--spacing-xs);
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <!-- Header -->
+    <header class="mockup-header">
+      <h1>Systematic AI Coaching System - Design Mockup</h1>
+      <p>Transform the current simple trigger-phrase matching into a guided conversation flow system where reps know exactly what to say based on customer responses.</p>
+    </header>
+
+    <!-- ========================================
+         SECTION 1: SAY THIS NOW Card Design
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">1. "SAY THIS NOW" Card Design</h2>
+      <p class="section-subtitle">Comparison of current vs. new prominent coaching card design</p>
+
+      <div class="card-comparison">
+        <div class="comparison-column">
+          <h4>Current Design</h4>
+          <div class="current-card">
+            <div class="tip-header">
+              <span>Suggestion</span>
+            </div>
+            <div class="tip-text">
+              Try acknowledging the price concern and reframe around value: "I understand budget is important. Let me ask - if price wasn't a factor, would this solve your problem?"
+            </div>
+          </div>
+        </div>
+
+        <div class="comparison-column">
+          <h4>New Design - More Prominent</h4>
+          <div class="say-this-now-card">
+            <div class="stn-header">
+              <span class="stn-title">SAY THIS NOW</span>
+              <span class="stn-badge">Price Objection</span>
+            </div>
+            <div class="stn-progress">
+              <div class="progress-dots">
+                <div class="progress-dot completed"></div>
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+              </div>
+              <span>Price Flow - Step 2 of 4</span>
+            </div>
+            <div class="stn-body">
+              <div class="stn-script">
+                "I understand budget is important. Let me ask - if price wasn't a factor, would this solve your problem?"
+              </div>
+              <button class="stn-copy-btn">Copy to Use</button>
+              <div class="stn-tip">
+                <span>Tip: Pause after asking to give them time to reflect. This helps uncover the real objection.</span>
+              </div>
+              <div class="stn-listen-for">
+                <div class="stn-listen-label">Listen for:</div>
+                <div class="stn-responses">
+                  <div class="stn-response-chip">"Yes, but..."</div>
+                  <div class="stn-response-chip">"I guess so"</div>
+                  <div class="stn-response-chip">"No, not really"</div>
+                  <div class="stn-response-chip">"Let me think"</div>
+                </div>
+              </div>
+            </div>
+            <div class="stn-footer">
+              <div class="stn-feedback">
+                <button class="stn-feedback-btn used">Used</button>
+                <button class="stn-feedback-btn">Helpful</button>
+                <button class="stn-feedback-btn">Not Helpful</button>
+              </div>
+              <span style="font-size: 0.7rem; color: var(--gray-400);">Script #42</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="note-title">Design Rationale</div>
+        The new card uses bold colors, clear hierarchy, and progress indicators to make it impossible to miss. The "Listen For" section prepares the rep for branching responses.
+      </div>
+    </section>
+
+    <!-- ========================================
+         SECTION 2: Conversation Flow Visualization
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">2. Multi-Step Conversation Flow</h2>
+      <p class="section-subtitle">Example: Price Objection Flow with branching based on customer response</p>
+
+      <div class="flow-diagram">
+        <div class="flow-container">
+          <!-- Step 1: Customer Trigger -->
+          <div class="flow-step">
+            <div class="flow-step-number">1</div>
+            <div class="flow-step-content">
+              <div class="flow-step-label">Customer Says</div>
+              <div class="flow-step-text customer">
+                "That's way too expensive. I can't afford that right now."
+              </div>
+            </div>
+          </div>
+
+          <!-- System Detection -->
+          <div class="flow-step">
+            <div class="flow-step-number"></div>
+            <div class="flow-step-content" style="border-color: var(--blue-500);">
+              <div class="flow-step-label">System Detects</div>
+              <div class="flow-step-text system">
+                <strong>Category:</strong> Price Objection<br>
+                <strong>Keywords matched:</strong> "expensive", "afford"<br>
+                <strong>Action:</strong> Start Price Objection Flow
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Rep Response (Step 1 of flow) -->
+          <div class="flow-step">
+            <div class="flow-step-number">2</div>
+            <div class="flow-step-content">
+              <div class="flow-step-label">Rep Says (Step 1 of 4)</div>
+              <div class="flow-step-text rep">
+                "I completely understand. Budget is always an important consideration. Let me ask you this - if price wasn't a factor, would this solution solve the problem you're facing?"
+              </div>
+            </div>
+          </div>
+
+          <!-- Branch Point -->
+          <div class="flow-step">
+            <div class="flow-step-number"></div>
+            <div style="flex: 1;">
+              <div class="flow-step-label" style="margin-bottom: var(--spacing-md);">Customer Response Branches</div>
+              <div class="flow-branch">
+                <div class="branch-option">
+                  <div class="branch-option-label">If "Yes, but..."</div>
+                  <div class="branch-option-text">Customer agrees it would help → Move to Value Justification (Step 2A)</div>
+                </div>
+                <div class="branch-option">
+                  <div class="branch-option-label">If "I guess so"</div>
+                  <div class="branch-option-text">Customer is uncertain → Move to Needs Discovery (Step 2B)</div>
+                </div>
+                <div class="branch-option">
+                  <div class="branch-option-label">If "No"</div>
+                  <div class="branch-option-text">Customer says no → Exit to Needs Analysis flow</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Follow-up (Branch 2A) -->
+          <div class="flow-step">
+            <div class="flow-step-number">3</div>
+            <div class="flow-step-content">
+              <div class="flow-step-label">Rep Says (Step 2A - Value Justification)</div>
+              <div class="flow-step-text rep">
+                "Perfect. So you see the value in what we offer. Let me share how our customers typically see a return on this investment within [timeframe]... Would it help if I showed you the payment options we have available?"
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Close -->
+          <div class="flow-step">
+            <div class="flow-step-number">4</div>
+            <div class="flow-step-content">
+              <div class="flow-step-label">Rep Says (Step 3 - Close Attempt)</div>
+              <div class="flow-step-text rep">
+                "Based on what you've shared, the [plan/option] would work best for you. Should we get you started with that today?"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="note-title">Key Principle: Diagnose Before Responding</div>
+        The system identifies the objection type (price, timing, authority, etc.) BEFORE providing a script. This ensures reps address the actual concern rather than using generic responses.
+      </div>
+    </section>
+
+    <!-- ========================================
+         SECTION 3: Objection Categories
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">3. Objection Categories</h2>
+      <p class="section-subtitle">Default categories with detection keywords</p>
+
+      <div class="categories-grid">
+        <div class="category-card price">
+          <div class="category-icon">Price</div>
+          <div class="category-name">Price Objection</div>
+          <div class="category-keywords">
+            <span>expensive</span>
+            <span>cost</span>
+            <span>afford</span>
+            <span>budget</span>
+            <span>too much</span>
+            <span>cheaper</span>
+          </div>
+        </div>
+
+        <div class="category-card timing">
+          <div class="category-icon">Timing</div>
+          <div class="category-name">Timing Objection</div>
+          <div class="category-keywords">
+            <span>not now</span>
+            <span>bad time</span>
+            <span>later</span>
+            <span>think about it</span>
+            <span>busy</span>
+          </div>
+        </div>
+
+        <div class="category-card authority">
+          <div class="category-icon">Authority</div>
+          <div class="category-name">Authority Objection</div>
+          <div class="category-keywords">
+            <span>spouse</span>
+            <span>partner</span>
+            <span>boss</span>
+            <span>discuss</span>
+            <span>decision maker</span>
+          </div>
+        </div>
+
+        <div class="category-card trust">
+          <div class="category-icon">Trust</div>
+          <div class="category-name">Trust/Skepticism</div>
+          <div class="category-keywords">
+            <span>not sure</span>
+            <span>guarantee</span>
+            <span>reviews</span>
+            <span>prove</span>
+            <span>skeptical</span>
+          </div>
+        </div>
+
+        <div class="category-card competitor">
+          <div class="category-icon">Competitor</div>
+          <div class="category-name">Competitor Objection</div>
+          <div class="category-keywords">
+            <span>already have</span>
+            <span>use someone else</span>
+            <span>current provider</span>
+            <span>contract</span>
+          </div>
+        </div>
+
+        <div class="category-card no-need">
+          <div class="category-icon">No Need</div>
+          <div class="category-name">No Need Objection</div>
+          <div class="category-keywords">
+            <span>don't need</span>
+            <span>not interested</span>
+            <span>do it myself</span>
+            <span>satisfied</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================
+         SECTION 4: AI Prompting Flow
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">4. AI Prompting with Knowledge Base Context</h2>
+      <p class="section-subtitle">How customer statement + KB context flows to AI for smarter suggestions</p>
+
+      <div class="ai-flow-diagram">
+        <div class="ai-flow-box customer">
+          <div class="ai-flow-icon">Customer</div>
+          <div class="ai-flow-label">Customer Says</div>
+          <div class="ai-flow-text">"I already have someone who does my cleaning"</div>
+        </div>
+
+        <div class="ai-flow-arrow">-></div>
+
+        <div class="ai-flow-box system">
+          <div class="ai-flow-icon">System</div>
+          <div class="ai-flow-label">System Detects</div>
+          <div class="ai-flow-text">Category: Competitor<br>No exact script match</div>
+        </div>
+
+        <div class="ai-flow-arrow">-></div>
+
+        <div class="ai-flow-box ai">
+          <div class="ai-flow-icon">AI</div>
+          <div class="ai-flow-label">AI Receives</div>
+          <div class="ai-flow-text">
+            <strong>Context:</strong><br>
+            - KB: "Cleaning Services"<br>
+            - Category: Competitor<br>
+            - Recent transcript<br>
+            - Category scripts
+          </div>
+        </div>
+
+        <div class="ai-flow-arrow">-></div>
+
+        <div class="ai-flow-box output">
+          <div class="ai-flow-icon">Output</div>
+          <div class="ai-flow-label">AI Suggests</div>
+          <div class="ai-flow-text">"Ask: What do you like best about them? This helps uncover switching triggers."</div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="note-title">AI Context Enhancement</div>
+        When no exact script matches, the AI receives: (1) the detected objection category, (2) KB-specific scripts for that category, (3) recent transcript context. This produces industry-relevant suggestions rather than generic advice.
+      </div>
+    </section>
+
+    <!-- ========================================
+         SECTION 5: Full Call UI Mockup
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">5. Full Call UI with Conversation Flow</h2>
+      <p class="section-subtitle">How the coaching panel looks during an active call with flow progression</p>
+
+      <div class="call-ui-mockup">
+        <div class="call-ui-header">
+          <div class="call-status">
+            <div class="call-status-dot"></div>
+            <span>Call Active - John Smith</span>
+          </div>
+          <div class="call-timer">04:32</div>
+        </div>
+
+        <div class="call-main-grid">
+          <!-- AI Coaching Panel -->
+          <div class="call-panel">
+            <div class="panel-header">
+              <span class="panel-title">AI Coach</span>
+              <select style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--gray-300);">
+                <option>Cleaning Services KB</option>
+                <option>Solar Sales KB</option>
+                <option>Insurance KB</option>
+              </select>
+            </div>
+            <div class="panel-body">
+              <!-- Active Flow Card -->
+              <div class="mini-stn-card">
+                <div class="mini-stn-header">
+                  <span>SAY THIS NOW</span>
+                  <span>Price</span>
+                </div>
+                <div class="mini-stn-progress">
+                  <div class="mini-progress-dots">
+                    <div class="mini-progress-dot completed"></div>
+                    <div class="mini-progress-dot active"></div>
+                    <div class="mini-progress-dot"></div>
+                    <div class="mini-progress-dot"></div>
+                  </div>
+                  <span>Price Flow - Step 2 of 4</span>
+                </div>
+                <div class="mini-stn-body">
+                  <div class="mini-stn-script">
+                    "I understand budget is important. Let me ask - if price wasn't a factor, would this solve your problem?"
+                  </div>
+                  <div class="mini-stn-listen">Listen for:</div>
+                  <div class="mini-response-chips">
+                    <span class="mini-response-chip">Yes, but...</span>
+                    <span class="mini-response-chip">I guess so</span>
+                    <span class="mini-response-chip">No</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Previous tip (dimmed) -->
+              <div style="opacity: 0.5; margin-top: var(--spacing-md);">
+                <div class="current-card" style="border-left-color: var(--green-500); background: var(--green-100);">
+                  <div class="tip-header" style="color: #166534;">
+                    <span>Step 1 - Completed</span>
+                  </div>
+                  <div class="tip-text" style="font-size: 0.8rem;">
+                    Acknowledged the price concern and asked qualifying question.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transcript Panel -->
+          <div class="call-panel">
+            <div class="panel-header">
+              <span class="panel-title">Live Transcript</span>
+              <span style="font-size: 0.7rem; color: var(--gray-400);">Auto-scroll enabled</span>
+            </div>
+            <div class="panel-body">
+              <div class="transcript-line rep">
+                <div class="transcript-speaker">Rep</div>
+                <div class="transcript-text">Hi John, thanks for taking my call today. How are you doing?</div>
+              </div>
+              <div class="transcript-line customer">
+                <div class="transcript-speaker">Customer</div>
+                <div class="transcript-text">I'm fine, but I'm really busy right now.</div>
+              </div>
+              <div class="transcript-line rep">
+                <div class="transcript-speaker">Rep</div>
+                <div class="transcript-text">I completely understand. I'll keep this brief. I wanted to share how our cleaning service could save you 5 hours a week...</div>
+              </div>
+              <div class="transcript-line customer">
+                <div class="transcript-speaker">Customer</div>
+                <div class="transcript-text">Look, that sounds nice but it's way too expensive. I can't afford that right now.</div>
+              </div>
+              <div class="transcript-line rep">
+                <div class="transcript-speaker">Rep</div>
+                <div class="transcript-text">I completely understand. Budget is always an important consideration...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================
+         SECTION 6: Settings Page Preview
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">6. Settings: Flow Builder Preview</h2>
+      <p class="section-subtitle">Managing conversation flows in the settings page</p>
+
+      <div class="settings-preview">
+        <div class="settings-tabs">
+          <div class="settings-tab">Knowledge Bases</div>
+          <div class="settings-tab">Scripts</div>
+          <div class="settings-tab active">Conversation Flows</div>
+          <div class="settings-tab">Objection Categories</div>
+        </div>
+
+        <div class="settings-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+            <h3 style="font-size: 1rem; color: var(--gray-800);">Price Objection Flow</h3>
+            <div>
+              <button style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; margin-right: var(--spacing-sm);">Save Flow</button>
+              <button style="padding: 6px 12px; background: white; color: var(--gray-600); border: 1px solid var(--gray-300); border-radius: var(--radius-sm); cursor: pointer;">Test Flow</button>
+            </div>
+          </div>
+
+          <div class="flow-builder">
+            <div style="margin-bottom: var(--spacing-md); color: var(--gray-500); font-size: 0.85rem;">Drag nodes to arrange the flow:</div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+              <div class="flow-node entry">
+                <span>Entry</span>
+                <span style="color: var(--gray-600);">Price Objection Detected</span>
+              </div>
+
+              <div style="margin-left: 40px; border-left: 2px solid var(--gray-300); padding-left: 20px;">
+                <div class="flow-node response">
+                  <span>Step 1</span>
+                  <span style="color: var(--gray-600);">Acknowledge + Value Question</span>
+                </div>
+
+                <div style="margin: var(--spacing-sm) 0; display: flex; gap: var(--spacing-sm);">
+                  <div class="flow-node question" style="font-size: 0.8rem;">
+                    <span>Branch</span>
+                    <span style="color: var(--gray-600);">"Yes"</span>
+                  </div>
+                  <div class="flow-node question" style="font-size: 0.8rem;">
+                    <span>Branch</span>
+                    <span style="color: var(--gray-600);">"No"</span>
+                  </div>
+                </div>
+
+                <div class="flow-node response">
+                  <span>Step 2</span>
+                  <span style="color: var(--gray-600);">Value Justification</span>
+                </div>
+
+                <div class="flow-node response">
+                  <span>Step 3</span>
+                  <span style="color: var(--gray-600);">Close Attempt</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--gray-100); border-radius: var(--radius-sm); text-align: center; border: 2px dashed var(--gray-300); cursor: pointer; color: var(--gray-500);">
+              + Add Node
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================
+         Implementation Notes
+         ======================================== -->
+    <section class="section">
+      <h2 class="section-title">Implementation Summary</h2>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+        <div>
+          <h4 style="color: var(--gray-700); margin-bottom: var(--spacing-sm);">Phase 1: Better Matching</h4>
+          <ul style="font-size: 0.85rem; color: var(--gray-600); padding-left: var(--spacing-lg);">
+            <li>Add objection category detection</li>
+            <li>Score-based keyword matching</li>
+            <li>Send KB context to AI fallback</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color: var(--gray-700); margin-bottom: var(--spacing-sm);">Phase 2: Database</h4>
+          <ul style="font-size: 0.85rem; color: var(--gray-600); padding-left: var(--spacing-lg);">
+            <li>objection_categories table</li>
+            <li>conversation_flows table</li>
+            <li>flow_nodes table</li>
+            <li>flow_branches table</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color: var(--gray-700); margin-bottom: var(--spacing-sm);">Phase 3: UI Updates</h4>
+          <ul style="font-size: 0.85rem; color: var(--gray-600); padding-left: var(--spacing-lg);">
+            <li>"SAY THIS NOW" card design</li>
+            <li>Flow progress indicator</li>
+            <li>"Listen For" response chips</li>
+            <li>KB dropdown (live switching)</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color: var(--gray-700); margin-bottom: var(--spacing-sm);">Phase 4: Settings</h4>
+          <ul style="font-size: 0.85rem; color: var(--gray-600); padding-left: var(--spacing-lg);">
+            <li>Category management UI</li>
+            <li>Flow builder interface</li>
+            <li>Script-to-category linking</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab - Design Mockup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 span {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .kb-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+
+    .kb-selector label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .kb-selector select {
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1f2937;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: #f9fafb;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    /* ========== SOURCE SELECTOR ========== */
+    .source-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .source-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .source-tab {
+      padding: 12px 24px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .source-tab:hover {
+      border-color: #9ca3af;
+    }
+
+    .source-tab.active {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .source-tab-icon {
+      font-size: 18px;
+    }
+
+    /* Source Content Areas */
+    .source-content {
+      display: none;
+    }
+
+    .source-content.active {
+      display: block;
+    }
+
+    /* Previous Calls Selector */
+    .calls-search {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .calls-search input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .calls-search input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .calls-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .call-card {
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .call-card:hover {
+      border-color: #3b82f6;
+      background: #f0f9ff;
+    }
+
+    .call-card.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .call-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .call-card-phone {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .call-card-date {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .call-card-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .call-card-duration {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .call-card-objections {
+      display: flex;
+      gap: 4px;
+    }
+
+    .objection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .objection-dot.price { background: #f59e0b; }
+    .objection-dot.timing { background: #3b82f6; }
+    .objection-dot.authority { background: #8b5cf6; }
+    .objection-dot.trust { background: #ec4899; }
+
+    /* Paste Transcript */
+    .paste-area textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .paste-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* Manual Input */
+    .manual-start {
+      text-align: center;
+      padding: 40px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 2px dashed #d1d5db;
+    }
+
+    .manual-start h3 {
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .manual-start p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .load-btn {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* ========== MAIN ANALYSIS AREA ========== */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+    }
+
+    /* Conversation Panel */
+    .conversation-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 320px);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .panel-header h2 {
+      font-size: 16px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header-meta {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: normal;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .panel-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .panel-btn:hover {
+      background: #f3f4f6;
+    }
+
+    /* Conversation Thread */
+    .conversation-thread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    /* Message Turn */
+    .turn {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .turn:hover {
+      background: #f9fafb;
+    }
+
+    .turn.selected {
+      background: #fef3c7;
+    }
+
+    .turn.has-coaching {
+      background: #f0fdf4;
+      border-left: 3px solid #22c55e;
+    }
+
+    .turn.has-coaching.selected {
+      background: #dcfce7;
+    }
+
+    .turn-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .turn-speaker {
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .turn-speaker.customer { color: #b45309; }
+    .turn-speaker.rep { color: #1d4ed8; }
+
+    .turn-badges {
+      display: flex;
+      gap: 6px;
+    }
+
+    .turn-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .turn-badge.price { background: #fef3c7; color: #b45309; }
+    .turn-badge.timing { background: #dbeafe; color: #1d4ed8; }
+    .turn-badge.authority { background: #f3e8ff; color: #7c3aed; }
+    .turn-badge.trust { background: #fce7f3; color: #be185d; }
+    .turn-badge.coaching { background: #dcfce7; color: #166534; }
+
+    .turn-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    /* Input Area */
+    .input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      flex-shrink: 0;
+    }
+
+    .speaker-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .speaker-btn {
+      padding: 8px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .speaker-btn.active.customer {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #b45309;
+    }
+
+    .speaker-btn.active.rep {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    /* ========== COACHING PANEL ========== */
+    .coaching-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 320px);
+    }
+
+    .coaching-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      color: white;
+      flex-shrink: 0;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .coaching-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .coaching-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* SAY THIS NOW Card */
+    .stn-card {
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .stn-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stn-label {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .stn-category {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .stn-progress {
+      padding: 8px 16px;
+      background: #f0f9ff;
+      border-bottom: 1px solid #e0f2fe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+
+    .progress-dot.active { background: #3b82f6; }
+    .progress-dot.completed { background: #22c55e; }
+
+    .stn-body {
+      padding: 16px;
+    }
+
+    .stn-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .stn-tip {
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #713f12;
+      margin-bottom: 12px;
+    }
+
+    .stn-listen {
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .stn-listen-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .response-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .response-chip {
+      padding: 6px 12px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      font-size: 12px;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    .response-chip:hover {
+      background: #e2e8f0;
+    }
+
+    .stn-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .stn-action {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .stn-action.primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    /* Comparison Section */
+    .comparison {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .comparison-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .comparison-box {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .comparison-box.suggested {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .comparison-box.actual {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+    }
+
+    .comparison-box-label {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .comparison-box.suggested .comparison-box-label { color: #166534; }
+    .comparison-box.actual .comparison-box-label { color: #1d4ed8; }
+
+    .comparison-box-text {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .match-score {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .match-score-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+
+    .match-score-value.medium { color: #f59e0b; }
+    .match-score-value.low { color: #ef4444; }
+
+    .match-score-text {
+      font-size: 13px;
+      color: #374151;
+    }
+
+    /* Edit Section */
+    .edit-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .edit-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .edit-section textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .edit-section-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .edit-section-actions .btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    /* Debug Panel */
+    .debug-panel {
+      margin-top: 16px;
+      background: #1f2937;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .debug-header {
+      padding: 10px 14px;
+      background: #111827;
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .debug-content {
+      padding: 12px 14px;
+      font-family: 'Monaco', monospace;
+      font-size: 11px;
+      color: #d1d5db;
+    }
+
+    .debug-row {
+      margin-bottom: 4px;
+    }
+
+    .debug-label { color: #6b7280; }
+    .debug-value { color: #34d399; }
+
+    /* No Selection */
+    .no-selection {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .no-selection-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .no-selection h3 {
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 12px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    /* Stats Mini Bar */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 12px 20px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 12px;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-item-value {
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .stat-item-label {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP</strong> - Coaching Lab: Test with previous calls, paste transcripts, or simulate conversations. All in one.
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 <span>Coaching Lab</span></h1>
+      <div class="header-controls">
+        <div class="kb-selector">
+          <label>Testing with:</label>
+          <select>
+            <option>Solar Sales Playbook</option>
+            <option>Roofing v2</option>
+            <option>HVAC Closers</option>
+          </select>
+        </div>
+        <button class="btn btn-primary">Re-Analyze</button>
+      </div>
+    </div>
+
+    <!-- Source Selection -->
+    <div class="source-section">
+      <div class="source-tabs">
+        <button class="source-tab active">
+          <span class="source-tab-icon">📞</span>
+          Previous Calls
+        </button>
+        <button class="source-tab">
+          <span class="source-tab-icon">📋</span>
+          Paste Transcript
+        </button>
+        <button class="source-tab">
+          <span class="source-tab-icon">💬</span>
+          Manual Simulation
+        </button>
+      </div>
+
+      <!-- Previous Calls -->
+      <div class="source-content active">
+        <div class="calls-search">
+          <input type="text" placeholder="Search calls by phone number, date, or objection type...">
+          <button class="btn">Filter</button>
+        </div>
+        <div class="calls-list">
+          <div class="call-card selected">
+            <div class="call-card-header">
+              <span class="call-card-phone">+1 (555) 123-4567</span>
+              <span class="call-card-date">Jan 28, 2026 • 2:34 PM</span>
+            </div>
+            <div class="call-card-meta">
+              <span class="call-card-duration">⏱ 4:32</span>
+              <span class="call-card-objections">
+                <span class="objection-dot price" title="Price"></span>
+                <span class="objection-dot authority" title="Authority"></span>
+              </span>
+              <span>2 coaching moments</span>
+            </div>
+          </div>
+          <div class="call-card">
+            <div class="call-card-header">
+              <span class="call-card-phone">+1 (555) 987-6543</span>
+              <span class="call-card-date">Jan 28, 2026 • 11:15 AM</span>
+            </div>
+            <div class="call-card-meta">
+              <span class="call-card-duration">⏱ 8:21</span>
+              <span class="call-card-objections">
+                <span class="objection-dot price" title="Price"></span>
+                <span class="objection-dot timing" title="Timing"></span>
+                <span class="objection-dot trust" title="Trust"></span>
+              </span>
+              <span>5 coaching moments</span>
+            </div>
+          </div>
+          <div class="call-card">
+            <div class="call-card-header">
+              <span class="call-card-phone">+1 (555) 456-7890</span>
+              <span class="call-card-date">Jan 27, 2026 • 4:45 PM</span>
+            </div>
+            <div class="call-card-meta">
+              <span class="call-card-duration">⏱ 2:15</span>
+              <span class="call-card-objections">
+                <span class="objection-dot timing" title="Timing"></span>
+              </span>
+              <span>1 coaching moment</span>
+            </div>
+          </div>
+          <div class="call-card">
+            <div class="call-card-header">
+              <span class="call-card-phone">+1 (555) 234-5678</span>
+              <span class="call-card-date">Jan 27, 2026 • 10:22 AM</span>
+            </div>
+            <div class="call-card-meta">
+              <span class="call-card-duration">⏱ 12:45</span>
+              <span class="call-card-objections">
+                <span class="objection-dot price" title="Price"></span>
+                <span class="objection-dot authority" title="Authority"></span>
+                <span class="objection-dot timing" title="Timing"></span>
+              </span>
+              <span>7 coaching moments</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paste Transcript (hidden) -->
+      <div class="source-content">
+        <div class="paste-area">
+          <textarea placeholder="Paste your transcript here...
+
+Format:
+Rep: Hi, this is Mike from Solar Solutions...
+Customer: Yeah, I got your flyer in the mail.
+Rep: Great! So you saw our offer..."></textarea>
+          <div class="paste-hint">Each line should start with "Rep:" or "Customer:" - we'll auto-detect if not formatted</div>
+        </div>
+        <div class="load-btn">
+          <button class="btn btn-primary">Load & Analyze</button>
+        </div>
+      </div>
+
+      <!-- Manual Simulation (hidden) -->
+      <div class="source-content">
+        <div class="manual-start">
+          <h3>Start a Manual Simulation</h3>
+          <p>Type what the customer and rep say to test how the coaching responds in real-time</p>
+          <button class="btn btn-primary">Start New Simulation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+      <!-- Left: Conversation -->
+      <div class="conversation-panel">
+        <div class="panel-header">
+          <h2>
+            Call Transcript
+            <span class="panel-header-meta">+1 (555) 123-4567 • 4:32</span>
+          </h2>
+          <div class="panel-actions">
+            <button class="panel-btn">⏮ Prev</button>
+            <button class="panel-btn">Next ⏭</button>
+            <button class="panel-btn">Export</button>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-item-value">8</span>
+            <span class="stat-item-label">turns</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-value">2</span>
+            <span class="stat-item-label">coaching moments</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-value" style="color: #f59e0b;">1</span>
+            <span class="stat-item-label">price</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-value" style="color: #8b5cf6;">1</span>
+            <span class="stat-item-label">authority</span>
+          </div>
+        </div>
+
+        <div class="conversation-thread">
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker rep">👤 Sales Rep</span>
+            </div>
+            <div class="turn-text">
+              Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker customer">🏠 Customer</span>
+            </div>
+            <div class="turn-text">
+              Yeah, what is this about?
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker rep">👤 Sales Rep</span>
+            </div>
+            <div class="turn-text">
+              We're offering free solar assessments in your area. I wanted to see if you had a few minutes to discuss how much you could save.
+            </div>
+          </div>
+
+          <div class="turn has-coaching selected">
+            <div class="turn-header">
+              <span class="turn-speaker customer">🏠 Customer</span>
+              <div class="turn-badges">
+                <span class="turn-badge price">💰 Price</span>
+                <span class="turn-badge coaching">💡 Coaching</span>
+              </div>
+            </div>
+            <div class="turn-text">
+              Look, I've already gotten quotes from two other companies and honestly your prices seem really high.
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker rep">👤 Sales Rep</span>
+            </div>
+            <div class="turn-text">
+              I appreciate you being upfront about that. Can I ask what the other companies quoted you?
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker customer">🏠 Customer</span>
+            </div>
+            <div class="turn-text">
+              They were around 20 thousand. You guys are at 28.
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker rep">👤 Sales Rep</span>
+            </div>
+            <div class="turn-text">
+              I see. Well, there's actually a reason for that difference. Our panels have a 25-year warranty compared to their 10-year...
+            </div>
+          </div>
+
+          <div class="turn has-coaching">
+            <div class="turn-header">
+              <span class="turn-speaker customer">🏠 Customer</span>
+              <div class="turn-badges">
+                <span class="turn-badge authority">👥 Authority</span>
+                <span class="turn-badge coaching">💡 Coaching</span>
+              </div>
+            </div>
+            <div class="turn-text">
+              I don't know, I need to talk to my wife about this.
+            </div>
+          </div>
+
+          <div class="turn">
+            <div class="turn-header">
+              <span class="turn-speaker rep">👤 Sales Rep</span>
+            </div>
+            <div class="turn-text">
+              Of course, that makes sense. When do you think you two could sit down together?
+            </div>
+          </div>
+        </div>
+
+        <!-- Input for adding more / testing -->
+        <div class="input-area">
+          <div class="speaker-toggle">
+            <button class="speaker-btn customer active">🏠 Customer</button>
+            <button class="speaker-btn rep">👤 Sales Rep</button>
+          </div>
+          <div class="input-row">
+            <input type="text" placeholder="Add a message to test what coaching would appear...">
+            <button class="btn btn-primary">Add & Test</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Coaching Detail -->
+      <div class="coaching-panel">
+        <div class="coaching-header">
+          <h2>🤖 Coaching Response</h2>
+        </div>
+
+        <div class="coaching-content">
+          <!-- Selected turn context -->
+          <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+            <strong>Customer said:</strong><br>
+            "Look, I've already gotten quotes from two other companies and honestly your prices seem really high."
+          </div>
+
+          <!-- SAY THIS NOW Card -->
+          <div class="stn-card">
+            <div class="stn-header">
+              <span class="stn-label">AI SUGGESTED</span>
+              <span class="stn-category">💰 Price Objection</span>
+            </div>
+            <div class="stn-progress">
+              <div class="progress-dots">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+              </div>
+              <span>Step 1 of 4 - Acknowledge & Reframe</span>
+            </div>
+            <div class="stn-body">
+              <div class="stn-script">
+                "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+              </div>
+              <div class="stn-tip">
+                💡 Reframe from price to value. Don't defend the price directly.
+              </div>
+              <div class="stn-listen">
+                <div class="stn-listen-label">Listen for:</div>
+                <div class="response-chips">
+                  <span class="response-chip">"No, they didn't"</span>
+                  <span class="response-chip">"I'm not sure"</span>
+                  <span class="response-chip">"Yes they did"</span>
+                </div>
+              </div>
+              <div class="stn-actions">
+                <button class="stn-action primary">📋 Copy</button>
+                <button class="stn-action">Save to KB</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparison -->
+          <div class="comparison">
+            <div class="comparison-title">What Rep Actually Said</div>
+            <div class="comparison-box actual">
+              <div class="comparison-box-label">👤 Rep's Response:</div>
+              <div class="comparison-box-text">
+                "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+              </div>
+            </div>
+            <div class="match-score">
+              <div class="match-score-value medium">68%</div>
+              <div class="match-score-text">
+                <strong>Partial match</strong><br>
+                <span style="font-size: 12px; color: #6b7280;">Rep acknowledged but asked about price instead of reframing to value</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit / Try Something Else -->
+          <div class="edit-section">
+            <h4>✏️ Try a different response:</h4>
+            <textarea>I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?</textarea>
+            <div class="edit-section-actions">
+              <button class="btn">Save to KB</button>
+              <button class="btn btn-primary">Test This</button>
+            </div>
+          </div>
+
+          <!-- Debug Info -->
+          <div class="debug-panel">
+            <div class="debug-header">
+              <span>Match Details</span>
+              <span style="cursor: pointer;">Hide ▼</span>
+            </div>
+            <div class="debug-content">
+              <div class="debug-row">
+                <span class="debug-label">Layer:</span>
+                <span class="debug-value">Objection Category</span>
+              </div>
+              <div class="debug-row">
+                <span class="debug-label">Category:</span>
+                <span class="debug-value">price (94% confidence)</span>
+              </div>
+              <div class="debug-row">
+                <span class="debug-label">Keywords:</span>
+                <span class="debug-value">"prices", "high"</span>
+              </div>
+              <div class="debug-row">
+                <span class="debug-label">Flow:</span>
+                <span class="debug-value">Price Objection Flow</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 Key Features in This Design:</h3>
+      <ul>
+        <li><strong>3 Sources Combined:</strong> Previous Calls (from system) | Paste Transcript | Manual Simulation - all in one tool</li>
+        <li><strong>Previous Calls:</strong> Search/filter your actual calls, see objection types at a glance, load any call instantly</li>
+        <li><strong>Click any turn:</strong> Shows what coaching appeared (or would appear) for that moment</li>
+        <li><strong>Comparison view:</strong> AI suggested vs what rep actually said, with match score</li>
+        <li><strong>Add & Test:</strong> Add more messages to the conversation to test different scenarios</li>
+        <li><strong>Edit & Save:</strong> Modify suggestions and save improvements back to Knowledge Base</li>
+        <li><strong>Switch KB:</strong> Re-run the same conversation with a different knowledge base to compare</li>
+        <li><strong>Debug panel:</strong> See exactly why this coaching triggered (layer, keywords, confidence)</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab - Wider Layout Options</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    .option-selector {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: #1f2937;
+      padding: 12px 24px;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .option-btn {
+      padding: 10px 20px;
+      border: none;
+      background: #374151;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+      background: #4b5563;
+    }
+
+    .option-btn.active {
+      background: #3b82f6;
+    }
+
+    .option-label {
+      color: #9ca3af;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      margin-right: 8px;
+    }
+
+    /* Layout Container */
+    .layout-option {
+      display: none;
+      padding-top: 80px;
+    }
+
+    .layout-option.active {
+      display: block;
+    }
+
+    /* Simulated Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 240px;
+      height: 100vh;
+      background: #1f2937;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .sidebar-item {
+      padding: 12px 16px;
+      color: #9ca3af;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-item.active {
+      background: #374151;
+      color: white;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      margin-left: 240px;
+      padding: 20px;
+    }
+
+    /* ==================== OPTION A: WIDER LAYOUT (85% width) ==================== */
+    .option-a .main-content {
+      max-width: 1800px;
+      margin-left: 240px;
+      margin-right: auto;
+      padding: 20px 40px;
+    }
+
+    .option-a .lab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .option-a .lab-header h1 {
+      font-size: 24px;
+      color: #1f2937;
+    }
+
+    .option-a .source-toggle {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .option-a .lab-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1.2fr 400px;
+      gap: 24px;
+      min-height: calc(100vh - 220px);
+    }
+
+    .option-a .lab-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+
+    .option-a .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .option-a .panel-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* Context Panel Specific - Option A */
+    .option-a .context-panel {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+    }
+
+    .option-a .context-panel .panel-header {
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: white;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .option-a .context-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+    }
+
+    .option-a .context-tab {
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .option-a .context-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .option-a .context-section {
+      margin-bottom: 20px;
+    }
+
+    .option-a .context-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .option-a .context-summary {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid #3b82f6;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .option-a .context-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .option-a .topic-tag {
+      padding: 6px 14px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .option-a .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .option-a .sentiment-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: white;
+      border-radius: 10px;
+    }
+
+    .option-a .sentiment-icon {
+      font-size: 28px;
+    }
+
+    .option-a .sentiment-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #16a34a;
+    }
+
+    .option-a .insight-item {
+      padding: 12px 16px;
+      background: #fefce8;
+      border-left: 4px solid #eab308;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px;
+      color: #713f12;
+      margin-bottom: 10px;
+    }
+
+    /* ==================== OPTION B: SLIDE-OUT OVERLAY ==================== */
+    .option-b .main-content {
+      max-width: 1400px;
+      margin-left: 240px;
+      padding: 20px 30px;
+    }
+
+    .option-b .lab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .option-b .lab-header h1 {
+      font-size: 24px;
+      color: #1f2937;
+    }
+
+    .option-b .source-toggle {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .option-b .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      min-height: calc(100vh - 220px);
+    }
+
+    .option-b .lab-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+
+    .option-b .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .option-b .panel-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* Slide-out Context Panel - Option B */
+    .option-b .context-overlay {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 420px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 30px rgba(0,0,0,0.15);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .option-b .context-overlay.hidden {
+      transform: translateX(100%);
+    }
+
+    .option-b .context-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .option-b .context-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .option-b .close-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .option-b .context-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 16px;
+    }
+
+    .option-b .context-tab {
+      padding: 14px 18px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .option-b .context-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .option-b .context-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .option-b .context-section {
+      margin-bottom: 24px;
+    }
+
+    .option-b .context-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .option-b .context-summary {
+      background: #f8fafc;
+      padding: 18px;
+      border-radius: 12px;
+      border-left: 4px solid #3b82f6;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .option-b .context-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .option-b .topic-tag {
+      padding: 8px 16px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .option-b .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .option-b .sentiment-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+    }
+
+    .option-b .sentiment-icon {
+      font-size: 32px;
+    }
+
+    .option-b .sentiment-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #16a34a;
+    }
+
+    .option-b .insight-item {
+      padding: 14px 18px;
+      background: #fefce8;
+      border-left: 4px solid #eab308;
+      border-radius: 0 12px 12px 0;
+      font-size: 14px;
+      color: #713f12;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    /* Toggle button for overlay */
+    .option-b .context-toggle-floating {
+      position: fixed;
+      right: 20px;
+      bottom: 30px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 150;
+    }
+
+    /* ==================== OPTION C: EXTRA WIDE (90%) ==================== */
+    .option-c .main-content {
+      max-width: 2000px;
+      width: calc(100% - 280px);
+      margin-left: 240px;
+      padding: 20px 40px;
+    }
+
+    .option-c .lab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .option-c .lab-header h1 {
+      font-size: 24px;
+      color: #1f2937;
+    }
+
+    .option-c .source-toggle {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .option-c .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr 450px;
+      gap: 30px;
+      min-height: calc(100vh - 220px);
+    }
+
+    .option-c .lab-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+
+    .option-c .panel-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      font-size: 16px;
+      color: #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .option-c .panel-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    /* Context Panel Specific - Option C */
+    .option-c .context-panel {
+      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 2px solid #e2e8f0;
+    }
+
+    .option-c .context-panel .panel-header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      color: white;
+      border-radius: 10px 10px 0 0;
+      border-bottom: none;
+    }
+
+    .option-c .context-tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 16px;
+    }
+
+    .option-c .context-tab {
+      padding: 14px 22px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .option-c .context-tab.active {
+      color: #1e3a5f;
+      border-bottom-color: #1e3a5f;
+    }
+
+    .option-c .context-section {
+      margin-bottom: 24px;
+    }
+
+    .option-c .context-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .option-c .context-summary {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #1e3a5f;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #334155;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .option-c .context-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .option-c .topic-tag {
+      padding: 8px 18px;
+      background: white;
+      color: #1e3a5f;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .option-c .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 22px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .option-c .sentiment-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .option-c .sentiment-icon {
+      font-size: 34px;
+    }
+
+    .option-c .sentiment-label {
+      font-size: 17px;
+      font-weight: 600;
+      color: #16a34a;
+    }
+
+    .option-c .insight-item {
+      padding: 16px 20px;
+      background: white;
+      border-left: 4px solid #f59e0b;
+      border-radius: 0 12px 12px 0;
+      font-size: 14px;
+      color: #92400e;
+      margin-bottom: 12px;
+      line-height: 1.6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* Common Elements */
+    .toggle-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-btn.active {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1d4ed8;
+    }
+
+    .tabs-group {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #1f2937;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .message-item {
+      padding: 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .message-speaker {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .message-speaker.customer { color: #b45309; }
+    .message-speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .coaching-card {
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .coaching-header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 14px 18px;
+      font-weight: 600;
+    }
+
+    .coaching-body {
+      padding: 18px;
+    }
+
+    .script-text {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid #3b82f6;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1f2937;
+    }
+
+    .width-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 260px;
+      background: #1f2937;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <!-- Option Selector -->
+  <div class="option-selector">
+    <span class="option-label">Layout Option:</span>
+    <button class="option-btn active" onclick="showOption('a')">A: Wider (85%)</button>
+    <button class="option-btn" onclick="showOption('b')">B: Slide-out Overlay</button>
+    <button class="option-btn" onclick="showOption('c')">C: Extra Wide (90%)</button>
+  </div>
+
+  <!-- Sidebar (shared) -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">AI</div>
+      <span>DialPro</span>
+    </div>
+    <div class="sidebar-item">Dashboard</div>
+    <div class="sidebar-item">Contacts</div>
+    <div class="sidebar-item">SMS</div>
+    <div class="sidebar-item">Make Call</div>
+    <div class="sidebar-item active">Coaching Lab</div>
+    <div class="sidebar-item">Settings</div>
+  </div>
+
+  <!-- ==================== OPTION A: WIDER LAYOUT ==================== -->
+  <div class="layout-option option-a active" id="option-a">
+    <div class="main-content">
+      <div class="lab-header">
+        <h1>Coaching Lab</h1>
+        <select style="padding: 8px 12px; border-radius: 8px; border: 1px solid #d1d5db;">
+          <option>Solar Sales KB</option>
+        </select>
+      </div>
+
+      <div class="source-toggle">
+        <div class="tabs-group">
+          <button class="tab-btn">Previous Call</button>
+          <button class="tab-btn active">Manual Test</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280;">
+          <input type="checkbox" checked> Live Mode
+          <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">ON</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: #6b7280;">Phase:</span>
+          <select style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
+            <option>Pricing</option>
+          </select>
+        </div>
+        <button class="toggle-btn active" style="margin-left: auto;">
+          Context <span style="font-weight: bold;">×</span>
+        </button>
+      </div>
+
+      <div class="lab-layout">
+        <!-- Conversation Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">
+            <span>Conversation</span>
+            <button style="padding: 4px 12px; border: 1px solid #d1d5db; background: white; border-radius: 6px; font-size: 11px; cursor: pointer;">Clear</button>
+          </div>
+          <div class="panel-content">
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Oh yeah, I got the quote in my email.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Great! What did you think? Any questions I can answer?</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Honestly, it's way too expensive for us right now. We weren't expecting it to cost that much.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coaching Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">Coaching Response</div>
+          <div class="panel-content">
+            <div class="coaching-card">
+              <div class="coaching-header">Price Objection Detected</div>
+              <div class="coaching-body">
+                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Say This</div>
+                <div class="script-text">
+                  "I completely understand - solar is a significant investment. What if I told you that most of our customers actually save money from day one? Let me show you how the financing works..."
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Panel -->
+        <div class="lab-panel context-panel">
+          <div class="panel-header">Context Window</div>
+          <div class="context-tabs">
+            <button class="context-tab active">Current</button>
+            <button class="context-tab">History</button>
+            <button class="context-tab">Settings</button>
+          </div>
+          <div class="panel-content">
+            <div class="context-section">
+              <div class="context-label">Current Phase</div>
+              <div class="phase-badge">Pricing</div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Summary</div>
+              <div class="context-summary">
+                Customer received solar quote but has concerns about the cost. Rep is transitioning from discovery to addressing price objection. Customer seems interested but price-sensitive.
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Topics Discussed</div>
+              <div class="context-topics">
+                <span class="topic-tag">Solar Quote</span>
+                <span class="topic-tag">Pricing</span>
+                <span class="topic-tag">Budget Concerns</span>
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Customer Sentiment</div>
+              <div class="sentiment-box">
+                <span class="sentiment-icon">Concerned but curious</span>
+                <span class="sentiment-label">Mixed</span>
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Key Insights</div>
+              <div class="insight-item">Price is main barrier - may need financing options</div>
+              <div class="insight-item">Customer requested quote = shows interest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="width-indicator">Option A: max-width 1800px (~85%)</div>
+  </div>
+
+  <!-- ==================== OPTION B: SLIDE-OUT OVERLAY ==================== -->
+  <div class="layout-option option-b" id="option-b">
+    <div class="main-content">
+      <div class="lab-header">
+        <h1>Coaching Lab</h1>
+        <select style="padding: 8px 12px; border-radius: 8px; border: 1px solid #d1d5db;">
+          <option>Solar Sales KB</option>
+        </select>
+      </div>
+
+      <div class="source-toggle">
+        <div class="tabs-group">
+          <button class="tab-btn">Previous Call</button>
+          <button class="tab-btn active">Manual Test</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280;">
+          <input type="checkbox" checked> Live Mode
+          <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">ON</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: #6b7280;">Phase:</span>
+          <select style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
+            <option>Pricing</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lab-layout">
+        <!-- Conversation Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">Conversation</div>
+          <div class="panel-content">
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Oh yeah, I got the quote in my email.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Great! What did you think? Any questions I can answer?</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Honestly, it's way too expensive for us right now. We weren't expecting it to cost that much.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coaching Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">Coaching Response</div>
+          <div class="panel-content">
+            <div class="coaching-card">
+              <div class="coaching-header">Price Objection Detected</div>
+              <div class="coaching-body">
+                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Say This</div>
+                <div class="script-text">
+                  "I completely understand - solar is a significant investment. What if I told you that most of our customers actually save money from day one? Let me show you how the financing works..."
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide-out Context Overlay -->
+    <div class="context-overlay">
+      <div class="context-header">
+        <h2>Context Window</h2>
+        <button class="close-btn">×</button>
+      </div>
+      <div class="context-tabs">
+        <button class="context-tab active">Current</button>
+        <button class="context-tab">History</button>
+        <button class="context-tab">Settings</button>
+      </div>
+      <div class="context-content">
+        <div class="context-section">
+          <div class="context-label">Current Phase</div>
+          <div class="phase-badge">Pricing</div>
+        </div>
+        <div class="context-section">
+          <div class="context-label">Summary</div>
+          <div class="context-summary">
+            Customer received solar quote but has concerns about the cost. Rep is transitioning from discovery to addressing price objection. Customer seems interested but price-sensitive.
+          </div>
+        </div>
+        <div class="context-section">
+          <div class="context-label">Topics Discussed</div>
+          <div class="context-topics">
+            <span class="topic-tag">Solar Quote</span>
+            <span class="topic-tag">Pricing</span>
+            <span class="topic-tag">Budget Concerns</span>
+          </div>
+        </div>
+        <div class="context-section">
+          <div class="context-label">Customer Sentiment</div>
+          <div class="sentiment-box">
+            <span class="sentiment-icon">Concerned but curious</span>
+            <span class="sentiment-label">Mixed</span>
+          </div>
+        </div>
+        <div class="context-section">
+          <div class="context-label">Key Insights</div>
+          <div class="insight-item">Price is main barrier - may need financing options</div>
+          <div class="insight-item">Customer requested quote = shows interest</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="context-toggle-floating">
+      Context Window
+    </button>
+    <div class="width-indicator">Option B: 2 columns + slide-out overlay (420px)</div>
+  </div>
+
+  <!-- ==================== OPTION C: EXTRA WIDE ==================== -->
+  <div class="layout-option option-c" id="option-c">
+    <div class="main-content">
+      <div class="lab-header">
+        <h1>Coaching Lab</h1>
+        <select style="padding: 8px 12px; border-radius: 8px; border: 1px solid #d1d5db;">
+          <option>Solar Sales KB</option>
+        </select>
+      </div>
+
+      <div class="source-toggle">
+        <div class="tabs-group">
+          <button class="tab-btn">Previous Call</button>
+          <button class="tab-btn active">Manual Test</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280;">
+          <input type="checkbox" checked> Live Mode
+          <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">ON</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: #6b7280;">Phase:</span>
+          <select style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px;">
+            <option>Pricing</option>
+          </select>
+        </div>
+        <button class="toggle-btn active" style="margin-left: auto;">
+          Context <span style="font-weight: bold;">×</span>
+        </button>
+      </div>
+
+      <div class="lab-layout">
+        <!-- Conversation Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">
+            <span>Conversation</span>
+            <button style="padding: 4px 12px; border: 1px solid #d1d5db; background: white; border-radius: 6px; font-size: 11px; cursor: pointer;">Clear</button>
+          </div>
+          <div class="panel-content">
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Oh yeah, I got the quote in my email.</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker rep">Rep</div>
+              <div class="message-text">Great! What did you think? Any questions I can answer?</div>
+            </div>
+            <div class="message-item">
+              <div class="message-speaker customer">Customer</div>
+              <div class="message-text">Honestly, it's way too expensive for us right now. We weren't expecting it to cost that much.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coaching Panel -->
+        <div class="lab-panel">
+          <div class="panel-header">Coaching Response</div>
+          <div class="panel-content">
+            <div class="coaching-card">
+              <div class="coaching-header">Price Objection Detected</div>
+              <div class="coaching-body">
+                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Say This</div>
+                <div class="script-text">
+                  "I completely understand - solar is a significant investment. What if I told you that most of our customers actually save money from day one? Let me show you how the financing works..."
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Panel - Wider -->
+        <div class="lab-panel context-panel">
+          <div class="panel-header">Context Window</div>
+          <div class="context-tabs">
+            <button class="context-tab active">Current</button>
+            <button class="context-tab">History</button>
+            <button class="context-tab">Settings</button>
+          </div>
+          <div class="panel-content">
+            <div class="context-section">
+              <div class="context-label">Current Phase</div>
+              <div class="phase-badge">Pricing</div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Summary</div>
+              <div class="context-summary">
+                Customer received solar quote but has concerns about the cost. Rep is transitioning from discovery to addressing price objection. Customer seems interested but price-sensitive.
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Topics Discussed</div>
+              <div class="context-topics">
+                <span class="topic-tag">Solar Quote</span>
+                <span class="topic-tag">Pricing</span>
+                <span class="topic-tag">Budget Concerns</span>
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Customer Sentiment</div>
+              <div class="sentiment-box">
+                <span class="sentiment-icon">Concerned but curious</span>
+                <span class="sentiment-label">Mixed</span>
+              </div>
+            </div>
+            <div class="context-section">
+              <div class="context-label">Key Insights</div>
+              <div class="insight-item">Price is main barrier - may need financing options</div>
+              <div class="insight-item">Customer requested quote = shows interest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="width-indicator">Option C: max-width 2000px (~90%), context 450px</div>
+  </div>
+
+  <script>
+    function showOption(option) {
+      // Hide all options
+      document.querySelectorAll('.layout-option').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.option-btn').forEach(el => el.classList.remove('active'));
+
+      // Show selected option
+      document.getElementById('option-' + option).classList.add('active');
+      document.querySelector(`[onclick="showOption('${option}')"]`).classList.add('active');
+    }
+  </script>
+</body>
+</html>

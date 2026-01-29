@@ -4127,6 +4127,487 @@ Respond in this exact JSON format (no markdown):
   }
 });
 
+// ============================================
+// COACHING ASSISTANT CHAT ENDPOINTS
+// ============================================
+
+/**
+ * Build comprehensive system prompt for the Coaching Assistant
+ * This gives the AI full context about how the coaching system works
+ */
+function buildCoachingAssistantPrompt(context) {
+  // Format available scripts
+  let scriptsSection = 'No scripts loaded in knowledge base.';
+  if (context?.availableScripts?.length > 0) {
+    scriptsSection = context.availableScripts.map((s, i) =>
+      `${i + 1}. "${s.title}" (${s.category || 'General'})\n   Triggers: ${s.triggers?.length > 0 ? s.triggers.join(', ') : 'No keyword triggers'}\n   Phases: ${s.applicablePhases?.join(', ') || 'all'}`
+    ).join('\n');
+  }
+
+  // Format phase keywords
+  let phaseKeywordsSection = 'Phase keywords not configured.';
+  if (context?.phaseKeywords) {
+    phaseKeywordsSection = Object.entries(context.phaseKeywords)
+      .map(([phase, keywords]) => `- ${phase}: "${keywords.join('", "')}"`)
+      .join('\n');
+  }
+
+  // Format last coaching trigger with full details
+  let lastTriggerSection = 'No coaching has triggered yet in this session.';
+  if (context?.lastCoachingTrigger) {
+    const t = context.lastCoachingTrigger;
+    lastTriggerSection = `
+CUSTOMER SAID: "${t.customerSaid || 'Unknown'}"
+
+WHAT TRIGGERED:
+- Script: "${t.coaching?.scriptTitle || 'Unknown'}"
+- Category: ${t.category?.displayName || 'Unknown'} ${t.category?.icon || ''}
+- Match Method: ${t.why?.matchMethod === 'ai' ? 'AI Selection (Claude analyzed context)' : t.why?.matchMethod === 'keyword' ? 'Keyword Match' : 'Unknown'}
+
+WHY IT MATCHED:
+- Keywords Found: ${t.why?.keywordsFound?.length > 0 ? `"${t.why.keywordsFound.join('", "')}"` : 'None (AI selected based on context)'}
+- Keywords Checked: ${t.why?.keywordsChecked?.slice(0, 10).join(', ') || 'N/A'}
+- Confidence: ${t.why?.confidence || 0}%
+- Confidence Breakdown: ${t.why?.confidenceBreakdown?.map(b => `${b.factor} (+${b.points}%)`).join(', ') || 'N/A'}
+- Phase at trigger: ${t.why?.phase || 'Unknown'}
+
+SCRIPT SHOWN TO REP:
+"${t.coaching?.scriptText || 'No script text'}"
+${t.coaching?.tips ? `Tips: ${t.coaching.tips}` : ''}
+
+ALTERNATIVES CONSIDERED:
+${t.why?.alternatives?.length > 0 ? t.why.alternatives.map(a => `- ${a.category} (score: ${a.score})`).join('\n') : 'None'}`;
+  }
+
+  // Format recent coaching history
+  let recentHistorySection = 'No previous coaching triggers.';
+  if (context?.recentCoachingMoments?.length > 0) {
+    recentHistorySection = context.recentCoachingMoments.map((m, i) =>
+      `${i + 1}. "${m.scriptTitle}" triggered by "${m.customerSaid?.substring(0, 50)}..." (${m.matchMethod}, ${m.confidence}% confidence, keywords: ${m.keywordsFound?.join(', ') || 'none'})`
+    ).join('\n');
+  }
+
+  // Format conversation context
+  let contextSummarySection = 'No AI-generated context summary available yet.';
+  if (context?.contextSummary) {
+    contextSummarySection = `Summary: ${context.contextSummary}
+Topics: ${context.contextTopics?.join(', ') || 'None identified'}
+Sentiment: ${context.contextSentiment || 'Unknown'}
+Insights: ${context.contextInsights?.join('; ') || 'None'}`;
+  }
+
+  return `You are the Coaching Assistant for DialPro's AI-powered sales coaching system. You have FULL ACCESS to how the system works and can explain everything in detail.
+
+=== SYSTEM ARCHITECTURE ===
+The coaching system uses a 3-layer approach:
+1. LAYER 1 - FLOWS: Multi-step guided conversations (like objection handling flows)
+2. LAYER 2 - OBJECTION CATEGORIES: Detects objection types and triggers appropriate flows
+3. LAYER 3 - SCRIPTS: Individual scripts matched by AI or keywords
+
+Script matching works like this:
+- First, the system checks if the current phase allows the script
+- Then it either uses AI (Claude) to select the best script, OR falls back to keyword matching
+- AI matching analyzes conversation context and picks the most relevant script
+- Keyword matching looks for trigger words in what the customer said
+- Confidence scores are calculated based on: keyword matches, phase alignment, and context relevance
+
+=== CURRENT SESSION STATE ===
+- Knowledge Base: ${context?.knowledgeBaseName || 'Not selected'}
+- Current Call Phase: ${context?.phase || 'intro'}
+- Messages in Conversation: ${context?.conversationLength || 0}
+
+=== PHASE DETECTION ===
+The system detects call phases using these keywords:
+${phaseKeywordsSection}
+
+Current phase "${context?.phase || 'intro'}" was detected because the conversation contains keywords from that phase.
+
+=== AVAILABLE SCRIPTS IN THIS KB ===
+${scriptsSection}
+
+=== LAST COACHING TRIGGER (DETAILED) ===
+${lastTriggerSection}
+
+=== COACHING HISTORY THIS SESSION ===
+${recentHistorySection}
+
+=== CONVERSATION CONTEXT (AI-GENERATED) ===
+${contextSummarySection}
+
+=== YOUR CAPABILITIES ===
+You can:
+1. Explain EXACTLY why a script triggered (what keywords matched, why AI selected it)
+2. Explain why something DIDN'T trigger (missing keywords, wrong phase, etc.)
+3. Explain how phase detection works and why the current phase was detected
+4. Suggest new trigger keywords that should be added
+5. Suggest improvements to scripts
+6. Create improvement tickets when you identify issues
+
+=== RESPONSE GUIDELINES ===
+- Be specific and technical - you have full access to the system details
+- When explaining matches, cite the actual keywords and scores
+- When something didn't trigger, explain what WOULD need to trigger it
+- If you identify a gap (missing keyword, wrong phase, etc.), offer to create a ticket
+- Keep responses focused and actionable
+
+=== TICKET CREATION ===
+When you identify an improvement, ask: "Would you like me to create a ticket for this?"
+If the user agrees, respond with EXACTLY this format on its own line:
+[CREATE_TICKET: {"title": "Brief title", "description": "Detailed description", "category": "category_code", "suggestedFix": "Specific fix", "priority": "medium"}]
+
+Valid categories: missing_trigger, script_improvement, phase_detection, new_script_request, bug_report, feature_request, other
+Valid priorities: low, medium, high, critical`;
+}
+
+/**
+ * Send a message to the Coaching Assistant
+ * POST /api/coaching-lab/chat
+ * Body: { sessionToken, message, context }
+ */
+app.post('/api/coaching-lab/chat', async (req, res) => {
+  if (!anthropic) {
+    return res.status(500).json({ success: false, error: 'AI not configured' });
+  }
+
+  try {
+    const { sessionToken, message, contextSnapshot, context: legacyContext, conversationHistory: clientConversation } = req.body;
+    // Support both contextSnapshot (new) and context (legacy)
+    const context = contextSnapshot || legacyContext || {};
+    // clientConversation contains the sales conversation from the coaching lab (not used in chat history)
+
+    if (!sessionToken || !message) {
+      return res.status(400).json({ success: false, error: 'sessionToken and message required' });
+    }
+
+    console.log(`[Coaching Assistant] Message from session ${sessionToken.substring(0, 8)}...`);
+    console.log(`[Coaching Assistant] Context: KB=${context.knowledgeBaseName}, Phase=${context.phase}, Scripts=${context.availableScripts?.length || 0}`);
+
+    // Get or create session
+    let session = null;
+    if (supabase) {
+      // First try to find existing session (use maybeSingle to avoid error on no match)
+      const { data: existingSession, error: findError } = await supabase
+        .from('coaching_assistant_sessions')
+        .select('*')
+        .eq('session_token', sessionToken)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('[Coaching Assistant] Error finding session:', findError.message);
+      }
+
+      if (existingSession) {
+        session = existingSession;
+        console.log('[Coaching Assistant] Found existing session:', session.id);
+      } else {
+        // Create new session
+        const { data: newSession, error: createError } = await supabase
+          .from('coaching_assistant_sessions')
+          .insert({
+            session_token: sessionToken,
+            knowledge_base_id: context?.knowledgeBaseId || null,
+            knowledge_base_name: context?.knowledgeBaseName || null
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('[Coaching Assistant] Error creating session:', createError.message);
+        } else {
+          session = newSession;
+          console.log('[Coaching Assistant] Created new session:', session?.id);
+        }
+      }
+    }
+
+    // Save user message to database
+    if (supabase && session) {
+      const { error: msgError } = await supabase.from('coaching_assistant_messages').insert({
+        session_id: session.id,
+        role: 'user',
+        content: message,
+        context_snapshot: context || {}
+      });
+      if (msgError) {
+        console.error('[Coaching Assistant] Error saving user message:', msgError.message);
+      }
+    }
+
+    // Build system prompt with RICH context about the coaching system
+    const systemPrompt = buildCoachingAssistantPrompt(context);
+
+    // Get conversation history for context
+    let conversationHistory = [];
+    if (supabase && session) {
+      const { data: history } = await supabase
+        .from('coaching_assistant_messages')
+        .select('role, content')
+        .eq('session_id', session.id)
+        .order('created_at', { ascending: true })
+        .limit(20);
+
+      if (history) {
+        conversationHistory = history.map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.content
+        }));
+      }
+    }
+
+    // Add current message
+    conversationHistory.push({ role: 'user', content: message });
+
+    // Call Claude API
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: conversationHistory
+    });
+
+    const assistantMessage = response.content[0]?.text || 'Sorry, I could not generate a response.';
+
+    // Check if the response contains a ticket creation request
+    let ticketCreated = null;
+    const ticketMatch = assistantMessage.match(/\[CREATE_TICKET:\s*(\{.*?\})\]/);
+    if (ticketMatch) {
+      try {
+        const ticketData = JSON.parse(ticketMatch[1]);
+        if (supabase && session) {
+          const { data: ticket, error: ticketError } = await supabase
+            .from('coaching_improvement_tickets')
+            .insert({
+              session_id: session.id,
+              title: ticketData.title,
+              description: ticketData.description,
+              category: ticketData.category || 'other',
+              suggested_fix: ticketData.suggestedFix,
+              affected_knowledge_base_id: context?.knowledgeBaseId,
+              context_snapshot: context || {},
+              priority: ticketData.priority || 'medium'
+            })
+            .select('id, ticket_number')
+            .single();
+
+          if (ticketError) {
+            console.error('[Coaching Assistant] Error creating ticket:', ticketError.message);
+          } else if (ticket) {
+            ticketCreated = {
+              id: ticket.id,
+              ticketNumber: ticket.ticket_number,
+              title: ticketData.title
+            };
+            console.log(`[Coaching Assistant] Ticket #${ticket.ticket_number} created: ${ticketData.title}`);
+          }
+        }
+      } catch (e) {
+        console.error('[Coaching Assistant] Error parsing ticket data:', e.message);
+      }
+    }
+
+    // Clean response (remove ticket markup if present)
+    const cleanResponse = assistantMessage.replace(/\[CREATE_TICKET:.*?\]/g, '').trim();
+
+    // Save assistant response to database
+    if (supabase && session) {
+      const { error: saveError } = await supabase.from('coaching_assistant_messages').insert({
+        session_id: session.id,
+        role: 'assistant',
+        content: cleanResponse,
+        context_snapshot: context || {},
+        ticket_id: ticketCreated?.id || null
+      });
+      if (saveError) {
+        console.error('[Coaching Assistant] Error saving assistant message:', saveError.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      response: cleanResponse,
+      ticketCreated: ticketCreated,
+      sessionId: session?.id
+    });
+
+  } catch (error) {
+    console.error('[Coaching Assistant] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Create an improvement ticket manually
+ * POST /api/coaching-lab/tickets
+ * Body: { sessionToken, title, description, category, suggestedFix, context }
+ */
+app.post('/api/coaching-lab/tickets', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { sessionToken, title, description, category, suggestedFix, context } = req.body;
+
+    if (!title || !category) {
+      return res.status(400).json({ success: false, error: 'title and category required' });
+    }
+
+    // Get session if token provided
+    let sessionId = null;
+    if (sessionToken) {
+      const { data: session } = await supabase
+        .from('coaching_assistant_sessions')
+        .select('id')
+        .eq('session_token', sessionToken)
+        .single();
+      sessionId = session?.id;
+    }
+
+    const { data: ticket, error } = await supabase
+      .from('coaching_improvement_tickets')
+      .insert({
+        session_id: sessionId,
+        title,
+        description,
+        category,
+        suggested_fix: suggestedFix,
+        affected_knowledge_base_id: context?.knowledgeBaseId,
+        context_snapshot: context || {},
+        priority: 'medium'
+      })
+      .select('id, ticket_number, title, category, priority, status, created_at')
+      .single();
+
+    if (error) {
+      console.error('[Tickets] Error creating ticket:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    console.log(`[Tickets] Ticket #${ticket.ticket_number} created: ${title}`);
+
+    res.json({
+      success: true,
+      ticket: {
+        id: ticket.id,
+        ticketNumber: ticket.ticket_number,
+        title: ticket.title,
+        category: ticket.category,
+        priority: ticket.priority,
+        status: ticket.status,
+        createdAt: ticket.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('[Tickets] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get chat history and tickets (admin view)
+ * GET /api/coaching-lab/admin/activity
+ * Query: ?limit=50
+ */
+app.get('/api/coaching-lab/admin/activity', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+
+    // Get recent sessions with message counts
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('coaching_assistant_sessions')
+      .select(`
+        id,
+        session_token,
+        user_identifier,
+        knowledge_base_name,
+        message_count,
+        tickets_created,
+        started_at,
+        last_activity_at
+      `)
+      .order('last_activity_at', { ascending: false })
+      .limit(limit);
+
+    if (sessionsError) {
+      console.error('[Admin Activity] Sessions error:', sessionsError);
+    }
+
+    // Get recent tickets
+    const { data: tickets, error: ticketsError } = await supabase
+      .from('coaching_improvement_tickets')
+      .select(`
+        id,
+        ticket_number,
+        title,
+        description,
+        category,
+        priority,
+        status,
+        created_at,
+        updated_at
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (ticketsError) {
+      console.error('[Admin Activity] Tickets error:', ticketsError);
+    }
+
+    res.json({
+      success: true,
+      sessions: sessions || [],
+      tickets: tickets || [],
+      summary: {
+        totalSessions: sessions?.length || 0,
+        totalTickets: tickets?.length || 0,
+        openTickets: tickets?.filter(t => t.status === 'open').length || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('[Admin Activity] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get messages for a specific chat session
+ * GET /api/coaching-lab/admin/sessions/:sessionId/messages
+ */
+app.get('/api/coaching-lab/admin/sessions/:sessionId/messages', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { sessionId } = req.params;
+
+    const { data: messages, error } = await supabase
+      .from('coaching_assistant_messages')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    res.json({
+      success: true,
+      messages: messages || []
+    });
+
+  } catch (error) {
+    console.error('[Admin Messages] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 /**
  * Get list of recent calls with transcripts
  * GET /api/calls

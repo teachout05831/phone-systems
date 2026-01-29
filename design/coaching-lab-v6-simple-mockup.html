@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab v6 - Simplified</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1f2937;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+    }
+
+    .btn-primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .btn-success { background: #22c55e; color: white; border-color: #22c55e; }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Call Selector */
+    .call-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Simple 2-Column Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .panel-content {
+      max-height: calc(100vh - 240px);
+      overflow-y: auto;
+    }
+
+    /* ========== LEFT: TIMELINE ========== */
+    .timeline-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .timeline-item:hover {
+      background: #fafafa;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: 'Monaco', monospace;
+      margin-bottom: 4px;
+    }
+
+    .speaker {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .speaker.customer { color: #b45309; }
+    .speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    /* Highlighted words */
+    .trigger-word {
+      background: #fef3c7;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      border-bottom: 2px solid #f59e0b;
+    }
+
+    /* Coaching Trigger Inline */
+    .coaching-trigger-inline {
+      margin-top: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .coaching-trigger-inline:hover {
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .coaching-trigger-inline.active {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+    }
+
+    .trigger-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .trigger-badge {
+      width: 26px;
+      height: 26px;
+      background: #f59e0b;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .trigger-badge.purple { background: #8b5cf6; }
+
+    .trigger-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+    }
+
+    .trigger-keywords {
+      font-size: 11px;
+      color: #b45309;
+      background: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* ========== RIGHT: COACHING DETAILS ========== */
+
+    /* Self-contained coaching card with WHY built in */
+    .coaching-full-card {
+      margin: 16px;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .coaching-full-card.purple {
+      border-color: #8b5cf6;
+    }
+
+    /* Card Header */
+    .cfc-header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .coaching-full-card.purple .cfc-header {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
+    .cfc-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .cfc-badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .cfc-time {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* What Customer Said */
+    .cfc-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .cfc-section:last-child {
+      border-bottom: none;
+    }
+
+    .cfc-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .cfc-customer-said {
+      font-size: 14px;
+      color: #374151;
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #f59e0b;
+      line-height: 1.5;
+    }
+
+    .coaching-full-card.purple .cfc-customer-said {
+      background: #f3e8ff;
+      border-left-color: #8b5cf6;
+    }
+
+    /* WHY Section - The key part */
+    .cfc-why {
+      background: #1f2937;
+      padding: 14px 16px;
+      color: white;
+    }
+
+    .cfc-why-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .why-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .why-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .why-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .why-content {
+      flex: 1;
+    }
+
+    .why-label {
+      color: #9ca3af;
+      font-size: 11px;
+    }
+
+    .why-value {
+      color: #d1d5db;
+    }
+
+    .why-highlight {
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .why-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .why-keyword {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .why-keyword.found {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .why-keyword.not-found {
+      background: #374151;
+      color: #6b7280;
+    }
+
+    /* AI Suggestion */
+    .cfc-suggestion {
+      background: #f0f9ff;
+    }
+
+    .cfc-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1f2937;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .cfc-tip {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      font-size: 12px;
+      color: #713f12;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* Rep Response */
+    .cfc-rep {
+      background: #eff6ff;
+    }
+
+    .rep-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .match-badge {
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .match-badge.partial { background: #fef3c7; color: #b45309; }
+    .match-badge.good { background: #dcfce7; color: #166534; }
+
+    .rep-text {
+      font-size: 13px;
+      color: #374151;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      line-height: 1.5;
+    }
+
+    /* Edit Section */
+    .cfc-edit {
+      background: #f9fafb;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 80px;
+      resize: vertical;
+      margin-bottom: 10px;
+    }
+
+    .edit-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .edit-btn:hover { background: #f3f4f6; }
+    .edit-btn.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .edit-btn.success { background: #22c55e; color: white; border-color: #22c55e; }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP v6</strong> - Simplified: Everything about each coaching moment in one self-contained card
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 Coaching Lab</h1>
+      <div style="display: flex; gap: 12px;">
+        <select><option>KB: Solar Sales Playbook</option></select>
+        <button class="btn btn-success">💾 Save All</button>
+      </div>
+    </div>
+
+    <!-- Call Bar -->
+    <div class="call-bar">
+      <label style="font-weight: 500;">Call:</label>
+      <select style="flex: 1; max-width: 400px;">
+        <option>+1 (555) 123-4567 - Jan 28, 2026 2:34 PM</option>
+      </select>
+      <span style="font-size: 13px; color: #6b7280;">⏱ 4:32 • 2 coaching moments</span>
+    </div>
+
+    <!-- Simple 2-Column Layout -->
+    <div class="main-layout">
+
+      <!-- LEFT: Timeline -->
+      <div class="panel">
+        <div class="panel-header">📞 Call Timeline</div>
+        <div class="panel-content">
+
+          <div class="timeline-item">
+            <div class="timestamp">0:00</div>
+            <div class="speaker rep">👤 Rep</div>
+            <div class="message-text">Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:05</div>
+            <div class="speaker customer">🏠 Customer</div>
+            <div class="message-text">Yeah, what is this about?</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:08</div>
+            <div class="speaker rep">👤 Rep</div>
+            <div class="message-text">We're offering free solar assessments in your area.</div>
+          </div>
+
+          <!-- TRIGGER #1 -->
+          <div class="timeline-item" style="background: #fffbeb;">
+            <div class="timestamp">0:18</div>
+            <div class="speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              Look, I've already gotten quotes from two other companies and honestly your <span class="trigger-word">prices</span> seem really <span class="trigger-word">high</span>.
+            </div>
+
+            <div class="coaching-trigger-inline active">
+              <div class="trigger-header">
+                <span class="trigger-badge">1</span>
+                <span class="trigger-title">💰 Price Objection Triggered</span>
+              </div>
+              <div class="trigger-keywords">
+                Detected: "prices" + "high" → 94% confidence
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:28</div>
+            <div class="speaker rep">👤 Rep</div>
+            <div class="message-text">I appreciate you being upfront about that. Can I ask what the other companies quoted you?</div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timestamp">0:58</div>
+            <div class="speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              I need to <span class="trigger-word" style="background: #f3e8ff; border-color: #8b5cf6;">talk to my wife</span> about this.
+            </div>
+
+            <div class="coaching-trigger-inline" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); border-color: #8b5cf6;">
+              <div class="trigger-header">
+                <span class="trigger-badge purple">2</span>
+                <span class="trigger-title" style="color: #5b21b6;">👥 Authority Objection Triggered</span>
+              </div>
+              <div class="trigger-keywords" style="color: #7c3aed;">
+                Detected: "talk to my wife" → 91% confidence
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Coaching Detail (self-contained) -->
+      <div class="panel">
+        <div class="panel-header">🤖 Coaching Details</div>
+        <div class="panel-content">
+
+          <!-- Full Card with WHY built in -->
+          <div class="coaching-full-card">
+
+            <!-- Header -->
+            <div class="cfc-header">
+              <div class="cfc-title">
+                <span class="cfc-badge">1</span>
+                💰 Price Objection
+              </div>
+              <div class="cfc-time">@ 0:18</div>
+            </div>
+
+            <!-- What Customer Said -->
+            <div class="cfc-section">
+              <div class="cfc-section-label">Customer Said</div>
+              <div class="cfc-customer-said">
+                "Look, I've already gotten quotes from two other companies and honestly your <strong>prices</strong> seem really <strong>high</strong>."
+              </div>
+            </div>
+
+            <!-- WHY - Built right into the card -->
+            <div class="cfc-why">
+              <div class="cfc-why-header">
+                🧠 Why This Triggered
+              </div>
+
+              <div class="why-row">
+                <span class="why-icon">🔍</span>
+                <div class="why-content">
+                  <div class="why-label">Keywords Found:</div>
+                  <div class="why-keywords">
+                    <span class="why-keyword found">"prices" ✓</span>
+                    <span class="why-keyword found">"high" ✓</span>
+                    <span class="why-keyword not-found">expensive</span>
+                    <span class="why-keyword not-found">cost</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="why-row">
+                <span class="why-icon">📊</span>
+                <div class="why-content">
+                  <div class="why-label">Confidence:</div>
+                  <div class="why-value">
+                    <span class="why-highlight">94%</span> — "prices" is primary trigger (+40%), "high" is modifier (+30%), comparison context (+24%)
+                  </div>
+                </div>
+              </div>
+
+              <div class="why-row">
+                <span class="why-icon">📚</span>
+                <div class="why-content">
+                  <div class="why-label">Source:</div>
+                  <div class="why-value">
+                    Price Objection Flow → Step 1 of 4
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Suggestion -->
+            <div class="cfc-section cfc-suggestion">
+              <div class="cfc-section-label">AI Suggested</div>
+              <div class="cfc-script">
+                "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+              </div>
+              <div class="cfc-tip">
+                💡 Reframe from price to value. Don't defend the price directly.
+              </div>
+            </div>
+
+            <!-- What Rep Said -->
+            <div class="cfc-section cfc-rep">
+              <div class="cfc-section-label">
+                <div class="rep-header">
+                  <span>Rep Said @ 0:28</span>
+                  <span class="match-badge partial">68% match</span>
+                </div>
+              </div>
+              <div class="rep-text">
+                "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+              </div>
+            </div>
+
+            <!-- Edit -->
+            <div class="cfc-section cfc-edit">
+              <div class="cfc-section-label">✏️ Edit This Response</div>
+              <textarea class="edit-textarea">"I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"</textarea>
+              <div class="edit-buttons">
+                <button class="edit-btn success">💾 Save to KB</button>
+                <button class="edit-btn primary">🧪 Test This</button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 What's Simpler in v6:</h3>
+      <ul>
+        <li><strong>2 columns instead of 3:</strong> Timeline on left, full coaching card on right</li>
+        <li><strong>WHY is embedded in the card:</strong> No separate panel - everything about this coaching moment is in one place</li>
+        <li><strong>Clear flow:</strong> Customer Said → Why Triggered → AI Suggested → Rep Said → Edit</li>
+        <li><strong>Trigger keywords shown inline:</strong> Both in timeline (highlighted) and in the trigger box</li>
+        <li><strong>Click trigger → see everything:</strong> No confusion about which why goes with which coaching</li>
+        <li><strong>Confidence explained in one line:</strong> "94% — 'prices' is primary trigger (+40%), 'high' is modifier (+30%)..."</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coaching Lab v3 - Editable Replay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .mockup-banner {
+      background: #7c3aed;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .mockup-banner strong {
+      color: #fbbf24;
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #1f2937;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover { background: #f9fafb; }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-success {
+      background: #22c55e;
+      color: white;
+      border-color: #22c55e;
+    }
+
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+      border-color: #f59e0b;
+    }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      background: #e5e7eb;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .mode-btn {
+      padding: 10px 24px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mode-btn.active {
+      background: white;
+      color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Call Selector */
+    .call-selector {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .call-selector select {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .call-info {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 450px;
+      gap: 24px;
+    }
+
+    /* Panel */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 280px);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h2 {
+      font-size: 15px;
+      color: #1f2937;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ========== TIMELINE ========== */
+    .timeline-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f3f4f6;
+      position: relative;
+    }
+
+    .timeline-item:hover {
+      background: #fafafa;
+    }
+
+    .timeline-item.editing {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: 'Monaco', monospace;
+      margin-bottom: 6px;
+    }
+
+    .message-speaker {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .message-speaker.customer { color: #b45309; }
+    .message-speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .objection-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .objection-badge.price { background: #fef3c7; color: #b45309; }
+    .objection-badge.authority { background: #f3e8ff; color: #7c3aed; }
+
+    /* ========== AI COACHING BLOCK (Editable) ========== */
+    .ai-block {
+      margin: 12px 0;
+      border: 2px solid #3b82f6;
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .ai-block.edited {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+
+    .ai-block-header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .ai-block.edited .ai-block-header {
+      background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+    }
+
+    .ai-block-label {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-block-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .ai-block-body {
+      padding: 14px;
+    }
+
+    /* Original vs Edited Toggle */
+    .version-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .version-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .version-btn.active {
+      background: #1e40af;
+      color: white;
+      border-color: #1e40af;
+    }
+
+    .version-btn.active.edited {
+      background: #f59e0b;
+      border-color: #f59e0b;
+    }
+
+    .ai-script-display {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1f2937;
+      padding: 12px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .ai-script-display.edited-version {
+      background: #fef3c7;
+      border-left-color: #f59e0b;
+    }
+
+    /* Edit Controls */
+    .edit-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .edit-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .edit-btn:hover {
+      background: #f3f4f6;
+    }
+
+    .edit-btn.primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    /* Inline Edit Mode */
+    .ai-script-edit {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .ai-script-edit:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    /* Rep Response Section */
+    .rep-response-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #d1d5db;
+    }
+
+    .rep-response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .rep-response-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d4ed8;
+    }
+
+    .match-badge {
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .match-badge.good { background: #dcfce7; color: #166534; }
+    .match-badge.partial { background: #fef3c7; color: #b45309; }
+    .match-badge.missed { background: #fee2e2; color: #b91c1c; }
+
+    .rep-response-text {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+      padding: 10px;
+      background: #eff6ff;
+      border-radius: 6px;
+    }
+
+    /* Branch Indicator */
+    .branch-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #166534;
+    }
+
+    /* ========== RIGHT PANEL: EDIT WORKSPACE ========== */
+    .edit-panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 280px);
+    }
+
+    .edit-panel-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .edit-panel-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .edit-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Context Box */
+    .context-box {
+      background: #fef3c7;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .context-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #b45309;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .context-time {
+      font-size: 12px;
+      color: #92400e;
+      font-family: 'Monaco', monospace;
+      margin-bottom: 8px;
+    }
+
+    .context-text {
+      font-size: 14px;
+      color: #1f2937;
+      line-height: 1.5;
+    }
+
+    /* Edit Form */
+    .edit-form {
+      margin-bottom: 20px;
+    }
+
+    .edit-form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .edit-form textarea {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .edit-form textarea:focus {
+      outline: none;
+      border-color: #f59e0b;
+    }
+
+    .edit-form-hint {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+
+    /* Action Buttons */
+    .edit-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .edit-actions .btn {
+      justify-content: center;
+    }
+
+    /* Comparison */
+    .comparison-box {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .comparison-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .comparison-text {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .comparison-text.strikethrough {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    /* Changes Summary */
+    .changes-summary {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 20px;
+    }
+
+    .changes-summary h4 {
+      font-size: 13px;
+      color: #b45309;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .changes-list {
+      font-size: 12px;
+      color: #92400e;
+    }
+
+    .changes-list li {
+      margin-bottom: 6px;
+      margin-left: 16px;
+    }
+
+    /* Keywords Section */
+    .keywords-section {
+      background: #1f2937;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+
+    .keywords-section h4 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .keyword-tag {
+      padding: 4px 10px;
+      background: #374151;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #d1d5db;
+    }
+
+    .keyword-tag.matched {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .keyword-tag.new {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .add-keyword-input {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .add-keyword-input input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #4b5563;
+      background: #374151;
+      border-radius: 6px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .add-keyword-input input::placeholder {
+      color: #9ca3af;
+    }
+
+    .add-keyword-input button {
+      padding: 6px 12px;
+      background: #f59e0b;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* ========== DESIGN NOTES ========== */
+    .design-notes {
+      margin-top: 32px;
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .design-notes h3 {
+      color: #b45309;
+      margin-bottom: 16px;
+    }
+
+    .design-notes ul {
+      margin-left: 20px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    /* Test from here button */
+    .test-from-here {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #22c55e;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .test-from-here:hover {
+      background: #16a34a;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-banner">
+    <strong>DESIGN MOCKUP v3</strong> - Editable Replay: Change AI coaching, test different responses, save improvements
+  </div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🧪 Coaching Lab</h1>
+      <div class="header-controls">
+        <select>
+          <option>KB: Solar Sales Playbook</option>
+        </select>
+        <button class="btn btn-success">💾 Save All Changes to KB</button>
+        <button class="btn">Reset to Original</button>
+      </div>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn">
+        👁️ View Mode
+      </button>
+      <button class="mode-btn active">
+        ✏️ Edit Mode
+      </button>
+      <button class="mode-btn">
+        🧪 Test Mode
+      </button>
+    </div>
+
+    <!-- Call Selector -->
+    <div class="call-selector">
+      <label style="font-weight: 500;">Replay:</label>
+      <select>
+        <option>+1 (555) 123-4567 - Jan 28, 2026 2:34 PM (4:32)</option>
+        <option>+1 (555) 987-6543 - Jan 28, 2026 11:15 AM (8:21)</option>
+      </select>
+      <div class="call-info">
+        <span>💬 12 turns</span>
+        <span>🤖 3 coaching moments</span>
+        <span style="color: #f59e0b; font-weight: 600;">✏️ 2 edits pending</span>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+      <!-- LEFT: Timeline with Editable AI Blocks -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📞 Call Timeline</h2>
+          <span style="font-size: 12px; color: #f59e0b; font-weight: 600;">✏️ Click any AI coaching to edit</span>
+        </div>
+
+        <div class="panel-content">
+
+          <!-- Turn 1 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:00</div>
+            <div class="message-speaker rep">👤 Sales Rep</div>
+            <div class="message-text">
+              Hi, this is Mike from Solar Solutions. I'm calling about the consultation you requested.
+            </div>
+          </div>
+
+          <!-- Turn 2 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:05</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              Yeah, what is this about?
+            </div>
+          </div>
+
+          <!-- Turn 3 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:08</div>
+            <div class="message-speaker rep">👤 Sales Rep</div>
+            <div class="message-text">
+              We're offering free solar assessments in your area. I wanted to see if you had a few minutes.
+            </div>
+          </div>
+
+          <!-- Turn 4: Customer Objection + AI Coaching (EDITED) -->
+          <div class="timeline-item editing">
+            <div class="timestamp">0:18</div>
+            <div class="message-speaker customer">
+              🏠 Customer
+              <span class="objection-badge price">💰 PRICE</span>
+            </div>
+            <div class="message-text">
+              Look, I've already gotten quotes from two other companies and honestly your prices seem really high.
+            </div>
+
+            <!-- AI Block - EDITED VERSION -->
+            <div class="ai-block edited">
+              <div class="ai-block-header">
+                <span class="ai-block-label">🤖 AI COACHING</span>
+                <span class="ai-block-badge">✏️ EDITED</span>
+              </div>
+              <div class="ai-block-body">
+                <!-- Toggle between original and edited -->
+                <div class="version-toggle">
+                  <button class="version-btn">Original</button>
+                  <button class="version-btn active edited">Your Edit</button>
+                </div>
+
+                <!-- Showing edited version -->
+                <div class="ai-script-display edited-version">
+                  "I hear you - nobody wants to overpay. Quick question: did those other quotes include a 30-year warranty and production guarantee? Because that's where the real value difference shows up over time."
+                </div>
+
+                <div class="edit-controls">
+                  <button class="edit-btn">✏️ Edit Again</button>
+                  <button class="edit-btn">↩️ Revert</button>
+                  <button class="edit-btn primary">💾 Save to KB</button>
+                </div>
+
+                <!-- Rep Response -->
+                <div class="rep-response-section">
+                  <div class="rep-response-header">
+                    <span class="rep-response-label">👤 Rep said at 0:28:</span>
+                    <span class="match-badge partial">68% match</span>
+                  </div>
+                  <div class="rep-response-text">
+                    "I appreciate you being upfront about that. Can I ask what the other companies quoted you?"
+                  </div>
+                </div>
+
+                <button class="test-from-here">
+                  🧪 Test from this point with your edit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 5 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:28</div>
+            <div class="message-speaker rep">👤 Sales Rep</div>
+            <div class="message-text">
+              I appreciate you being upfront about that. Can I ask what the other companies quoted you?
+            </div>
+          </div>
+
+          <!-- Turn 6 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:35</div>
+            <div class="message-speaker customer">🏠 Customer</div>
+            <div class="message-text">
+              They were around 20 thousand. You guys are at 28.
+            </div>
+          </div>
+
+          <!-- Turn 7 -->
+          <div class="timeline-item">
+            <div class="timestamp">0:42</div>
+            <div class="message-speaker rep">👤 Sales Rep</div>
+            <div class="message-text">
+              I see. Our panels have a 25-year warranty compared to their 10-year...
+            </div>
+          </div>
+
+          <!-- Turn 8: Authority Objection + AI Coaching (NOT EDITED) -->
+          <div class="timeline-item">
+            <div class="timestamp">0:58</div>
+            <div class="message-speaker customer">
+              🏠 Customer
+              <span class="objection-badge authority">👥 AUTHORITY</span>
+            </div>
+            <div class="message-text">
+              I don't know, I need to talk to my wife about this.
+            </div>
+
+            <!-- AI Block - ORIGINAL -->
+            <div class="ai-block">
+              <div class="ai-block-header">
+                <span class="ai-block-label">🤖 AI COACHING</span>
+                <span class="ai-block-badge">👥 Authority - Step 1</span>
+              </div>
+              <div class="ai-block-body">
+                <div class="ai-script-display">
+                  "Absolutely, she should definitely be part of this decision. What if I scheduled a quick 15-minute call when you're both available? That way she can ask questions directly."
+                </div>
+
+                <div class="edit-controls">
+                  <button class="edit-btn">✏️ Edit</button>
+                  <button class="edit-btn primary">🧪 Test from here</button>
+                </div>
+
+                <!-- Rep Response -->
+                <div class="rep-response-section">
+                  <div class="rep-response-header">
+                    <span class="rep-response-label">👤 Rep said at 1:05:</span>
+                    <span class="match-badge partial">72% match</span>
+                  </div>
+                  <div class="rep-response-text">
+                    "Of course, that makes sense. When do you think you two could sit down together?"
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn 9 -->
+          <div class="timeline-item">
+            <div class="timestamp">1:05</div>
+            <div class="message-speaker rep">👤 Sales Rep</div>
+            <div class="message-text">
+              Of course, that makes sense. When do you think you two could sit down together?
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Edit Panel -->
+      <div class="edit-panel">
+        <div class="edit-panel-header">
+          <h2>✏️ Edit Coaching Response</h2>
+        </div>
+
+        <div class="edit-panel-content">
+
+          <!-- What triggered this -->
+          <div class="context-box">
+            <div class="context-label">Editing response to:</div>
+            <div class="context-time">⏱ 0:18 into call</div>
+            <div class="context-text">
+              "Look, I've already gotten quotes from two other companies and honestly your prices seem really high."
+            </div>
+          </div>
+
+          <!-- Original -->
+          <div class="comparison-box">
+            <div class="comparison-label">Original AI Suggestion:</div>
+            <div class="comparison-text strikethrough">
+              "I appreciate you sharing that. Price is definitely important - let me ask you this: when you got those other quotes, did they include the 30-year warranty and the efficiency guarantee we offer?"
+            </div>
+          </div>
+
+          <!-- Edit Form -->
+          <div class="edit-form">
+            <div class="edit-form-label">✏️ Your Improved Version:</div>
+            <textarea>"I hear you - nobody wants to overpay. Quick question: did those other quotes include a 30-year warranty and production guarantee? Because that's where the real value difference shows up over time."</textarea>
+            <div class="edit-form-hint">This version will be suggested next time this objection is detected</div>
+          </div>
+
+          <!-- Actions -->
+          <div class="edit-actions">
+            <button class="btn btn-primary">💾 Save to Knowledge Base</button>
+            <button class="btn btn-warning">🧪 Test This Response</button>
+            <button class="btn">↩️ Revert to Original</button>
+          </div>
+
+          <!-- Keywords -->
+          <div class="keywords-section">
+            <h4>Keywords triggering this match:</h4>
+            <div class="keywords-list">
+              <span class="keyword-tag matched">prices</span>
+              <span class="keyword-tag matched">high</span>
+              <span class="keyword-tag">expensive</span>
+              <span class="keyword-tag">cost</span>
+              <span class="keyword-tag new">+ overpay</span>
+            </div>
+            <div class="add-keyword-input">
+              <input type="text" placeholder="Add keyword...">
+              <button>Add</button>
+            </div>
+          </div>
+
+          <!-- Changes Summary -->
+          <div class="changes-summary">
+            <h4>📝 Pending Changes (2)</h4>
+            <ul class="changes-list">
+              <li><strong>Price Objection Step 1:</strong> Updated script text</li>
+              <li><strong>Price Keywords:</strong> Added "overpay"</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+      <h3>🎨 What's New in v3 - Editable Replay:</h3>
+      <ul>
+        <li><strong>Edit Mode toggle:</strong> Switch between View / Edit / Test modes</li>
+        <li><strong>Click any AI block to edit:</strong> Change what the AI would suggest</li>
+        <li><strong>Version toggle:</strong> Switch between Original and Your Edit to compare</li>
+        <li><strong>Edited blocks highlighted:</strong> Orange border + "EDITED" badge shows what you've changed</li>
+        <li><strong>"Test from this point":</strong> Branch off and simulate what would happen with your new coaching</li>
+        <li><strong>Pending changes tracker:</strong> See all edits before saving to KB</li>
+        <li><strong>Add keywords:</strong> Improve detection by adding new trigger words</li>
+        <li><strong>Save All to KB:</strong> One button to save all your improvements</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+</html>
