@@ -845,6 +845,160 @@
       }
     }
 
+    /* ========== OBJECTION CATEGORIES STYLES ========== */
+
+    .kb-sub-tabs {
+      display: flex;
+      gap: 4px;
+      padding: var(--spacing-xs) var(--spacing-lg);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .kb-sub-tab {
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .kb-sub-tab:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .kb-sub-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .kb-panel {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .kb-panel.active {
+      display: block;
+    }
+
+    /* Category Cards */
+    .category-card {
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--radius-md);
+      margin: var(--spacing-md);
+      margin-top: 0;
+      border: 1px solid var(--gray-200);
+      border-left: 4px solid var(--primary);
+      transition: all 0.15s ease;
+    }
+
+    .category-card:first-of-type {
+      margin-top: var(--spacing-md);
+    }
+
+    .category-card:hover {
+      box-shadow: var(--shadow-sm);
+    }
+
+    .category-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .category-card-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .category-icon {
+      font-size: 1.25rem;
+    }
+
+    .category-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .category-internal-name {
+      font-size: 0.7rem;
+      color: var(--gray-400);
+      font-family: monospace;
+    }
+
+    .category-card-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .category-action-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .category-action-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .category-action-btn.delete:hover {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #dc2626;
+    }
+
+    .category-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .category-keyword {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      background: var(--gray-100);
+      border-radius: 20px;
+      color: var(--gray-600);
+    }
+
+    /* Category colors */
+    .category-card.price { border-left-color: #f59e0b; }
+    .category-card.timing { border-left-color: #3b82f6; }
+    .category-card.authority { border-left-color: #8b5cf6; }
+    .category-card.trust { border-left-color: #ec4899; }
+    .category-card.competitor { border-left-color: #14b8a6; }
+    .category-card.no_need { border-left-color: #6b7280; }
+
+    /* Empty state for panels */
+    .kb-panel-empty {
+      padding: var(--spacing-xl);
+      text-align: center;
+      color: var(--gray-500);
+    }
+
+    .kb-panel-empty .empty-icon {
+      font-size: 2rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
     /* Modal Styles - Override global styles.css which uses visibility:hidden */
     .modal-overlay {
       position: fixed;
@@ -1040,6 +1194,10 @@
 
         <!-- Settings -->
         <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="coaching-lab.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🧪</span>
+            <span class="sidebar-nav-label">Coaching Lab</span>
+          </a>
           <a href="settings.html" class="sidebar-nav-item active">
             <span class="sidebar-nav-icon">⚙️</span>
             <span class="sidebar-nav-label">Settings</span>
@@ -1750,16 +1908,35 @@
                 </div>
               </div>
 
-              <!-- Right Panel - Scripts -->
+              <!-- Right Panel - Scripts & Categories -->
               <div class="kb-split-right">
                 <div class="kb-split-right-header">
                   <h4 id="scriptsCardTitle">Select a Knowledge Base</h4>
-                  <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem; display: none;" id="addScriptBtn" onclick="showAddScriptModal()">+ Add Script</button>
+                  <div id="kbSubTabActions" style="display: none;">
+                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" id="addScriptBtn" onclick="showAddScriptModal()">+ Add Script</button>
+                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem; display: none;" id="addCategoryBtn" onclick="showAddCategoryModal()">+ Add Category</button>
+                  </div>
                 </div>
-                <div id="scriptsPanel">
+
+                <!-- Sub-tabs for Scripts vs Categories -->
+                <div class="kb-sub-tabs" id="kbSubTabs" style="display: none;">
+                  <button class="kb-sub-tab active" data-panel="scripts" onclick="switchKbPanel('scripts')">Scripts</button>
+                  <button class="kb-sub-tab" data-panel="categories" onclick="switchKbPanel('categories')">Objection Categories</button>
+                </div>
+
+                <!-- Scripts Panel -->
+                <div class="kb-panel active" id="scriptsPanel">
                   <div class="kb-split-right-empty">
                     <div style="font-size: 2rem;">📚</div>
                     <p>Select a knowledge base from the left to view and manage its scripts</p>
+                  </div>
+                </div>
+
+                <!-- Categories Panel -->
+                <div class="kb-panel" id="categoriesPanel">
+                  <div class="kb-panel-empty">
+                    <div class="empty-icon">🏷️</div>
+                    <p>Loading categories...</p>
                   </div>
                 </div>
               </div>
@@ -2987,5 +3164,272 @@
       </form>
     </div>
   </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">Add Objection Category</h3>
+        <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+      </div>
+      <form id="categoryForm" onsubmit="saveCategory(event)">
+        <input type="hidden" id="categoryId">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Icon</label>
+            <select class="input" id="categoryIcon" style="font-size: 1.25rem;">
+              <option value="💰">💰 Price</option>
+              <option value="⏰">⏰ Timing</option>
+              <option value="👥">👥 Authority</option>
+              <option value="🤔">🤔 Trust</option>
+              <option value="🏢">🏢 Competitor</option>
+              <option value="❓">❓ No Need</option>
+              <option value="📝">📝 General</option>
+              <option value="💬">💬 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <input type="color" class="input" id="categoryColor" value="#f59e0b" style="height: 38px;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Display Name *</label>
+          <input type="text" class="input" id="categoryDisplayName" required placeholder="e.g., Price Objection">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Internal Name *</label>
+          <input type="text" class="input" id="categoryName" required placeholder="e.g., price (lowercase, no spaces)">
+          <div class="form-hint">Used in code, should be lowercase with underscores</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detection Keywords *</label>
+          <textarea class="input" id="categoryKeywords" rows="3" required placeholder="expensive, cost, afford, budget, too much (comma separated)"></textarea>
+          <div class="form-hint">Keywords that identify this type of objection in customer speech</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeCategoryModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ========== OBJECTION CATEGORIES MANAGEMENT ==========
+
+    let currentKbCategories = [];
+
+    // Switch between Scripts and Categories panels
+    window.switchKbPanel = function(panelName) {
+      // Update tab buttons
+      document.querySelectorAll('.kb-sub-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.panel === panelName);
+      });
+
+      // Update panels
+      document.querySelectorAll('.kb-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      document.getElementById(panelName + 'Panel').classList.add('active');
+
+      // Update action buttons
+      document.getElementById('addScriptBtn').style.display = panelName === 'scripts' ? '' : 'none';
+      document.getElementById('addCategoryBtn').style.display = panelName === 'categories' ? '' : 'none';
+    };
+
+    // Load categories for a knowledge base
+    window.loadCategories = async function(kbId) {
+      const panel = document.getElementById('categoriesPanel');
+
+      if (!kbId) {
+        panel.innerHTML = `
+          <div class="kb-panel-empty">
+            <div class="empty-icon">🏷️</div>
+            <p>Select a knowledge base to view categories</p>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = '<div class="kb-panel-empty"><p>Loading categories...</p></div>';
+
+      try {
+        const response = await fetch(`/api/knowledge-bases/${kbId}/categories`);
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load categories');
+        }
+
+        currentKbCategories = data.categories || [];
+
+        if (currentKbCategories.length === 0) {
+          panel.innerHTML = `
+            <div class="kb-panel-empty">
+              <div class="empty-icon">🏷️</div>
+              <p>No objection categories yet</p>
+              <p style="font-size: 0.8rem; color: var(--gray-400); margin-top: var(--spacing-sm);">Categories help identify objection types for smarter coaching</p>
+              <button class="btn btn-primary" style="margin-top: var(--spacing-md);" onclick="showAddCategoryModal()">+ Add Category</button>
+            </div>
+          `;
+          return;
+        }
+
+        renderCategories(currentKbCategories);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        panel.innerHTML = `
+          <div class="kb-panel-empty">
+            <div class="empty-icon">⚠️</div>
+            <p>Error loading categories: ${error.message}</p>
+          </div>
+        `;
+      }
+    };
+
+    function renderCategories(categories) {
+      const panel = document.getElementById('categoriesPanel');
+
+      const html = categories.map(cat => `
+        <div class="category-card ${cat.name}" style="border-left-color: ${cat.color || '#f59e0b'};">
+          <div class="category-card-header">
+            <div class="category-card-title">
+              <span class="category-icon">${cat.icon || '📝'}</span>
+              <div>
+                <div class="category-name">${cat.display_name}</div>
+                <div class="category-internal-name">${cat.name}</div>
+              </div>
+            </div>
+            <div class="category-card-actions">
+              <button class="category-action-btn" onclick="editCategory('${cat.id}')" title="Edit">✏️</button>
+              <button class="category-action-btn delete" onclick="deleteCategory('${cat.id}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+          <div class="category-keywords">
+            ${(cat.detection_keywords || []).slice(0, 8).map(kw => `<span class="category-keyword">${kw}</span>`).join('')}
+            ${(cat.detection_keywords || []).length > 8 ? `<span class="category-keyword">+${cat.detection_keywords.length - 8} more</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      panel.innerHTML = html;
+    }
+
+    // Show add category modal
+    window.showAddCategoryModal = function() {
+      document.getElementById('categoryModalTitle').textContent = 'Add Objection Category';
+      document.getElementById('categoryForm').reset();
+      document.getElementById('categoryId').value = '';
+      document.getElementById('categoryColor').value = '#f59e0b';
+      document.getElementById('categoryModal').classList.add('show');
+    };
+
+    // Edit category
+    window.editCategory = function(categoryId) {
+      const category = currentKbCategories.find(c => c.id === categoryId);
+      if (!category) return;
+
+      document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+      document.getElementById('categoryId').value = category.id;
+      document.getElementById('categoryIcon').value = category.icon || '📝';
+      document.getElementById('categoryColor').value = category.color || '#f59e0b';
+      document.getElementById('categoryDisplayName').value = category.display_name;
+      document.getElementById('categoryName').value = category.name;
+      document.getElementById('categoryKeywords').value = (category.detection_keywords || []).join(', ');
+
+      document.getElementById('categoryModal').classList.add('show');
+    };
+
+    // Save category
+    window.saveCategory = async function(event) {
+      event.preventDefault();
+
+      const categoryId = document.getElementById('categoryId').value;
+      const isEdit = !!categoryId;
+
+      const keywords = document.getElementById('categoryKeywords').value
+        .split(',')
+        .map(k => k.trim().toLowerCase())
+        .filter(k => k.length > 0);
+
+      const categoryData = {
+        knowledge_base_id: selectedKnowledgeBaseId,
+        icon: document.getElementById('categoryIcon').value,
+        color: document.getElementById('categoryColor').value,
+        display_name: document.getElementById('categoryDisplayName').value,
+        name: document.getElementById('categoryName').value.toLowerCase().replace(/\s+/g, '_'),
+        detection_keywords: keywords
+      };
+
+      try {
+        const url = isEdit ? `/api/objection-categories/${categoryId}` : '/api/objection-categories';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(categoryData)
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to save category');
+        }
+
+        closeCategoryModal();
+        loadCategories(selectedKnowledgeBaseId);
+
+      } catch (error) {
+        console.error('Error saving category:', error);
+        alert('Error saving category: ' + error.message);
+      }
+    };
+
+    // Delete category
+    window.deleteCategory = async function(categoryId) {
+      if (!confirm('Are you sure you want to delete this category?')) return;
+
+      try {
+        const response = await fetch(`/api/objection-categories/${categoryId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to delete category');
+        }
+
+        loadCategories(selectedKnowledgeBaseId);
+
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Error deleting category: ' + error.message);
+      }
+    };
+
+    // Close modal
+    window.closeCategoryModal = function() {
+      document.getElementById('categoryModal').classList.remove('show');
+    };
+
+    // Update selectKnowledgeBase to also load categories
+    const originalSelectKnowledgeBase = window.selectKnowledgeBase;
+    window.selectKnowledgeBase = function(id, name) {
+      // Call original function
+      if (originalSelectKnowledgeBase) {
+        originalSelectKnowledgeBase(id, name);
+      }
+
+      // Show sub-tabs and action buttons
+      document.getElementById('kbSubTabs').style.display = '';
+      document.getElementById('kbSubTabActions').style.display = '';
+
+      // Load categories
+      loadCategories(id);
+    };
+  </script>
 </body>
 </html>

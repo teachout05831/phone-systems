@@ -434,6 +434,29 @@ function openEditKBModal(kb) {
 
 ---
 
+### Issue: Call fails with "Cannot read properties of null (reading 'classList')"
+
+**Error:** `Failed to connect call: Cannot read properties of null (reading 'classList')`
+
+**Root Cause:** UI redesign removed elements that JavaScript still referenced:
+- `sessionPauseBtn` - doesn't exist but `sessionTracker.updateUI()` accessed `pauseBtn.classList`
+- Multiple sessionTracker functions accessed DOM elements without null checks
+- `handleCallDisconnected`, `toggleMute`, `toggleHold` accessed elements without optional chaining
+
+**Fix:** Added null checks and optional chaining (`?.`) to all DOM element accesses in:
+1. `sessionTracker.updateUI()` - wrapped statusBadge and pauseBtn accesses in null checks
+2. `sessionTracker.updateUIWithTimes()` - added null checks for all element references
+3. `handleCallDisconnected()` - added `?.` to endCallBtn, muteBtn, holdBtn
+4. `toggleMute()` and `toggleHold()` - added `?.` to all classList accesses
+5. `showCallUI()` and `hideCallUI()` - added `?.` to all element accesses
+6. Multiple other functions referencing redesigned-out elements
+
+**Files:** `twilio-ai-coach/public/call.html`
+
+**Pattern:** After UI redesign, always search for `getElementById` calls and verify elements still exist. Add null checks (`?.` or `if (el)`) for any elements that may have been removed.
+
+---
+
 ## Add New Fixes Here
 
 When you fix something new, add it to the appropriate section above.

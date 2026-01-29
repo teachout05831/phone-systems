@@ -14,8 +14,8 @@
     /* Call-specific styles */
     .call-page {
       display: grid;
-      grid-template-columns: 280px 320px 1fr;
-      gap: var(--spacing-lg);
+      grid-template-columns: 240px 320px 1fr;
+      gap: var(--spacing-md);
       height: 100%;
       overflow: hidden;
     }
@@ -523,6 +523,330 @@
     .ai-tip-card.script-match.opener {
       border-left-color: #f59e0b;
       background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+
+    /* ========================================
+       SAY THIS NOW Card Styles
+       ======================================== */
+    .say-this-now-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+      border: 2px solid #f59e0b;
+      animation: slideIn 0.3s ease-out, pulse-border 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+      50% { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stn-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+
+    .stn-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .stn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      background: rgba(255,255,255,0.25);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .stn-badge-icon {
+      font-size: 0.85rem;
+    }
+
+    .stn-progress {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background: #fef3c7;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      font-size: 0.75rem;
+      color: #92400e;
+      border-bottom: 1px solid #fcd34d;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fcd34d;
+      transition: background 0.2s ease;
+    }
+
+    .progress-dot.active {
+      background: #f59e0b;
+      transform: scale(1.2);
+    }
+
+    .progress-dot.completed {
+      background: #22c55e;
+    }
+
+    .stn-body {
+      padding: var(--spacing-md);
+    }
+
+    .stn-script {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--gray-900);
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--gray-300);
+      position: relative;
+    }
+
+    .stn-copy-btn {
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stn-copy-btn:hover {
+      background: var(--primary-dark, #4338ca);
+      transform: scale(1.05);
+    }
+
+    .stn-copy-btn.copied {
+      background: #22c55e;
+    }
+
+    .stn-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: #dbeafe;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .stn-tip-icon {
+      flex-shrink: 0;
+    }
+
+    .stn-story {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .stn-story-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: transparent;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stn-story-toggle:hover {
+      background: var(--gray-100);
+    }
+
+    .stn-story-content {
+      margin-top: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background: #f0f9ff;
+      border-radius: var(--radius-md);
+      border-left: 3px solid #3b82f6;
+      font-size: 0.85rem;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+
+    .stn-story-content.hidden {
+      display: none;
+    }
+
+    .stn-listen-for {
+      border-top: 1px solid var(--gray-200);
+      padding-top: var(--spacing-md);
+    }
+
+    .stn-listen-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .stn-responses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+    }
+
+    .stn-response-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stn-response-chip:hover {
+      background: #e0e7ff;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .stn-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .stn-feedback {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .stn-feedback-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 5px 10px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stn-feedback-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .stn-feedback-btn.used {
+      background: #dcfce7;
+      border-color: #22c55e;
+      color: #166534;
+    }
+
+    .stn-feedback-btn.helpful-yes {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #1e40af;
+    }
+
+    .stn-feedback-btn.helpful-no {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #dc2626;
+    }
+
+    .stn-flow-info {
+      font-size: 0.65rem;
+      color: var(--gray-400);
+    }
+
+    /* Category-specific colors for SAY THIS NOW */
+    .say-this-now-card.price { border-color: #f59e0b; }
+    .say-this-now-card.price .stn-header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+    .say-this-now-card.timing { border-color: #3b82f6; }
+    .say-this-now-card.timing .stn-header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .say-this-now-card.timing .stn-progress { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+    .say-this-now-card.timing .progress-dot { background: #93c5fd; }
+    .say-this-now-card.timing .progress-dot.active { background: #3b82f6; }
+
+    .say-this-now-card.authority { border-color: #8b5cf6; }
+    .say-this-now-card.authority .stn-header { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .say-this-now-card.authority .stn-progress { background: #ede9fe; border-color: #c4b5fd; color: #5b21b6; }
+    .say-this-now-card.authority .progress-dot { background: #c4b5fd; }
+    .say-this-now-card.authority .progress-dot.active { background: #8b5cf6; }
+
+    .say-this-now-card.trust { border-color: #ec4899; }
+    .say-this-now-card.trust .stn-header { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+    .say-this-now-card.trust .stn-progress { background: #fce7f3; border-color: #f9a8d4; color: #9d174d; }
+    .say-this-now-card.trust .progress-dot { background: #f9a8d4; }
+    .say-this-now-card.trust .progress-dot.active { background: #ec4899; }
+
+    .say-this-now-card.competitor { border-color: #14b8a6; }
+    .say-this-now-card.competitor .stn-header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    .say-this-now-card.competitor .stn-progress { background: #ccfbf1; border-color: #5eead4; color: #115e59; }
+    .say-this-now-card.competitor .progress-dot { background: #5eead4; }
+    .say-this-now-card.competitor .progress-dot.active { background: #14b8a6; }
+
+    .say-this-now-card.no_need { border-color: #6b7280; }
+    .say-this-now-card.no_need .stn-header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+    .say-this-now-card.no_need .stn-progress { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+    .say-this-now-card.no_need .progress-dot { background: #d1d5db; }
+    .say-this-now-card.no_need .progress-dot.active { background: #6b7280; }
+
+    /* Dimmed previous cards */
+    .say-this-now-card.previous {
+      opacity: 0.5;
+      animation: none;
+      border-width: 1px;
+    }
+
+    .say-this-now-card.previous .stn-header {
+      background: var(--gray-400);
     }
 
     .script-header {
@@ -1362,6 +1686,1115 @@
       flex-direction: column;
       align-items: center;
     }
+
+    /* =====================================================
+       DESIGN 6 - NEW STYLES
+       ===================================================== */
+
+    /* Session Stats Mini Bar (at top of queue column) */
+    .session-stats-mini {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      border: 1px solid #7dd3fc;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .session-stats-mini:hover {
+      background: linear-gradient(135deg, #bae6fd, #7dd3fc);
+    }
+
+    .session-stats-mini .stats-collapsed {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-stats-mini .stat-group {
+      display: flex;
+      gap: 16px;
+    }
+
+    .session-stats-mini .stat {
+      text-align: center;
+    }
+
+    .session-stats-mini .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0369a1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .session-stats-mini .stat-label {
+      font-size: 0.6rem;
+      color: #0c4a6e;
+      text-transform: uppercase;
+    }
+
+    .session-stats-mini .expand-icon {
+      color: #0369a1;
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .session-stats-mini.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .session-stats-mini .stats-expanded {
+      display: none;
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid #7dd3fc;
+    }
+
+    .session-stats-mini.expanded .stats-expanded {
+      display: block;
+    }
+
+    .session-stats-mini .mini-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .session-stats-mini .mini-stat-box {
+      background: white;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+
+    .session-stats-mini .mini-stat-box .value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .session-stats-mini .mini-stat-box .value.talk { color: #16a34a; }
+    .session-stats-mini .mini-stat-box .value.idle { color: #d97706; }
+    .session-stats-mini .mini-stat-box .value.break { color: #6b7280; }
+
+    .session-stats-mini .mini-stat-box .label {
+      font-size: 0.6rem;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .session-stats-mini .mini-productivity {
+      background: white;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+
+    .session-stats-mini .mini-productivity .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      margin-bottom: 4px;
+    }
+
+    .session-stats-mini .mini-productivity .bar {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .session-stats-mini .mini-productivity .bar-segment {
+      height: 100%;
+    }
+
+    .session-stats-mini .mini-productivity .bar-segment.talk { background: #16a34a; }
+    .session-stats-mini .mini-productivity .bar-segment.idle { background: #d97706; }
+    .session-stats-mini .mini-productivity .bar-segment.break { background: #6b7280; }
+
+    .session-stats-mini .mini-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .session-stats-mini .mini-controls button {
+      flex: 1;
+      padding: 6px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .session-stats-mini .mini-controls .btn-break {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .session-stats-mini .mini-controls .btn-break:hover {
+      background: #fde68a;
+    }
+
+    .session-stats-mini .mini-controls .btn-end {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .session-stats-mini .mini-controls .btn-end:hover {
+      background: #fecaca;
+    }
+
+    /* Queue Column Updates */
+    .queue-column {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .queue-column .queue-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Center Column - Dialer + Customer */
+    .center-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Compact Dialer */
+    .compact-dialer {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .compact-dialer .dialer-display {
+      padding: 16px;
+      text-align: center;
+      background: linear-gradient(135deg, #fefce8, #fef9c3);
+      border-bottom: 1px solid #fde047;
+    }
+
+    .compact-dialer .dialer-number {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: 0.5px;
+    }
+
+    .compact-dialer .dialer-number input {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: 0.5px;
+      border: none;
+      background: transparent;
+      text-align: center;
+      width: 100%;
+      outline: none;
+    }
+
+    .compact-dialer .dialer-number input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .compact-dialer .dialer-status {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+
+    .compact-dialer .dialer-status.calling {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .compact-dialer .dialer-status.ringing {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .compact-dialer .dialer-timer {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--success);
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, monospace;
+    }
+
+    .compact-dialer .dialer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .compact-dialer .dialer-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .compact-dialer .dialer-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .compact-dialer .dialer-btn.call {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+
+    .compact-dialer .dialer-btn.end {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .compact-dialer .dialer-btn.mute,
+    .compact-dialer .dialer-btn.hold {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .compact-dialer .dialer-btn.mute:hover,
+    .compact-dialer .dialer-btn.hold:hover {
+      background: var(--gray-200);
+    }
+
+    .compact-dialer .dialer-btn.mute.active {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .compact-dialer .dialer-btn.hold.active {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .compact-dialer .dialer-btn.transfer {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+    }
+
+    .compact-dialer .dialer-btn.transfer:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    }
+
+    /* In-Call Control Bar */
+    .in-call-controls {
+      display: none;
+      padding: 12px;
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .in-call-controls.visible {
+      display: block;
+    }
+
+    .call-controls-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .call-control-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 56px;
+    }
+
+    .call-control-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+    }
+
+    .call-control-btn .icon {
+      font-size: 1.2rem;
+    }
+
+    .call-control-btn.mute.active {
+      background: #fbbf24;
+      color: #78350f;
+      border-color: #fbbf24;
+    }
+
+    .call-control-btn.hold.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .call-control-btn.end {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-color: #ef4444;
+    }
+
+    .call-control-btn.end:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    .call-control-btn.transfer {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      border-color: #8b5cf6;
+    }
+
+    .call-control-btn.transfer:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    }
+
+    /* Transfer Modal */
+    .transfer-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .transfer-modal.visible {
+      display: flex;
+    }
+
+    .transfer-modal-content {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .transfer-modal h3 {
+      margin: 0 0 16px 0;
+      font-size: 1.1rem;
+      color: var(--gray-900);
+    }
+
+    .transfer-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .transfer-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .transfer-option:hover {
+      background: var(--gray-100);
+      border-color: var(--primary);
+    }
+
+    .transfer-option .icon {
+      font-size: 1.3rem;
+    }
+
+    .transfer-option .label {
+      flex: 1;
+    }
+
+    .transfer-option .label strong {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--gray-900);
+    }
+
+    .transfer-option .label span {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .transfer-input-group {
+      margin-bottom: 16px;
+    }
+
+    .transfer-input-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+
+    .transfer-input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+    }
+
+    .transfer-modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .transfer-modal-actions button {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .transfer-modal-actions .cancel-btn {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .transfer-modal-actions .cancel-btn:hover {
+      background: var(--gray-200);
+    }
+
+    .transfer-modal-actions .transfer-btn {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      border: none;
+      color: white;
+    }
+
+    .transfer-modal-actions .transfer-btn:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    }
+
+    /* Contact Search Bar */
+    .contact-search-bar {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-200);
+      position: relative;
+    }
+
+    .contact-search-bar input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      background: var(--gray-50);
+    }
+
+    .contact-search-bar input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .contact-search-bar .search-results {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 12px;
+      right: 12px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-height: 250px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .contact-search-bar .search-results.visible {
+      display: block;
+    }
+
+    .contact-search-bar .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.15s;
+    }
+
+    .contact-search-bar .search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .contact-search-bar .search-result-item:hover {
+      background: var(--gray-50);
+    }
+
+    .contact-search-bar .search-result-item .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .contact-search-bar .search-result-item .info {
+      flex: 1;
+    }
+
+    .contact-search-bar .search-result-item .info .name {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--gray-900);
+    }
+
+    .contact-search-bar .search-result-item .info .phone {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .contact-search-bar .search-result-item .call-btn {
+      padding: 6px 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .contact-search-bar .no-results {
+      padding: 16px;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 0.85rem;
+    }
+
+    .compact-dialer .dialpad-toggle {
+      text-align: center;
+      padding: 8px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .compact-dialer .dialpad-toggle:hover {
+      background: var(--gray-100);
+    }
+
+    .compact-dialer .dialpad-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px;
+      background: var(--gray-50);
+    }
+
+    .compact-dialer .dialpad-grid.visible {
+      display: grid;
+    }
+
+    .compact-dialer .dialpad-btn {
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .compact-dialer .dialpad-btn:hover {
+      background: var(--gray-100);
+    }
+
+    /* Customer Panel with Tabs */
+    .customer-tabbed-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .customer-tabbed-panel .customer-header {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+      border-bottom: 1px solid #e9d5ff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .customer-tabbed-panel .customer-avatar {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .customer-tabbed-panel .customer-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .customer-tabbed-panel .customer-info h3 {
+      font-size: 1rem;
+      color: var(--gray-900);
+      margin: 0 0 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .customer-tabbed-panel .customer-info .meta {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .customer-tabbed-panel .customer-tags {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .customer-tabbed-panel .customer-tag {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      font-weight: 500;
+    }
+
+    .customer-tabbed-panel .customer-tag.hot { background: #fee2e2; color: #dc2626; }
+    .customer-tabbed-panel .customer-tag.source { background: #dbeafe; color: #1d4ed8; }
+    .customer-tabbed-panel .customer-tag.new { background: #dcfce7; color: #166534; }
+
+    /* Tab Navigation */
+    .customer-tabbed-panel .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .customer-tabbed-panel .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .customer-tabbed-panel .tab-btn:hover {
+      color: var(--gray-700);
+      background: var(--gray-100);
+    }
+
+    .customer-tabbed-panel .tab-btn.active {
+      color: #7c3aed;
+      border-bottom-color: #7c3aed;
+      background: white;
+    }
+
+    /* Tab Content */
+    .customer-tabbed-panel .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-md);
+    }
+
+    .customer-tabbed-panel .tab-pane {
+      display: none;
+    }
+
+    .customer-tabbed-panel .tab-pane.active {
+      display: block;
+    }
+
+    /* Profile Tab Styles */
+    .profile-section {
+      margin-bottom: 16px;
+    }
+
+    .profile-section h4 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .profile-row .label {
+      color: var(--gray-600);
+    }
+
+    .profile-row .value {
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .profile-row .value a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .profile-row .value a:hover {
+      text-decoration: underline;
+    }
+
+    /* Tags Section Styles */
+    .tags-section {
+      border-top: 1px solid var(--gray-200);
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+      min-height: 28px;
+    }
+
+    .tags-container .no-tags {
+      color: var(--gray-400);
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
+    .tags-container .contact-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      border: 1px solid #7dd3fc;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      color: #0369a1;
+      font-weight: 500;
+    }
+
+    .tags-container .contact-tag.hot {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border-color: #f87171;
+      color: #b91c1c;
+    }
+
+    .tags-container .contact-tag.vip {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-color: #fbbf24;
+      color: #b45309;
+    }
+
+    .tags-container .contact-tag .remove-tag {
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      opacity: 0.6;
+      margin-left: 2px;
+    }
+
+    .tags-container .contact-tag .remove-tag:hover {
+      opacity: 1;
+    }
+
+    .add-tag-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .add-tag-row input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+    }
+
+    .add-tag-row input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .add-tag-btn {
+      padding: 6px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .add-tag-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .suggested-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .suggested-tag {
+      padding: 3px 8px;
+      background: var(--gray-100);
+      border: 1px dashed var(--gray-300);
+      border-radius: 10px;
+      font-size: 0.65rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .suggested-tag:hover {
+      background: var(--gray-200);
+      border-color: var(--gray-400);
+      color: var(--gray-800);
+    }
+
+    /* Activity Tab Styles */
+    .activity-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .activity-item .activity-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .activity-item .activity-icon.call { background: #dcfce7; }
+    .activity-item .activity-icon.sms { background: #dbeafe; }
+    .activity-item .activity-icon.note { background: #fef3c7; }
+    .activity-item .activity-icon.email { background: #f3e8ff; }
+    .activity-item .activity-icon.created { background: #e0f2fe; }
+
+    .activity-item .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-item .activity-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .activity-item .activity-desc {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-item .activity-time {
+      font-size: 0.65rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* Notes Tab Styles */
+    .note-input-area {
+      margin-bottom: 12px;
+    }
+
+    .note-input-area textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      resize: none;
+      font-family: inherit;
+    }
+
+    .note-input-area textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .note-input-area button {
+      margin-top: 6px;
+      padding: 6px 12px;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .note-input-area button:hover {
+      background: #6d28d9;
+    }
+
+    .note-item {
+      padding: 10px;
+      background: #fefce8;
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      border-left: 3px solid #facc15;
+    }
+
+    .note-item .note-text {
+      font-size: 0.8rem;
+      color: var(--gray-900);
+      line-height: 1.4;
+    }
+
+    .note-item .note-meta {
+      font-size: 0.65rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* History Tab Styles */
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .history-item .history-icon {
+      font-size: 1rem;
+    }
+
+    .history-item .history-info {
+      flex: 1;
+    }
+
+    .history-item .history-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .history-item .history-date {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+    }
+
+    .history-item .history-outcome {
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.65rem;
+      font-weight: 500;
+    }
+
+    .history-item .history-outcome.connected { background: #dcfce7; color: #166534; }
+    .history-item .history-outcome.no-answer { background: #fee2e2; color: #dc2626; }
+    .history-item .history-outcome.callback { background: #dbeafe; color: #1d4ed8; }
+    .history-item .history-outcome.booked { background: #d1fae5; color: #065f46; }
+
+    /* Empty state for tabs */
+    .tab-empty-state {
+      text-align: center;
+      padding: var(--spacing-xl);
+      color: var(--gray-500);
+    }
+
+    .tab-empty-state .empty-icon {
+      font-size: 2rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    /* Right Column - AI + Transcript */
+    .call-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Hide old time tracking panel in new layout */
+    .time-tracking-panel {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -1471,6 +2904,10 @@
 
         <!-- Settings -->
         <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="coaching-lab.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🧪</span>
+            <span class="sidebar-nav-label">Coaching Lab</span>
+          </a>
           <a href="settings.html" class="sidebar-nav-item">
             <span class="sidebar-nav-icon">⚙️</span>
             <span class="sidebar-nav-label">Settings</span>
@@ -1522,335 +2959,358 @@
       <!-- Main Content Area -->
       <main class="main-content-area" style="padding: var(--spacing-md);">
         <div class="call-page">
-        <!-- Auto-Dialer Queue Panel -->
-        <div class="card queue-panel" id="queuePanel">
-          <div class="queue-header">
-            <h3>Call Queue</h3>
-            <div class="queue-controls">
-              <button class="btn btn-sm btn-secondary" onclick="clearQueue()" title="Clear Queue">Clear</button>
-            </div>
-          </div>
 
-          <!-- Auto-Dial Toggle -->
-          <div class="auto-dial-toggle">
-            <span id="autoDialLabel">Auto-Dial</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <button class="btn btn-sm" id="pauseBtn" onclick="togglePause()" style="display: none; padding: 4px 8px; font-size: 0.75rem;">⏸️ Pause</button>
-              <label class="toggle-switch" for="autoDialToggle">
-                <input type="checkbox" id="autoDialToggle" onchange="handleAutoDialToggle(this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="delay-setting">
-            <span>Delay between calls:</span>
-            <select id="dialDelay">
-              <option value="0">None</option>
-              <option value="3" selected>3 sec</option>
-              <option value="5">5 sec</option>
-              <option value="10">10 sec</option>
-            </select>
-          </div>
-
-          <!-- Queue Stats -->
-          <div class="queue-stats">
-            <div class="queue-stat">
-              <span>Total:</span>
-              <span class="queue-stat-value" id="queueTotal">0</span>
-            </div>
-            <div class="queue-stat">
-              <span>Done:</span>
-              <span class="queue-stat-value" id="queueCompleted">0</span>
-            </div>
-            <div class="queue-stat">
-              <span>Left:</span>
-              <span class="queue-stat-value" id="queueRemaining">0</span>
-            </div>
-          </div>
-
-          <!-- Queue List -->
-          <div class="queue-list" id="queueList">
-            <div class="queue-empty">
-              <div class="queue-empty-icon">📋</div>
-              <div>No numbers in queue</div>
-              <div style="font-size: 0.75rem; margin-top: 4px;">Add numbers below to get started</div>
-            </div>
-          </div>
-
-          <!-- Add to Queue Section -->
-          <div class="queue-add-section">
-            <div class="queue-add-input">
-              <input type="tel" class="input input-sm" id="queuePhoneInput" placeholder="Add number...">
-              <button class="btn btn-sm btn-primary" onclick="addToQueue()">+</button>
-            </div>
-            <div style="margin-top: var(--spacing-sm);">
-              <button class="btn btn-sm btn-secondary" style="width: 100%;" onclick="showBulkAddModal()">
-                Bulk Add Numbers
-              </button>
-            </div>
-          </div>
-
-          <!-- Time Tracking Panel -->
-          <div class="time-tracking-panel" id="timeTrackingPanel">
-            <div class="time-tracking-header" onclick="toggleTimeTrackingPanel()">
-              <div class="time-tracking-title">
-                <span>Session Stats</span>
-                <span class="session-status inactive" id="sessionStatusBadge">Not Started</span>
-              </div>
-              <button class="time-tracking-collapse-btn" title="Collapse">&#9660;</button>
-            </div>
-            <div class="time-tracking-body">
-              <!-- Main Working Time Timer -->
-              <div class="session-main-timer">
-                <div class="timer-label">Working Time</div>
-                <div class="timer-value" id="sessionWorkingTime">0:00:00</div>
-              </div>
-
-              <!-- Time Stats Grid (Talk, Idle, Break) -->
-              <div class="session-stats-grid">
-                <div class="session-stat-item">
-                  <div class="stat-value talk-time" id="sessionTalkTime">0:00</div>
-                  <div class="stat-label">Talk Time</div>
+        <!-- =====================================================
+             COLUMN 1: QUEUE COLUMN (Session Stats + Queue)
+             ===================================================== -->
+        <div class="queue-column">
+          <!-- Session Stats Mini Bar (Collapsible) -->
+          <div class="session-stats-mini" id="sessionStatsMini" onclick="toggleSessionStatsMini()">
+            <div class="stats-collapsed">
+              <div class="stat-group">
+                <div class="stat">
+                  <div class="stat-value" id="miniSessionTime">0:00:00</div>
+                  <div class="stat-label">Session</div>
                 </div>
-                <div class="session-stat-item">
-                  <div class="stat-value idle-time" id="sessionIdleTime">0:00</div>
-                  <div class="stat-label">Idle Time</div>
-                </div>
-                <div class="session-stat-item">
-                  <div class="stat-value break-time" id="sessionBreakTime">0:00</div>
-                  <div class="stat-label">Break Time</div>
+                <div class="stat">
+                  <div class="stat-value" id="miniCallCount">0</div>
+                  <div class="stat-label">Calls</div>
                 </div>
               </div>
-
-              <!-- Productivity Bar -->
-              <div class="productivity-bar-container">
-                <div class="productivity-bar-label">
+              <span class="expand-icon">&#9660;</span>
+            </div>
+            <div class="stats-expanded">
+              <div class="mini-stats-grid">
+                <div class="mini-stat-box">
+                  <div class="value talk" id="miniTalkTime">0:00</div>
+                  <div class="label">Talk</div>
+                </div>
+                <div class="mini-stat-box">
+                  <div class="value idle" id="miniIdleTime">0:00</div>
+                  <div class="label">Idle</div>
+                </div>
+                <div class="mini-stat-box">
+                  <div class="value break" id="miniBreakTime">0:00</div>
+                  <div class="label">Break</div>
+                </div>
+              </div>
+              <div class="mini-productivity">
+                <div class="bar-label">
                   <span>Productivity</span>
-                  <span id="productivityPercent">0%</span>
+                  <span id="miniProductivityPercent">0%</span>
                 </div>
-                <div class="productivity-bar">
-                  <div class="productivity-segment talk" id="productivityTalk" style="width: 0%"></div>
-                  <div class="productivity-segment idle" id="productivityIdle" style="width: 0%"></div>
-                  <div class="productivity-segment break" id="productivityBreak" style="width: 0%"></div>
+                <div class="bar">
+                  <div class="bar-segment talk" id="miniProductivityTalk" style="width: 0%"></div>
+                  <div class="bar-segment idle" id="miniProductivityIdle" style="width: 0%"></div>
+                  <div class="bar-segment break" id="miniProductivityBreak" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="mini-controls">
+                <button class="btn-break" onclick="event.stopPropagation(); toggleSessionPause()">
+                  <span id="miniPauseBtnText">Break</span>
+                </button>
+                <button class="btn-end" onclick="event.stopPropagation(); endSession()">End</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Queue Panel -->
+          <div class="card queue-panel" id="queuePanel">
+            <div class="queue-header">
+              <h3>Call Queue</h3>
+              <div class="queue-controls">
+                <button class="btn btn-sm btn-secondary" onclick="clearQueue()" title="Clear Queue">Clear</button>
+              </div>
+            </div>
+
+            <!-- Auto-Dial Toggle -->
+            <div class="auto-dial-toggle">
+              <span id="autoDialLabel">Auto-Dial</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-sm" id="pauseBtn" onclick="togglePause()" style="display: none; padding: 4px 8px; font-size: 0.75rem;">⏸️ Pause</button>
+                <label class="toggle-switch" for="autoDialToggle">
+                  <input type="checkbox" id="autoDialToggle" onchange="handleAutoDialToggle(this.checked)">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="delay-setting">
+              <span>Delay:</span>
+              <select id="dialDelay">
+                <option value="0">None</option>
+                <option value="3" selected>3s</option>
+                <option value="5">5s</option>
+                <option value="10">10s</option>
+              </select>
+            </div>
+
+            <!-- Queue Stats -->
+            <div class="queue-stats">
+              <div class="queue-stat">
+                <span>Total:</span>
+                <span class="queue-stat-value" id="queueTotal">0</span>
+              </div>
+              <div class="queue-stat">
+                <span>Done:</span>
+                <span class="queue-stat-value" id="queueCompleted">0</span>
+              </div>
+              <div class="queue-stat">
+                <span>Left:</span>
+                <span class="queue-stat-value" id="queueRemaining">0</span>
+              </div>
+            </div>
+
+            <!-- Queue List -->
+            <div class="queue-list" id="queueList">
+              <div class="queue-empty">
+                <div class="queue-empty-icon">📋</div>
+                <div>No numbers in queue</div>
+                <div style="font-size: 0.75rem; margin-top: 4px;">Add numbers below</div>
+              </div>
+            </div>
+
+            <!-- Add to Queue Section -->
+            <div class="queue-add-section">
+              <div class="queue-add-input">
+                <input type="tel" class="input input-sm" id="queuePhoneInput" placeholder="Add number...">
+                <button class="btn btn-sm btn-primary" onclick="addToQueue()">+</button>
+              </div>
+              <div style="margin-top: var(--spacing-sm);">
+                <button class="btn btn-sm btn-secondary" style="width: 100%;" onclick="showBulkAddModal()">
+                  Bulk Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden old time tracking panel for JS compatibility -->
+          <div class="time-tracking-panel" id="timeTrackingPanel" style="display: none;">
+            <div class="time-tracking-body">
+              <div class="timer-value" id="sessionWorkingTime">0:00:00</div>
+              <div class="stat-value" id="sessionTalkTime">0:00</div>
+              <div class="stat-value" id="sessionIdleTime">0:00</div>
+              <div class="stat-value" id="sessionBreakTime">0:00</div>
+              <span id="productivityPercent">0%</span>
+              <div id="productivityTalk"></div>
+              <div id="productivityIdle"></div>
+              <div id="productivityBreak"></div>
+              <div id="sessionTotalCalls">0</div>
+              <div id="sessionConnectedCalls">0</div>
+              <div id="sessionCallsPerHour">0.0</div>
+              <span id="sessionStatusBadge"></span>
+              <span id="pauseBtnIcon"></span>
+              <span id="pauseBtnText"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- =====================================================
+             COLUMN 2: CENTER COLUMN (Compact Dialer + Customer Tabs)
+             ===================================================== -->
+        <div class="center-column">
+          <!-- Compact Dialer -->
+          <div class="compact-dialer">
+            <!-- Contact Search -->
+            <div class="contact-search-bar">
+              <input type="text" id="contactSearchInput" placeholder="Search contacts..." oninput="searchContacts(this.value)">
+              <div class="search-results" id="contactSearchResults"></div>
+            </div>
+
+            <div class="dialer-display">
+              <div class="dialer-number">
+                <input type="tel" id="phoneInput" placeholder="Enter number to call">
+              </div>
+              <div class="dialer-status" id="callState">Ready</div>
+              <div class="dialer-timer" id="callTimer" style="display: none;">0:00</div>
+              <!-- Hidden element for compatibility -->
+              <div id="phoneNumber" style="display: none;">Enter number to call</div>
+            </div>
+
+            <div class="dialer-controls">
+              <button class="dialer-btn call" id="callBtn" title="Call">📞</button>
+            </div>
+
+            <!-- In-Call Control Bar -->
+            <div class="in-call-controls" id="inCallControls">
+              <div class="call-controls-row">
+                <button class="call-control-btn mute" id="callControlMute" onclick="toggleMute()" title="Mute">
+                  <span class="icon">🔇</span>
+                  <span>Mute</span>
+                </button>
+                <button class="call-control-btn hold" id="callControlHold" onclick="toggleHold()" title="Hold">
+                  <span class="icon">⏸️</span>
+                  <span>Hold</span>
+                </button>
+                <button class="call-control-btn" onclick="toggleDialpad()" title="Keypad">
+                  <span class="icon">⌨️</span>
+                  <span>Keypad</span>
+                </button>
+                <button class="call-control-btn transfer" onclick="openTransferModal()" title="Transfer">
+                  <span class="icon">↗️</span>
+                  <span>Transfer</span>
+                </button>
+                <button class="call-control-btn" onclick="addQuickNote()" title="Note">
+                  <span class="icon">📝</span>
+                  <span>Note</span>
+                </button>
+                <button class="call-control-btn end" id="callControlEnd" onclick="endCall()" title="End Call">
+                  <span class="icon">📵</span>
+                  <span>End</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="dialpad-toggle" onclick="toggleDialpad()">
+              <span id="dialpadToggleText">Show Keypad</span> ▼
+            </div>
+
+            <div class="dialpad-grid" id="dialpadGrid">
+              <button class="dialpad-btn" onclick="dialDigit('1')">1</button>
+              <button class="dialpad-btn" onclick="dialDigit('2')">2</button>
+              <button class="dialpad-btn" onclick="dialDigit('3')">3</button>
+              <button class="dialpad-btn" onclick="dialDigit('4')">4</button>
+              <button class="dialpad-btn" onclick="dialDigit('5')">5</button>
+              <button class="dialpad-btn" onclick="dialDigit('6')">6</button>
+              <button class="dialpad-btn" onclick="dialDigit('7')">7</button>
+              <button class="dialpad-btn" onclick="dialDigit('8')">8</button>
+              <button class="dialpad-btn" onclick="dialDigit('9')">9</button>
+              <button class="dialpad-btn" onclick="dialDigit('*')">*</button>
+              <button class="dialpad-btn" onclick="dialDigit('0')">0</button>
+              <button class="dialpad-btn" onclick="dialDigit('#')">#</button>
+            </div>
+
+            <!-- Hidden elements for compatibility -->
+            <button class="dialer-btn mute hidden" id="muteBtn" title="Mute">🔇</button>
+            <button class="dialer-btn end hidden" id="endCallBtn" title="End Call">📵</button>
+            <button class="dialer-btn hold hidden" id="holdBtn" title="Hold">⏸️</button>
+          </div>
+
+          <!-- Customer Tabbed Panel -->
+          <div class="customer-tabbed-panel" id="customerTabbedPanel">
+            <div class="customer-header">
+              <div class="customer-avatar" id="customerAvatar">?</div>
+              <div class="customer-info">
+                <h3 id="customerName">No Contact Selected</h3>
+                <div class="meta" id="customerMeta">Select a contact or enter a number</div>
+              </div>
+              <div class="customer-tags" id="customerTags">
+                <!-- Tags will be inserted dynamically -->
+              </div>
+            </div>
+
+            <div class="tab-nav">
+              <button class="tab-btn active" onclick="switchCustomerTab('profile')">Profile</button>
+              <button class="tab-btn" onclick="switchCustomerTab('activity')">Activity</button>
+              <button class="tab-btn" onclick="switchCustomerTab('notes')">Notes</button>
+              <button class="tab-btn" onclick="switchCustomerTab('history')">History</button>
+            </div>
+
+            <div class="tab-content">
+              <!-- Profile Tab -->
+              <div class="tab-pane active" id="tab-profile">
+                <div class="profile-section">
+                  <h4>Contact Details</h4>
+                  <div class="profile-row">
+                    <span class="label">Phone</span>
+                    <span class="value" id="profilePhone">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Email</span>
+                    <span class="value" id="profileEmail">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Company</span>
+                    <span class="value" id="profileCompany">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Website</span>
+                    <span class="value" id="profileWebsite">-</span>
+                  </div>
+                </div>
+                <div class="profile-section">
+                  <h4>Lead Info</h4>
+                  <div class="profile-row">
+                    <span class="label">Source</span>
+                    <span class="value" id="profileSource">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Campaign</span>
+                    <span class="value" id="profileCampaign">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Status</span>
+                    <span class="value" id="profileStatus">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Value</span>
+                    <span class="value" id="profileValue">-</span>
+                  </div>
+                  <div class="profile-row">
+                    <span class="label">Created</span>
+                    <span class="value" id="profileCreated">-</span>
+                  </div>
+                </div>
+
+                <div class="profile-section tags-section">
+                  <h4>Tags</h4>
+                  <div class="tags-container" id="profileTags">
+                    <span class="no-tags">No tags yet</span>
+                  </div>
+                  <div class="add-tag-row">
+                    <input type="text" id="newTagInput" placeholder="Add a tag..." onkeypress="if(event.key==='Enter') addContactTag()">
+                    <button class="add-tag-btn" onclick="addContactTag()">+</button>
+                  </div>
+                  <div class="suggested-tags" id="suggestedTags">
+                    <span class="suggested-tag" onclick="addSuggestedTag('Hot Lead')">Hot Lead</span>
+                    <span class="suggested-tag" onclick="addSuggestedTag('Follow Up')">Follow Up</span>
+                    <span class="suggested-tag" onclick="addSuggestedTag('Interested')">Interested</span>
+                    <span class="suggested-tag" onclick="addSuggestedTag('Not Interested')">Not Interested</span>
+                    <span class="suggested-tag" onclick="addSuggestedTag('Call Back')">Call Back</span>
+                    <span class="suggested-tag" onclick="addSuggestedTag('VIP')">VIP</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Call Metrics -->
-              <div class="call-metrics-row">
-                <div class="call-metric">
-                  <div class="metric-value" id="sessionTotalCalls">0</div>
-                  <div class="metric-label">Calls Made</div>
-                </div>
-                <div class="call-metric">
-                  <div class="metric-value" id="sessionConnectedCalls">0</div>
-                  <div class="metric-label">Connected</div>
-                </div>
-                <div class="call-metric">
-                  <div class="metric-value" id="sessionCallsPerHour">0.0</div>
-                  <div class="metric-label">Calls/Hour</div>
+              <!-- Activity Tab -->
+              <div class="tab-pane" id="tab-activity">
+                <div id="activityList">
+                  <div class="tab-empty-state">
+                    <div class="empty-icon">📋</div>
+                    <div>No activity yet</div>
+                    <div style="font-size: 0.75rem; margin-top: 4px;">Activity will appear here once a contact is selected</div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Session Controls -->
-              <div class="session-controls">
-                <button class="btn btn-pause" id="sessionPauseBtn" onclick="toggleSessionPause()">
-                  <span id="pauseBtnIcon">&#9616;&#9616;</span> <span id="pauseBtnText">Break</span>
-                </button>
-                <button class="btn btn-end" id="sessionEndBtn" onclick="endSession()">
-                  End Session
-                </button>
+              <!-- Notes Tab -->
+              <div class="tab-pane" id="tab-notes">
+                <div class="note-input-area">
+                  <textarea id="callNotes" rows="3" placeholder="Add a note about this customer..."></textarea>
+                  <button onclick="saveCustomerNote()">Save Note</button>
+                </div>
+                <div id="notesList">
+                  <!-- Notes will be inserted dynamically -->
+                </div>
+              </div>
+
+              <!-- History Tab -->
+              <div class="tab-pane" id="tab-history">
+                <div id="historyList">
+                  <div class="tab-empty-state">
+                    <div class="empty-icon">📞</div>
+                    <div>No call history</div>
+                    <div style="font-size: 0.75rem; margin-top: 4px;">Previous calls will appear here</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Center Sidebar (Dial Pad & Controls) -->
-        <div class="call-sidebar">
-          <!-- Call Status Card -->
-          <div class="card">
-            <div class="card-body">
-              <div class="call-status-display">
-                <div id="phoneNumber" style="font-size: 1.25rem; font-weight: 600; color: var(--gray-700); margin-bottom: var(--spacing-md);">
-                  Enter number to call
-                </div>
-                <div class="call-timer" id="callTimer">0:00</div>
-                <div class="call-state" id="callState">Ready</div>
-              </div>
-
-              <!-- Dial Pad (shown when not in call) -->
-              <div id="dialPadContainer">
-                <input type="tel" class="input input-lg mt-4" id="phoneInput" placeholder="+1 (___) ___-____">
-                <div class="dial-pad mt-3">
-                  <button class="dial-btn" data-digit="1">1</button>
-                  <button class="dial-btn" data-digit="2">2</button>
-                  <button class="dial-btn" data-digit="3">3</button>
-                  <button class="dial-btn" data-digit="4">4</button>
-                  <button class="dial-btn" data-digit="5">5</button>
-                  <button class="dial-btn" data-digit="6">6</button>
-                  <button class="dial-btn" data-digit="7">7</button>
-                  <button class="dial-btn" data-digit="8">8</button>
-                  <button class="dial-btn" data-digit="9">9</button>
-                  <button class="dial-btn" data-digit="*">*</button>
-                  <button class="dial-btn" data-digit="0">0</button>
-                  <button class="dial-btn" data-digit="#">#</button>
-                </div>
-              </div>
-
-              <!-- Call Controls -->
-              <div class="call-controls mt-4">
-                <button class="call-control-btn mute hidden" id="muteBtn" title="Mute">
-                  🔇
-                </button>
-                <button class="call-control-btn call" id="callBtn" title="Call">
-                  📞
-                </button>
-                <button class="call-control-btn end-call hidden" id="endCallBtn" title="End Call">
-                  📵
-                </button>
-                <button class="call-control-btn mute hidden" id="holdBtn" title="Hold">
-                  ⏸️
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Lead Source Card -->
-          <div class="lead-source-card" id="leadSourceCard">
-            <div class="lead-source-header">
-              <h3 class="lead-source-title">
-                <span>📍</span> Lead Source
-              </h3>
-              <button class="btn btn-sm btn-secondary" id="toggleLeadSourceBtn" onclick="toggleLeadSourceEdit()">Edit</button>
-            </div>
-            <div class="lead-source-body">
-              <!-- Compact Display (default view) -->
-              <div id="leadSourceDisplay">
-                <div class="lead-source-display" id="leadSourceSummary">
-                  <span class="source-icon">❓</span>
-                  <div class="source-info">
-                    <div class="source-name">Not set</div>
-                    <div class="source-category">Click edit to set lead source</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Edit Mode (hidden by default) -->
-              <div id="leadSourceEdit" class="hidden">
-                <!-- Source Selection Grid -->
-                <div class="lead-source-grid">
-                  <button class="lead-source-btn facebook" data-source="facebook" onclick="selectLeadSource('facebook')">
-                    <span class="source-icon">📘</span>
-                    <span class="source-label">Facebook</span>
-                  </button>
-                  <button class="lead-source-btn google" data-source="google" onclick="selectLeadSource('google')">
-                    <span class="source-icon">🔍</span>
-                    <span class="source-label">Google</span>
-                  </button>
-                  <button class="lead-source-btn instagram" data-source="instagram" onclick="selectLeadSource('instagram')">
-                    <span class="source-icon">📷</span>
-                    <span class="source-label">Instagram</span>
-                  </button>
-                  <button class="lead-source-btn tiktok" data-source="tiktok" onclick="selectLeadSource('tiktok')">
-                    <span class="source-icon">🎵</span>
-                    <span class="source-label">TikTok</span>
-                  </button>
-                  <button class="lead-source-btn linkedin" data-source="linkedin" onclick="selectLeadSource('linkedin')">
-                    <span class="source-icon">💼</span>
-                    <span class="source-label">LinkedIn</span>
-                  </button>
-                  <button class="lead-source-btn referral" data-source="referral" onclick="selectLeadSource('referral')">
-                    <span class="source-icon">🤝</span>
-                    <span class="source-label">Referral</span>
-                  </button>
-                  <button class="lead-source-btn website" data-source="website" onclick="selectLeadSource('website')">
-                    <span class="source-icon">🌐</span>
-                    <span class="source-label">Website</span>
-                  </button>
-                  <button class="lead-source-btn cold-call" data-source="cold-call" onclick="selectLeadSource('cold-call')">
-                    <span class="source-icon">📞</span>
-                    <span class="source-label">Cold Call</span>
-                  </button>
-                  <button class="lead-source-btn other" data-source="other" onclick="selectLeadSource('other')">
-                    <span class="source-icon">📋</span>
-                    <span class="source-label">Other</span>
-                  </button>
-                </div>
-
-                <!-- Custom Source Input (shown when "Other" selected) -->
-                <div class="lead-custom-source hidden" id="customSourceInput">
-                  <input type="text" class="input" id="customSourceName" placeholder="Enter custom source...">
-                </div>
-
-                <!-- Category Section -->
-                <div class="lead-category-section" id="leadCategorySection">
-                  <div class="lead-category-label">Category</div>
-                  <div class="lead-category-chips" id="leadCategoryChips">
-                    <button class="lead-category-chip" data-category="ad" onclick="selectLeadCategory('ad')">Paid Ad</button>
-                    <button class="lead-category-chip" data-category="organic" onclick="selectLeadCategory('organic')">Organic</button>
-                    <button class="lead-category-chip" data-category="direct" onclick="selectLeadCategory('direct')">Direct</button>
-                    <button class="lead-category-chip" data-category="retargeting" onclick="selectLeadCategory('retargeting')">Retargeting</button>
-                    <button class="lead-category-chip" data-category="email" onclick="selectLeadCategory('email')">Email</button>
-                    <button class="lead-category-chip" data-category="sms" onclick="selectLeadCategory('sms')">SMS</button>
-                  </div>
-                </div>
-
-                <!-- Campaign/Ad Details -->
-                <div class="lead-campaign-section" id="leadCampaignSection">
-                  <div class="lead-campaign-row">
-                    <div class="form-group">
-                      <label class="form-label">Campaign Name</label>
-                      <input type="text" class="input" id="leadCampaignName" placeholder="e.g., Summer 2025">
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">Ad Set / Ad Name</label>
-                      <input type="text" class="input" id="leadAdName" placeholder="e.g., Video Ad 1">
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Save Button -->
-                <div class="mt-3 flex gap-2 justify-end">
-                  <button class="btn btn-secondary" onclick="cancelLeadSourceEdit()">Cancel</button>
-                  <button class="btn btn-primary" onclick="saveLeadSource()">Save</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Customer History Card -->
-          <div class="card customer-info-card" id="customerInfoCard" style="display: none;">
-            <div class="card-header">
-              <h3 class="card-title">Customer History</h3>
-            </div>
-            <div class="card-body">
-              <div id="customerHistory">
-                <div class="text-sm text-muted">No previous history</div>
-              </div>
-              <div class="mt-3">
-                <label class="form-label">Notes</label>
-                <textarea class="input" id="callNotes" rows="3" placeholder="Add notes about this call..."></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Scripts Card -->
-          <div class="card" id="scriptsCard" style="display: none;">
-            <div class="card-header">
-              <h3 class="card-title">Quick Scripts</h3>
-            </div>
-            <div class="card-body">
-              <div class="scripts-grid">
-                <button class="btn btn-secondary btn-sm" onclick="showScript('intro')">Intro</button>
-                <button class="btn btn-secondary btn-sm" onclick="showScript('pricing')">Pricing</button>
-                <button class="btn btn-secondary btn-sm" onclick="showScript('objections')">Objections</button>
-                <button class="btn btn-secondary btn-sm" onclick="showScript('close')">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main Panel - AI Coaching + Transcript (50/50 split) -->
+        <!-- =====================================================
+             COLUMN 3: RIGHT COLUMN (AI Coach + Transcript)
+             ===================================================== -->
         <div class="call-main">
           <!-- AI Coaching Panel (Left - 50%) -->
           <div class="ai-coaching-panel" id="aiCoachingPanel">
@@ -2068,6 +3528,57 @@
       </div>
       <div class="modal-body">
         <div id="scriptContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfer Call Modal -->
+  <div class="transfer-modal" id="transferModal">
+    <div class="transfer-modal-content">
+      <h3>Transfer Call</h3>
+
+      <div class="transfer-options">
+        <div class="transfer-option" onclick="selectTransferType('blind')">
+          <span class="icon">📞</span>
+          <div class="label">
+            <strong>Blind Transfer</strong>
+            <span>Transfer immediately without announcing</span>
+          </div>
+        </div>
+        <div class="transfer-option" onclick="selectTransferType('warm')">
+          <span class="icon">🤝</span>
+          <div class="label">
+            <strong>Warm Transfer</strong>
+            <span>Announce caller before transferring</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="transfer-input-group">
+        <label>Transfer to:</label>
+        <input type="tel" id="transferNumber" placeholder="Enter phone number or extension">
+      </div>
+
+      <div class="transfer-modal-actions">
+        <button class="cancel-btn" onclick="closeTransferModal()">Cancel</button>
+        <button class="transfer-btn" onclick="executeTransfer()">Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Note Modal -->
+  <div class="transfer-modal" id="quickNoteModal">
+    <div class="transfer-modal-content">
+      <h3>Add Quick Note</h3>
+
+      <div class="transfer-input-group">
+        <label>Note:</label>
+        <textarea id="quickNoteText" rows="4" placeholder="Enter note about this call..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 0.9rem; resize: vertical;"></textarea>
+      </div>
+
+      <div class="transfer-modal-actions">
+        <button class="cancel-btn" onclick="closeQuickNoteModal()">Cancel</button>
+        <button class="transfer-btn" onclick="saveQuickNote()">Save Note</button>
       </div>
     </div>
   </div>
@@ -2799,25 +4310,25 @@
 
       // Update UI with specific times (for running display)
       updateUIWithTimes(talkTime, idleTime, breakTime) {
-        // Working time
-        document.getElementById('sessionWorkingTime').textContent =
-          this.formatDuration(this.totalDuration);
-
-        // Add on-call class when in talk mode
+        // Working time (with null checks for redesigned UI)
         const workingTimeEl = document.getElementById('sessionWorkingTime');
-        if (this.currentMode === 'talk') {
-          workingTimeEl.classList.add('on-call');
-        } else {
-          workingTimeEl.classList.remove('on-call');
+        if (workingTimeEl) {
+          workingTimeEl.textContent = this.formatDuration(this.totalDuration);
+          // Add on-call class when in talk mode
+          if (this.currentMode === 'talk') {
+            workingTimeEl.classList.add('on-call');
+          } else {
+            workingTimeEl.classList.remove('on-call');
+          }
         }
 
-        // Time stats
-        document.getElementById('sessionTalkTime').textContent =
-          this.formatDurationShort(talkTime);
-        document.getElementById('sessionIdleTime').textContent =
-          this.formatDurationShort(idleTime);
-        document.getElementById('sessionBreakTime').textContent =
-          this.formatDurationShort(breakTime);
+        // Time stats (with null checks)
+        const talkTimeEl = document.getElementById('sessionTalkTime');
+        const idleTimeEl = document.getElementById('sessionIdleTime');
+        const breakTimeEl = document.getElementById('sessionBreakTime');
+        if (talkTimeEl) talkTimeEl.textContent = this.formatDurationShort(talkTime);
+        if (idleTimeEl) idleTimeEl.textContent = this.formatDurationShort(idleTime);
+        if (breakTimeEl) breakTimeEl.textContent = this.formatDurationShort(breakTime);
 
         // Productivity bar
         const total = talkTime + idleTime + breakTime;
@@ -2826,57 +4337,70 @@
           const idlePercent = (idleTime / total) * 100;
           const breakPercent = (breakTime / total) * 100;
 
-          document.getElementById('productivityTalk').style.width = talkPercent + '%';
-          document.getElementById('productivityIdle').style.width = idlePercent + '%';
-          document.getElementById('productivityBreak').style.width = breakPercent + '%';
-          document.getElementById('productivityPercent').textContent =
-            Math.round(talkPercent) + '%';
+          const prodTalk = document.getElementById('productivityTalk');
+          const prodIdle = document.getElementById('productivityIdle');
+          const prodBreak = document.getElementById('productivityBreak');
+          const prodPercent = document.getElementById('productivityPercent');
+          if (prodTalk) prodTalk.style.width = talkPercent + '%';
+          if (prodIdle) prodIdle.style.width = idlePercent + '%';
+          if (prodBreak) prodBreak.style.width = breakPercent + '%';
+          if (prodPercent) prodPercent.textContent = Math.round(talkPercent) + '%';
         }
 
-        // Call metrics
-        document.getElementById('sessionTotalCalls').textContent = this.totalCalls;
-        document.getElementById('sessionConnectedCalls').textContent = this.connectedCalls;
+        // Call metrics (with null checks)
+        const totalCallsEl = document.getElementById('sessionTotalCalls');
+        const connectedCallsEl = document.getElementById('sessionConnectedCalls');
+        if (totalCallsEl) totalCallsEl.textContent = this.totalCalls;
+        if (connectedCallsEl) connectedCallsEl.textContent = this.connectedCalls;
 
         // Calls per hour
         const hours = this.totalDuration / 3600;
         const callsPerHour = hours > 0 ? (this.totalCalls / hours).toFixed(1) : '0.0';
-        document.getElementById('sessionCallsPerHour').textContent = callsPerHour;
+        const callsPerHourEl = document.getElementById('sessionCallsPerHour');
+        if (callsPerHourEl) callsPerHourEl.textContent = callsPerHour;
       },
 
       // Update UI
       updateUI() {
         // Status badge
         const statusBadge = document.getElementById('sessionStatusBadge');
-        if (this.status === 'active') {
-          statusBadge.textContent = 'Active';
-          statusBadge.className = 'session-status active';
-        } else if (this.status === 'paused') {
-          statusBadge.textContent = 'On Break';
-          statusBadge.className = 'session-status paused';
-        } else {
-          statusBadge.textContent = 'Not Started';
-          statusBadge.className = 'session-status inactive';
+        if (statusBadge) {
+          if (this.status === 'active') {
+            statusBadge.textContent = 'Active';
+            statusBadge.className = 'session-status active';
+          } else if (this.status === 'paused') {
+            statusBadge.textContent = 'On Break';
+            statusBadge.className = 'session-status paused';
+          } else {
+            statusBadge.textContent = 'Not Started';
+            statusBadge.className = 'session-status inactive';
+          }
         }
 
-        // Pause button
+        // Pause button (may not exist in redesigned UI)
         const pauseBtn = document.getElementById('sessionPauseBtn');
         const pauseBtnIcon = document.getElementById('pauseBtnIcon');
         const pauseBtnText = document.getElementById('pauseBtnText');
 
         if (this.status === 'paused' || this.currentMode === 'break') {
-          pauseBtnIcon.innerHTML = '&#9658;'; // Play icon
-          pauseBtnText.textContent = 'Resume';
-          pauseBtn.classList.remove('btn-pause');
-          pauseBtn.classList.add('btn-primary');
+          if (pauseBtnIcon) pauseBtnIcon.innerHTML = '&#9658;'; // Play icon
+          if (pauseBtnText) pauseBtnText.textContent = 'Resume';
+          pauseBtn?.classList.remove('btn-pause');
+          pauseBtn?.classList.add('btn-primary');
         } else {
-          pauseBtnIcon.innerHTML = '&#9616;&#9616;'; // Pause icon
-          pauseBtnText.textContent = 'Break';
-          pauseBtn.classList.add('btn-pause');
-          pauseBtn.classList.remove('btn-primary');
+          if (pauseBtnIcon) pauseBtnIcon.innerHTML = '&#9616;&#9616;'; // Pause icon
+          if (pauseBtnText) pauseBtnText.textContent = 'Break';
+          pauseBtn?.classList.add('btn-pause');
+          pauseBtn?.classList.remove('btn-primary');
         }
 
         // Update times
         this.updateUIWithTimes(this.talkTime, this.idleTime, this.breakTime);
+
+        // Update mini session stats (Design 6)
+        if (typeof updateMiniSessionStats === 'function') {
+          updateMiniSessionStats();
+        }
       },
 
       // Format duration as H:MM:SS
@@ -3464,10 +4988,13 @@ What do you say?`
       const editEl = document.getElementById('leadSourceEdit');
       const toggleBtn = document.getElementById('toggleLeadSourceBtn');
 
+      // Skip if elements don't exist (UI redesign)
+      if (!displayEl && !editEl && !toggleBtn) return;
+
       if (leadSourceEditMode) {
-        displayEl.classList.add('hidden');
-        editEl.classList.remove('hidden');
-        toggleBtn.textContent = 'Cancel';
+        displayEl?.classList.add('hidden');
+        editEl?.classList.remove('hidden');
+        if (toggleBtn) toggleBtn.textContent = 'Cancel';
 
         // Restore current values if any
         if (leadSourceData.source) {
@@ -3477,18 +5004,21 @@ What do you say?`
           selectLeadCategory(leadSourceData.category, false);
         }
         if (leadSourceData.campaignName) {
-          document.getElementById('leadCampaignName').value = leadSourceData.campaignName;
+          const el = document.getElementById('leadCampaignName');
+          if (el) el.value = leadSourceData.campaignName;
         }
         if (leadSourceData.adName) {
-          document.getElementById('leadAdName').value = leadSourceData.adName;
+          const el = document.getElementById('leadAdName');
+          if (el) el.value = leadSourceData.adName;
         }
         if (leadSourceData.customSource) {
-          document.getElementById('customSourceName').value = leadSourceData.customSource;
+          const el = document.getElementById('customSourceName');
+          if (el) el.value = leadSourceData.customSource;
         }
       } else {
-        displayEl.classList.remove('hidden');
-        editEl.classList.add('hidden');
-        toggleBtn.textContent = 'Edit';
+        displayEl?.classList.remove('hidden');
+        editEl?.classList.add('hidden');
+        if (toggleBtn) toggleBtn.textContent = 'Edit';
       }
     }
 
@@ -3508,10 +5038,10 @@ What do you say?`
       // Show/hide custom source input
       const customInput = document.getElementById('customSourceInput');
       if (source === 'other') {
-        customInput.classList.remove('hidden');
-        document.getElementById('customSourceName').focus();
+        customInput?.classList.remove('hidden');
+        document.getElementById('customSourceName')?.focus();
       } else {
-        customInput.classList.add('hidden');
+        customInput?.classList.add('hidden');
         leadSourceData.customSource = null;
       }
     }
@@ -3571,6 +5101,7 @@ What do you say?`
 
     function updateLeadSourceDisplay() {
       const summaryEl = document.getElementById('leadSourceSummary');
+      if (!summaryEl) return; // Element not in current UI
 
       if (!leadSourceData.source) {
         summaryEl.innerHTML = `
@@ -3620,22 +5151,29 @@ What do you say?`
         adName: null
       };
 
-      // Reset UI
+      // Reset UI (with null checks for redesigned UI)
       document.querySelectorAll('.lead-source-btn').forEach(btn => btn.classList.remove('selected'));
       document.querySelectorAll('.lead-category-chip').forEach(chip => chip.classList.remove('selected'));
-      document.getElementById('leadCampaignName').value = '';
-      document.getElementById('leadAdName').value = '';
-      document.getElementById('customSourceName').value = '';
-      document.getElementById('customSourceInput').classList.add('hidden');
+
+      const leadCampaignName = document.getElementById('leadCampaignName');
+      const leadAdName = document.getElementById('leadAdName');
+      const customSourceName = document.getElementById('customSourceName');
+      const customSourceInput = document.getElementById('customSourceInput');
+
+      if (leadCampaignName) leadCampaignName.value = '';
+      if (leadAdName) leadAdName.value = '';
+      if (customSourceName) customSourceName.value = '';
+      if (customSourceInput) customSourceInput.classList.add('hidden');
 
       updateLeadSourceDisplay();
 
       // Make sure we're in display mode
       if (leadSourceEditMode) {
         leadSourceEditMode = false;
-        document.getElementById('leadSourceDisplay').classList.remove('hidden');
-        document.getElementById('leadSourceEdit').classList.add('hidden');
-        document.getElementById('toggleLeadSourceBtn').textContent = 'Edit';
+        document.getElementById('leadSourceDisplay')?.classList.remove('hidden');
+        document.getElementById('leadSourceEdit')?.classList.add('hidden');
+        const toggleBtn = document.getElementById('toggleLeadSourceBtn');
+        if (toggleBtn) toggleBtn.textContent = 'Edit';
       }
     }
 
@@ -3751,6 +5289,487 @@ What do you say?`
       if (mobileTimer && desktopTimer) {
         mobileTimer.textContent = desktopTimer.textContent;
       }
+    }
+
+    // =====================================================
+    // DESIGN 6 - NEW UI FUNCTIONS
+    // =====================================================
+
+    // Toggle session stats mini bar expand/collapse
+    function toggleSessionStatsMini() {
+      const mini = document.getElementById('sessionStatsMini');
+      if (mini) {
+        mini.classList.toggle('expanded');
+      }
+    }
+
+    // Toggle dialpad visibility
+    function toggleDialpad() {
+      const dialpad = document.getElementById('dialpadGrid');
+      const toggleText = document.getElementById('dialpadToggleText');
+      if (dialpad) {
+        dialpad.classList.toggle('visible');
+        if (toggleText) {
+          toggleText.textContent = dialpad.classList.contains('visible') ? 'Hide Keypad' : 'Show Keypad';
+        }
+      }
+    }
+
+    // Add digit to phone input (for dialpad)
+    function dialDigit(digit) {
+      const phoneInput = document.getElementById('phoneInput');
+      if (phoneInput) {
+        phoneInput.value += digit;
+        phoneInput.focus();
+      }
+    }
+
+    // Switch between customer tabs
+    function switchCustomerTab(tabId) {
+      // Remove active from all tabs and panes
+      document.querySelectorAll('.customer-tabbed-panel .tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.customer-tabbed-panel .tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+
+      // Add active to clicked tab
+      event.target.classList.add('active');
+      const pane = document.getElementById('tab-' + tabId);
+      if (pane) {
+        pane.classList.add('active');
+      }
+    }
+
+    // Save customer note
+    async function saveCustomerNote() {
+      const noteText = document.getElementById('callNotes')?.value?.trim();
+      if (!noteText) return;
+
+      // If we have a contact, save the note
+      if (currentContactId && currentUser) {
+        try {
+          await supabase.from('contact_notes').insert({
+            contact_id: currentContactId,
+            user_id: currentUser.id,
+            content: noteText,
+            created_at: new Date().toISOString()
+          });
+
+          // Add to notes list UI
+          const notesList = document.getElementById('notesList');
+          if (notesList) {
+            const noteItem = document.createElement('div');
+            noteItem.className = 'note-item';
+            noteItem.innerHTML = `
+              <div class="note-text">${noteText}</div>
+              <div class="note-meta">Just now</div>
+            `;
+            notesList.insertBefore(noteItem, notesList.firstChild);
+          }
+
+          // Clear input
+          document.getElementById('callNotes').value = '';
+        } catch (error) {
+          console.error('Error saving note:', error);
+        }
+      } else {
+        // No contact selected, just clear the input
+        alert('Please select a contact first');
+      }
+    }
+
+    // Update customer panel with contact data
+    function updateCustomerPanel(contact) {
+      if (!contact) {
+        // Reset to default
+        document.getElementById('customerAvatar').textContent = '?';
+        document.getElementById('customerName').textContent = 'No Contact Selected';
+        document.getElementById('customerMeta').textContent = 'Select a contact or enter a number';
+        document.getElementById('customerTags').innerHTML = '';
+        document.getElementById('profilePhone').textContent = '-';
+        document.getElementById('profileEmail').textContent = '-';
+        document.getElementById('profileCompany').textContent = '-';
+        document.getElementById('profileWebsite').textContent = '-';
+        document.getElementById('profileSource').textContent = '-';
+        document.getElementById('profileCampaign').textContent = '-';
+        document.getElementById('profileStatus').textContent = '-';
+        document.getElementById('profileValue').textContent = '-';
+        document.getElementById('profileCreated').textContent = '-';
+        // Reset profile tags
+        document.getElementById('profileTags').innerHTML = '<span class="no-tags">No tags yet</span>';
+        return;
+      }
+
+      // Update avatar
+      const initials = getInitials(contact.name || contact.first_name, contact.last_name);
+      document.getElementById('customerAvatar').textContent = initials || '?';
+
+      // Update name
+      const displayName = contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown';
+      document.getElementById('customerName').textContent = displayName;
+
+      // Update meta
+      const phone = contact.phone || contact.phone_number || '';
+      const email = contact.email || '';
+      document.getElementById('customerMeta').textContent = [phone, email].filter(Boolean).join(' | ') || 'No contact info';
+
+      // Update tags
+      const tagsContainer = document.getElementById('customerTags');
+      tagsContainer.innerHTML = '';
+      if (contact.lead_status === 'hot' || contact.status === 'hot') {
+        tagsContainer.innerHTML += '<span class="customer-tag hot">Hot Lead</span>';
+      }
+      if (contact.lead_source || contact.source) {
+        tagsContainer.innerHTML += `<span class="customer-tag source">${contact.lead_source || contact.source}</span>`;
+      }
+
+      // Update profile tab
+      document.getElementById('profilePhone').textContent = phone || '-';
+      document.getElementById('profileEmail').textContent = email || '-';
+      document.getElementById('profileCompany').textContent = contact.company || contact.company_name || '-';
+      document.getElementById('profileWebsite').textContent = contact.website || '-';
+      document.getElementById('profileSource').textContent = contact.lead_source || contact.source || '-';
+      document.getElementById('profileCampaign').textContent = contact.campaign || '-';
+      document.getElementById('profileStatus').textContent = contact.status || contact.lead_status || '-';
+      document.getElementById('profileValue').textContent = contact.value ? `$${contact.value.toLocaleString()}` : '-';
+      document.getElementById('profileCreated').textContent = contact.created_at ? new Date(contact.created_at).toLocaleDateString() : '-';
+
+      // Update profile tags
+      updateProfileTags(contact.tags);
+
+      // Load activity, notes, and history
+      loadCustomerActivity(contact.id);
+      loadCustomerNotes(contact.id);
+      loadCustomerHistory(contact.id);
+    }
+
+    // Get initials from name
+    function getInitials(firstName, lastName) {
+      const first = (firstName || '').charAt(0).toUpperCase();
+      const last = (lastName || '').charAt(0).toUpperCase();
+      return first + last || '?';
+    }
+
+    // Load customer activity
+    async function loadCustomerActivity(contactId) {
+      const activityList = document.getElementById('activityList');
+      if (!activityList || !contactId) return;
+
+      try {
+        // Get calls
+        const { data: calls } = await supabase
+          .from('calls')
+          .select('*')
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // Get SMS
+        const { data: messages } = await supabase
+          .from('sms_messages')
+          .select('*')
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // Combine and sort
+        const activities = [
+          ...(calls || []).map(c => ({ ...c, type: 'call', date: c.created_at })),
+          ...(messages || []).map(m => ({ ...m, type: 'sms', date: m.created_at }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+
+        if (activities.length === 0) {
+          activityList.innerHTML = `
+            <div class="tab-empty-state">
+              <div class="empty-icon">📋</div>
+              <div>No activity yet</div>
+            </div>
+          `;
+          return;
+        }
+
+        activityList.innerHTML = activities.map(a => `
+          <div class="activity-item">
+            <div class="activity-icon ${a.type}">${a.type === 'call' ? '📞' : '💬'}</div>
+            <div class="activity-content">
+              <div class="activity-title">${a.type === 'call' ? (a.direction === 'inbound' ? 'Inbound Call' : 'Outbound Call') : (a.direction === 'inbound' ? 'SMS Received' : 'SMS Sent')}</div>
+              <div class="activity-desc">${a.type === 'sms' ? (a.body || a.content || '').substring(0, 50) + '...' : (a.outcome || a.status || 'No outcome')}</div>
+              <div class="activity-time">${formatTimeAgo(a.date)}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading activity:', error);
+      }
+    }
+
+    // Tag Management Functions
+    function updateProfileTags(tags) {
+      const container = document.getElementById('profileTags');
+      if (!container) return;
+
+      // Parse tags - could be array, JSON string, or comma-separated string
+      let tagArray = [];
+      if (Array.isArray(tags)) {
+        tagArray = tags;
+      } else if (typeof tags === 'string' && tags.trim()) {
+        try {
+          tagArray = JSON.parse(tags);
+        } catch {
+          tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+        }
+      }
+
+      if (tagArray.length === 0) {
+        container.innerHTML = '<span class="no-tags">No tags yet</span>';
+        return;
+      }
+
+      container.innerHTML = tagArray.map(tag => {
+        const tagClass = getTagClass(tag);
+        return `
+          <span class="contact-tag ${tagClass}">
+            ${escapeHtml(tag)}
+            <span class="remove-tag" onclick="removeContactTag('${escapeHtml(tag)}')">&times;</span>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function getTagClass(tag) {
+      const tagLower = tag.toLowerCase();
+      if (tagLower.includes('hot') || tagLower.includes('urgent')) return 'hot';
+      if (tagLower.includes('vip') || tagLower.includes('priority')) return 'vip';
+      return '';
+    }
+
+    async function addContactTag() {
+      const input = document.getElementById('newTagInput');
+      const tag = input.value.trim();
+      if (!tag) return;
+
+      if (!currentContact || !currentContact.id) {
+        alert('No contact selected');
+        return;
+      }
+
+      try {
+        // Get current tags
+        let currentTags = [];
+        if (Array.isArray(currentContact.tags)) {
+          currentTags = currentContact.tags;
+        } else if (typeof currentContact.tags === 'string' && currentContact.tags.trim()) {
+          try {
+            currentTags = JSON.parse(currentContact.tags);
+          } catch {
+            currentTags = currentContact.tags.split(',').map(t => t.trim()).filter(Boolean);
+          }
+        }
+
+        // Check if tag already exists
+        if (currentTags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+          input.value = '';
+          return;
+        }
+
+        // Add new tag
+        currentTags.push(tag);
+
+        // Update in database
+        const { error } = await supabase
+          .from('contacts')
+          .update({ tags: currentTags })
+          .eq('id', currentContact.id);
+
+        if (error) throw error;
+
+        // Update local state and UI
+        currentContact.tags = currentTags;
+        updateProfileTags(currentTags);
+        input.value = '';
+
+        console.log('Tag added:', tag);
+      } catch (err) {
+        console.error('Error adding tag:', err);
+        alert('Failed to add tag');
+      }
+    }
+
+    function addSuggestedTag(tag) {
+      document.getElementById('newTagInput').value = tag;
+      addContactTag();
+    }
+
+    async function removeContactTag(tagToRemove) {
+      if (!currentContact || !currentContact.id) return;
+
+      try {
+        // Get current tags
+        let currentTags = [];
+        if (Array.isArray(currentContact.tags)) {
+          currentTags = currentContact.tags;
+        } else if (typeof currentContact.tags === 'string' && currentContact.tags.trim()) {
+          try {
+            currentTags = JSON.parse(currentContact.tags);
+          } catch {
+            currentTags = currentContact.tags.split(',').map(t => t.trim()).filter(Boolean);
+          }
+        }
+
+        // Remove the tag
+        currentTags = currentTags.filter(t => t !== tagToRemove);
+
+        // Update in database
+        const { error } = await supabase
+          .from('contacts')
+          .update({ tags: currentTags })
+          .eq('id', currentContact.id);
+
+        if (error) throw error;
+
+        // Update local state and UI
+        currentContact.tags = currentTags;
+        updateProfileTags(currentTags);
+
+        console.log('Tag removed:', tagToRemove);
+      } catch (err) {
+        console.error('Error removing tag:', err);
+        alert('Failed to remove tag');
+      }
+    }
+
+    // Load customer notes
+    async function loadCustomerNotes(contactId) {
+      const notesList = document.getElementById('notesList');
+      if (!notesList || !contactId) return;
+
+      try {
+        const { data: notes } = await supabase
+          .from('contact_notes')
+          .select('*')
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (!notes || notes.length === 0) {
+          notesList.innerHTML = '';
+          return;
+        }
+
+        notesList.innerHTML = notes.map(n => `
+          <div class="note-item">
+            <div class="note-text">${n.content}</div>
+            <div class="note-meta">${formatTimeAgo(n.created_at)}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading notes:', error);
+      }
+    }
+
+    // Load customer call history
+    async function loadCustomerHistory(contactId) {
+      const historyList = document.getElementById('historyList');
+      if (!historyList || !contactId) return;
+
+      try {
+        const { data: calls } = await supabase
+          .from('calls')
+          .select('*')
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (!calls || calls.length === 0) {
+          historyList.innerHTML = `
+            <div class="tab-empty-state">
+              <div class="empty-icon">📞</div>
+              <div>No call history</div>
+            </div>
+          `;
+          return;
+        }
+
+        historyList.innerHTML = calls.map(c => {
+          const outcomeClass = c.outcome === 'connected' || c.outcome === 'answered' ? 'connected' :
+                               c.outcome === 'no_answer' ? 'no-answer' :
+                               c.outcome === 'callback' ? 'callback' :
+                               c.outcome === 'booked' ? 'booked' : '';
+          return `
+            <div class="history-item">
+              <div class="history-icon">📞</div>
+              <div class="history-info">
+                <div class="history-title">${c.direction === 'inbound' ? 'Inbound Call' : 'Outbound Call'}</div>
+                <div class="history-date">${new Date(c.created_at).toLocaleString()}</div>
+              </div>
+              <span class="history-outcome ${outcomeClass}">${c.outcome || 'Unknown'}</span>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading history:', error);
+      }
+    }
+
+    // Format time ago
+    function formatTimeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+      return date.toLocaleDateString();
+    }
+
+    // Update mini session stats (called by sessionTracker)
+    function updateMiniSessionStats() {
+      const tracker = sessionTracker;
+
+      // Update mini display
+      document.getElementById('miniSessionTime').textContent = formatDuration(tracker.totalDuration);
+      document.getElementById('miniCallCount').textContent = tracker.totalCalls;
+
+      // Update expanded stats
+      document.getElementById('miniTalkTime').textContent = formatShortDuration(tracker.talkTime);
+      document.getElementById('miniIdleTime').textContent = formatShortDuration(tracker.idleTime);
+      document.getElementById('miniBreakTime').textContent = formatShortDuration(tracker.breakTime);
+
+      // Update productivity bar
+      const total = tracker.talkTime + tracker.idleTime + tracker.breakTime;
+      if (total > 0) {
+        const talkPercent = (tracker.talkTime / total * 100).toFixed(0);
+        const idlePercent = (tracker.idleTime / total * 100).toFixed(0);
+        const breakPercent = (tracker.breakTime / total * 100).toFixed(0);
+
+        document.getElementById('miniProductivityPercent').textContent = talkPercent + '%';
+        document.getElementById('miniProductivityTalk').style.width = talkPercent + '%';
+        document.getElementById('miniProductivityIdle').style.width = idlePercent + '%';
+        document.getElementById('miniProductivityBreak').style.width = breakPercent + '%';
+      }
+
+      // Update break button text
+      const pauseText = tracker.status === 'paused' ? 'Resume' : 'Break';
+      document.getElementById('miniPauseBtnText').textContent = pauseText;
+    }
+
+    // Format duration as H:MM:SS
+    function formatDuration(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Format short duration as M:SS
+    function formatShortDuration(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${String(s).padStart(2, '0')}`;
     }
 
     // Initialize
@@ -4051,6 +6070,7 @@ What do you say?`
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('[WebSocket] Received message:', data.type, data);
           handleWebSocketMessage(data);
         } catch (e) {
           console.error('Failed to parse WebSocket message:', e);
@@ -4138,30 +6158,36 @@ What do you say?`
       const modeIndicator = document.getElementById('modeIndicator');
       const modeText = document.getElementById('modeText');
 
+      // Skip if elements don't exist (UI redesign may have removed them)
+      if (!modeStatus && !modeIndicator && !modeText) {
+        console.log('Mode status elements not found, skipping update');
+        return;
+      }
+
       // Remove all status classes
-      modeStatus.classList.remove('basic', 'advanced', 'error');
-      modeIndicator.classList.remove('active', 'error');
+      modeStatus?.classList.remove('basic', 'advanced', 'error');
+      modeIndicator?.classList.remove('active', 'error');
 
       switch (status) {
         case 'connected':
-          modeStatus.classList.add('advanced');
-          modeIndicator.classList.add('active');
-          modeText.textContent = 'Advanced (Live AI)';
+          modeStatus?.classList.add('advanced');
+          modeIndicator?.classList.add('active');
+          if (modeText) modeText.textContent = 'Advanced (Live AI)';
           break;
         case 'reconnecting':
-          modeStatus.classList.add('error');
-          modeText.textContent = 'Reconnecting...';
+          modeStatus?.classList.add('error');
+          if (modeText) modeText.textContent = 'Reconnecting...';
           break;
         case 'error':
-          modeStatus.classList.add('error');
-          modeIndicator.classList.add('error');
-          modeText.textContent = 'Connection Error';
+          modeStatus?.classList.add('error');
+          modeIndicator?.classList.add('error');
+          if (modeText) modeText.textContent = 'Connection Error';
           break;
         case 'fallback':
         case 'basic':
         default:
-          modeStatus.classList.add('basic');
-          modeText.textContent = 'Basic';
+          modeStatus?.classList.add('basic');
+          if (modeText) modeText.textContent = 'Basic';
           break;
       }
     }
@@ -4207,6 +6233,7 @@ What do you say?`
     function handleWebSocketMessage(data) {
       switch (data.type) {
         case 'transcript':
+          console.log('[Transcript] Received:', data.speaker, data.isFinal ? 'FINAL' : 'interim', data.text);
           // Only show final transcripts to avoid fragmented one-word display
           if (data.isFinal) {
             addTranscriptMessage(data.speaker || 'customer', data.text, data.timestamp);
@@ -4216,10 +6243,16 @@ What do you say?`
           }
           break;
         case 'ai_coaching':
-          if (data.type === 'script') {
-            showScriptCard(data);
+          // Handle different coaching response types
+          if (data.coachingType === 'flow') {
+            // Multi-step conversation flow - show SAY THIS NOW card
+            showSayThisNowCard(data);
+          } else if (data.coachingType === 'script') {
+            // Single script match - show enhanced script card
+            showEnhancedScriptCard(data);
           } else {
-            showAICoaching(data.suggestion);
+            // AI-generated suggestion
+            showAICoachingSuggestion(data);
           }
           break;
         case 'speaking_started':
@@ -4237,13 +6270,270 @@ What do you say?`
           break;
         case 'call_ended':
           console.log('Call ended:', data.callSid);
+          // Clear any active flows
+          activeFlowState = null;
           break;
       }
     }
 
+    // Track active flow state
+    let activeFlowState = null;
+
+    // Show SAY THIS NOW card for conversation flows
+    function showSayThisNowCard(data) {
+      const container = document.getElementById('aiCoachingContent');
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.ai-empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Dim previous SAY THIS NOW cards
+      const previousCards = container.querySelectorAll('.say-this-now-card:not(.previous)');
+      previousCards.forEach(card => card.classList.add('previous'));
+
+      // Get category info
+      const categoryName = data.category?.name || 'price';
+      const categoryDisplay = data.category?.display_name || 'Objection';
+      const categoryIcon = data.category?.icon || '💬';
+
+      // Build progress dots
+      const totalSteps = data.totalSteps || 4;
+      const currentStep = data.stepNumber || 1;
+      let progressDots = '';
+      for (let i = 1; i <= totalSteps; i++) {
+        const dotClass = i < currentStep ? 'completed' : (i === currentStep ? 'active' : '');
+        progressDots += `<div class="progress-dot ${dotClass}"></div>`;
+      }
+
+      // Build expected responses chips
+      let responseChips = '';
+      if (data.expectedResponses && data.expectedResponses.length > 0) {
+        responseChips = data.expectedResponses.map(response =>
+          `<span class="stn-response-chip">${response}</span>`
+        ).join('');
+      }
+
+      const cardDiv = document.createElement('div');
+      cardDiv.className = `say-this-now-card ${categoryName}`;
+      cardDiv.dataset.flowId = data.flowId;
+      cardDiv.dataset.nodeId = data.nodeId;
+      cardDiv.innerHTML = `
+        <div class="stn-header">
+          <span class="stn-title">SAY THIS NOW</span>
+          <span class="stn-badge">
+            <span class="stn-badge-icon">${categoryIcon}</span>
+            ${categoryDisplay}
+          </span>
+        </div>
+        <div class="stn-progress">
+          <div class="progress-dots">${progressDots}</div>
+          <span>${data.flowName || 'Flow'} - Step ${currentStep} of ${totalSteps}</span>
+        </div>
+        <div class="stn-body">
+          <div class="stn-script">
+            "${data.scriptText}"
+            <button class="stn-copy-btn" onclick="copyStnScript(this)" title="Copy to clipboard">📋</button>
+          </div>
+          ${data.tips ? `
+            <div class="stn-tip">
+              <span class="stn-tip-icon">💡</span>
+              <span>${data.tips}</span>
+            </div>
+          ` : ''}
+          ${data.storyText ? `
+            <div class="stn-story">
+              <button class="stn-story-toggle" onclick="toggleStnStory(this)">📖 Show Story</button>
+              <div class="stn-story-content hidden">${data.storyText}</div>
+            </div>
+          ` : ''}
+          ${responseChips ? `
+            <div class="stn-listen-for">
+              <div class="stn-listen-label">Listen for:</div>
+              <div class="stn-responses">${responseChips}</div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="stn-footer">
+          <div class="stn-feedback">
+            <button class="stn-feedback-btn" onclick="markStnUsed(this, '${data.flowId}', '${data.nodeId}')">✓ Used</button>
+            <button class="stn-feedback-btn" onclick="markStnHelpful(this, true)">👍</button>
+            <button class="stn-feedback-btn" onclick="markStnHelpful(this, false)">👎</button>
+          </div>
+          <span class="stn-flow-info">${data.title || ''}</span>
+        </div>
+      `;
+
+      // Add to top of container
+      container.insertBefore(cardDiv, container.firstChild);
+
+      // Update active flow state
+      activeFlowState = {
+        flowId: data.flowId,
+        nodeId: data.nodeId,
+        stepNumber: currentStep
+      };
+
+      // Keep only last 5 cards
+      const allCards = container.querySelectorAll('.say-this-now-card, .ai-tip-card');
+      if (allCards.length > 5) {
+        for (let i = 5; i < allCards.length; i++) {
+          allCards[i].remove();
+        }
+      }
+
+      // Scroll to top
+      container.scrollTop = 0;
+    }
+
+    // Show enhanced script card with category info
+    function showEnhancedScriptCard(data) {
+      const container = document.getElementById('aiCoachingContent');
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.ai-empty-state');
+      if (emptyState) emptyState.remove();
+
+      // Get category info
+      const categoryName = data.category?.name || 'objection';
+      const categoryDisplay = data.category?.display_name || data.category || 'Script';
+      const categoryIcon = data.category?.icon || '📝';
+
+      const cardDiv = document.createElement('div');
+      cardDiv.className = `say-this-now-card ${categoryName}`;
+      cardDiv.dataset.scriptId = data.scriptId;
+      cardDiv.innerHTML = `
+        <div class="stn-header">
+          <span class="stn-title">TRY THIS</span>
+          <span class="stn-badge">
+            <span class="stn-badge-icon">${categoryIcon}</span>
+            ${categoryDisplay}
+          </span>
+        </div>
+        <div class="stn-body">
+          <div class="stn-script">
+            "${data.scriptText}"
+            <button class="stn-copy-btn" onclick="copyStnScript(this)" title="Copy to clipboard">📋</button>
+          </div>
+          ${data.tips ? `
+            <div class="stn-tip">
+              <span class="stn-tip-icon">💡</span>
+              <span>${data.tips}</span>
+            </div>
+          ` : ''}
+          ${data.storyText ? `
+            <div class="stn-story">
+              <button class="stn-story-toggle" onclick="toggleStnStory(this)">📖 Show Story</button>
+              <div class="stn-story-content hidden">${data.storyText}</div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="stn-footer">
+          <div class="stn-feedback">
+            <button class="stn-feedback-btn" onclick="markScriptUsed('${data.scriptId}')">✓ Used</button>
+            <button class="stn-feedback-btn" onclick="markScriptHelpful('${data.scriptId}', true)">👍</button>
+            <button class="stn-feedback-btn" onclick="markScriptHelpful('${data.scriptId}', false)">👎</button>
+          </div>
+          <span class="stn-flow-info">${data.title || ''}</span>
+        </div>
+      `;
+
+      // Add to top of container
+      container.insertBefore(cardDiv, container.firstChild);
+
+      // Keep only last 5 cards
+      const allCards = container.querySelectorAll('.say-this-now-card, .ai-tip-card');
+      if (allCards.length > 5) {
+        for (let i = 5; i < allCards.length; i++) {
+          allCards[i].remove();
+        }
+      }
+    }
+
+    // Show AI-generated coaching suggestion with category context
+    function showAICoachingSuggestion(data) {
+      const container = document.getElementById('aiCoachingContent');
+
+      // Remove empty state if present
+      const emptyState = container.querySelector('.ai-empty-state');
+      if (emptyState) emptyState.remove();
+
+      const categoryName = data.category?.name || '';
+      const categoryDisplay = data.category?.display_name || 'AI Suggestion';
+      const categoryIcon = data.category?.icon || '🤖';
+
+      const cardDiv = document.createElement('div');
+      cardDiv.className = `ai-tip-card suggestion ${categoryName}`;
+      cardDiv.innerHTML = `
+        <div class="ai-tip-header">
+          <span>${categoryIcon} ${categoryDisplay}</span>
+        </div>
+        <div class="ai-tip-text">${data.suggestion}</div>
+      `;
+
+      container.insertBefore(cardDiv, container.firstChild);
+
+      // Keep only last 10 tips
+      const tips = container.querySelectorAll('.ai-tip-card');
+      if (tips.length > 10) {
+        tips[tips.length - 1].remove();
+      }
+    }
+
+    // Copy SAY THIS NOW script text
+    async function copyStnScript(button) {
+      const scriptDiv = button.closest('.stn-script');
+      // Get text content without the button text
+      const textContent = scriptDiv.textContent.replace('📋', '').trim();
+      // Remove surrounding quotes if present
+      const cleanText = textContent.replace(/^"|"$/g, '');
+
+      try {
+        await navigator.clipboard.writeText(cleanText);
+        button.textContent = '✓';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.textContent = '📋';
+          button.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+
+    // Toggle story visibility in SAY THIS NOW card
+    function toggleStnStory(button) {
+      const storyContent = button.nextElementSibling;
+      const isHidden = storyContent.classList.contains('hidden');
+
+      storyContent.classList.toggle('hidden');
+      button.textContent = isHidden ? '📖 Hide Story' : '📖 Show Story';
+    }
+
+    // Mark SAY THIS NOW card as used
+    async function markStnUsed(button, flowId, nodeId) {
+      button.classList.add('used');
+      button.textContent = '✓ Used!';
+
+      // Could send analytics to server here
+      console.log(`Flow step used: flowId=${flowId}, nodeId=${nodeId}`);
+    }
+
+    // Mark SAY THIS NOW card as helpful/not helpful
+    function markStnHelpful(button, helpful) {
+      button.classList.add(helpful ? 'helpful-yes' : 'helpful-no');
+
+      // Disable both buttons
+      const feedback = button.closest('.stn-feedback');
+      feedback.querySelectorAll('.stn-feedback-btn').forEach(btn => {
+        if (btn !== button) btn.style.opacity = '0.5';
+      });
+    }
+
     // Handle transcription status updates from server
     function handleTranscriptionStatus(data) {
+      console.log('[Transcription Status]', data);
       const transcriptStatus = document.getElementById('transcriptStatus');
+      if (!transcriptStatus) return;
 
       switch (data.status) {
         case 'active':
@@ -4271,9 +6561,10 @@ What do you say?`
 
           // Update mode status to show degraded state
           const modeStatus = document.getElementById('callModeStatus');
-          modeStatus.classList.remove('advanced');
-          modeStatus.classList.add('error');
-          document.getElementById('modeText').textContent = 'Degraded';
+          modeStatus?.classList.remove('advanced');
+          modeStatus?.classList.add('error');
+          const modeTextEl = document.getElementById('modeText');
+          if (modeTextEl) modeTextEl.textContent = 'Degraded';
           break;
       }
     }
@@ -4293,18 +6584,18 @@ What do you say?`
 
         device.on('registered', () => {
           console.log('Twilio device registered and ready');
-          updateConnectionStatus('connected');
+          updateConnectionStatus(true);
           populateAudioDevices();
         });
 
         device.on('unregistered', () => {
           console.log('Twilio device unregistered');
-          updateConnectionStatus('disconnected');
+          updateConnectionStatus(false);
         });
 
         device.on('error', (error) => {
           console.error('Twilio device error:', error.message || error);
-          updateConnectionStatus('disconnected');
+          updateConnectionStatus(false);
         });
 
         device.on('incoming', handleIncomingCall);
@@ -4316,20 +6607,7 @@ What do you say?`
 
       } catch (error) {
         console.error('Failed to initialize Twilio:', error);
-        updateConnectionStatus('disconnected');
-      }
-    }
-
-    function updateConnectionStatus(status) {
-      const statusEl = document.getElementById('connectionStatus');
-      if (!statusEl) return;
-
-      if (status === 'connected') {
-        statusEl.className = 'connection-status connected';
-        statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Connected</span>';
-      } else {
-        statusEl.className = 'connection-status disconnected';
-        statusEl.innerHTML = '<span class="connection-dot"></span><span class="desktop-only">Disconnected</span>';
+        updateConnectionStatus(false);
       }
     }
 
@@ -4378,6 +6656,14 @@ What do you say?`
 
       // Pass call mode to server - 'basic', 'advanced', or 'twilio-realtime'
       const callMode = document.getElementById('callModeSelect').value;
+
+      // Warn if using live transcription on localhost (Twilio can't reach localhost)
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalhost && (callMode === 'advanced' || callMode === 'twilio-realtime')) {
+        console.warn('[Call] Live transcription modes require a publicly accessible server. Using ngrok? Make sure Twilio TwiML App uses your ngrok URL.');
+        showNotification('Note: Live transcription requires ngrok or a public server URL. Call will proceed but live transcription may not work on localhost.', 'warning');
+      }
+
       const params = {
         To: number,
         CallMode: callMode
@@ -4428,6 +6714,13 @@ What do you say?`
           console.log('Call was rejected');
           updateCallState('Rejected');
           hideCallUI();
+        });
+
+        // Listen for mute events to keep UI in sync
+        connection.on('mute', (isMuted) => {
+          console.log('[Mute Event] Connection mute state changed:', isMuted);
+          document.getElementById('muteBtn')?.classList.toggle('active', isMuted);
+          document.getElementById('callControlMute')?.classList.toggle('active', isMuted);
         });
 
       } catch (error) {
@@ -4667,8 +6960,10 @@ What do you say?`
       document.getElementById('transcriptContainer').innerHTML = '';
 
       // Show customer info and scripts
-      document.getElementById('customerInfoCard').style.display = 'block';
-      document.getElementById('scriptsCard').style.display = 'block';
+      const customerInfoCard = document.getElementById('customerInfoCard');
+      const scriptsCard = document.getElementById('scriptsCard');
+      if (customerInfoCard) customerInfoCard.style.display = 'block';
+      if (scriptsCard) scriptsCard.style.display = 'block';
 
       const phoneNumber = conn.parameters.To || conn.parameters.From;
 
@@ -4908,9 +7203,9 @@ What do you say?`
       updateCallState('Call ended');
 
       // Hide call control buttons since call is over
-      document.getElementById('endCallBtn').classList.add('hidden');
-      document.getElementById('muteBtn').classList.add('hidden');
-      document.getElementById('holdBtn').classList.add('hidden');
+      document.getElementById('endCallBtn')?.classList.add('hidden');
+      document.getElementById('muteBtn')?.classList.add('hidden');
+      document.getElementById('holdBtn')?.classList.add('hidden');
 
       // Calculate call duration
       const duration = callStartTime ? Math.floor((new Date() - callStartTime) / 1000) : 0;
@@ -4955,8 +7250,8 @@ What do you say?`
       }
 
       // Show outcome panel
-      document.getElementById('outcomePanel').classList.remove('hidden');
-      document.getElementById('dialPadContainer').classList.add('hidden');
+      document.getElementById('outcomePanel')?.classList.remove('hidden');
+      document.getElementById('dialPadContainer')?.classList.add('hidden');
 
       // If auto-dial is enabled and we're in a queue, prepare for next call
       // Note: Auto-dial will continue after outcome is saved (see saveOutcome)
@@ -4974,9 +7269,30 @@ What do you say?`
 
     function toggleMute() {
       if (connection) {
-        const isMuted = connection.isMuted;
-        connection.mute(!isMuted);
-        document.getElementById('muteBtn').classList.toggle('active', !isMuted);
+        // In Twilio SDK v2, isMuted() is a method that returns the current state
+        const isMuted = typeof connection.isMuted === 'function' ? connection.isMuted() : connection.isMuted;
+        console.log('[Mute] Current muted state:', isMuted, '-> toggling to:', !isMuted);
+        console.log('[Mute] Connection object:', connection);
+        console.log('[Mute] connection.mute is:', typeof connection.mute);
+
+        try {
+          connection.mute(!isMuted);
+          console.log('[Mute] mute() called successfully');
+
+          // Update visual state - when we mute, button should show active
+          const newMutedState = !isMuted;
+          document.getElementById('muteBtn')?.classList.toggle('active', newMutedState);
+          document.getElementById('callControlMute')?.classList.toggle('active', newMutedState);
+
+          // Show notification
+          showNotification(newMutedState ? 'Muted' : 'Unmuted', 'info');
+        } catch (err) {
+          console.error('[Mute] Error calling mute():', err);
+          showNotification('Mute failed: ' + err.message, 'error');
+        }
+      } else {
+        console.warn('[Mute] No active connection');
+        showNotification('Cannot mute - no active call', 'warning');
       }
     }
 
@@ -4985,40 +7301,297 @@ What do you say?`
       // In a production environment, hold would require server-side TwiML
       if (connection) {
         const holdBtn = document.getElementById('holdBtn');
-        const isOnHold = holdBtn.classList.contains('active');
+        const callControlHold = document.getElementById('callControlHold');
+        const isOnHold = holdBtn?.classList.contains('active');
 
         if (!isOnHold) {
           // Put on hold - mute the call
           connection.mute(true);
-          holdBtn.classList.add('active');
+          holdBtn?.classList.add('active');
+          callControlHold?.classList.add('active');
           updateCallState('On Hold');
         } else {
           // Resume from hold - unmute
           connection.mute(false);
-          holdBtn.classList.remove('active');
+          holdBtn?.classList.remove('active');
+          callControlHold?.classList.remove('active');
           updateCallState('Connected');
           // Also update mute button state
-          document.getElementById('muteBtn').classList.remove('active');
+          document.getElementById('muteBtn')?.classList.remove('active');
+          document.getElementById('callControlMute')?.classList.remove('active');
         }
       }
     }
 
+    // Transfer functions
+    let transferType = 'blind';
+
+    function openTransferModal() {
+      document.getElementById('transferModal').classList.add('visible');
+      document.getElementById('transferNumber').value = '';
+      document.getElementById('transferNumber').focus();
+    }
+
+    function closeTransferModal() {
+      document.getElementById('transferModal').classList.remove('visible');
+    }
+
+    function selectTransferType(type) {
+      transferType = type;
+      // Update UI to show selected
+      document.querySelectorAll('.transfer-option').forEach(opt => {
+        opt.style.borderColor = '';
+        opt.style.background = '';
+      });
+      event.currentTarget.style.borderColor = 'var(--primary)';
+      event.currentTarget.style.background = '#f0f9ff';
+    }
+
+    async function executeTransfer() {
+      const transferTo = document.getElementById('transferNumber').value.trim();
+      if (!transferTo) {
+        alert('Please enter a number to transfer to');
+        return;
+      }
+
+      if (!currentCallSid) {
+        alert('No active call to transfer');
+        closeTransferModal();
+        return;
+      }
+
+      // Format phone number if needed
+      let formattedNumber = transferTo;
+      if (!transferTo.startsWith('+')) {
+        // Assume US number if no country code
+        formattedNumber = '+1' + transferTo.replace(/\D/g, '');
+      }
+
+      console.log(`Executing ${transferType} transfer to ${formattedNumber}`);
+
+      // Show loading state
+      const transferBtn = document.querySelector('.transfer-modal-actions .transfer-btn');
+      const originalText = transferBtn.textContent;
+      transferBtn.textContent = 'Transferring...';
+      transferBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/call/transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callSid: currentCallSid,
+            transferTo: formattedNumber,
+            transferType: transferType
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('Transfer initiated:', result);
+
+          if (transferType === 'blind') {
+            // Blind transfer - call is handed off, we're done
+            updateCallState('Transferred');
+            setTimeout(() => {
+              hideCallUI();
+              updateCallState('Ready');
+            }, 2000);
+          } else {
+            // Warm transfer - we're now in a conference
+            // Store conference info for completing the transfer later
+            window.currentTransferConference = result.conferenceName;
+            updateCallState('Conference');
+
+            // Show a notification that the transfer party is being called
+            alert(`Calling ${transferTo}... You can speak with them before completing the transfer.`);
+          }
+
+          closeTransferModal();
+        } else {
+          throw new Error(result.error || 'Transfer failed');
+        }
+      } catch (error) {
+        console.error('Transfer error:', error);
+        alert('Transfer failed: ' + error.message);
+      } finally {
+        transferBtn.textContent = originalText;
+        transferBtn.disabled = false;
+      }
+    }
+
+    // Quick Note functions
+    function addQuickNote() {
+      document.getElementById('quickNoteModal').classList.add('visible');
+      document.getElementById('quickNoteText').value = '';
+      document.getElementById('quickNoteText').focus();
+    }
+
+    function closeQuickNoteModal() {
+      document.getElementById('quickNoteModal').classList.remove('visible');
+    }
+
+    async function saveQuickNote() {
+      const noteText = document.getElementById('quickNoteText').value.trim();
+      if (!noteText) {
+        alert('Please enter a note');
+        return;
+      }
+
+      try {
+        // Try to save to contact_notes if we have a contact
+        if (currentContact && currentContact.id) {
+          const { error } = await supabase
+            .from('contact_notes')
+            .insert({
+              contact_id: currentContact.id,
+              note: noteText,
+              created_at: new Date().toISOString()
+            });
+
+          if (error) throw error;
+          console.log('Quick note saved to contact');
+          showNotification('Note saved to contact', 'success');
+        }
+        // Otherwise save to call record notes if we have an active call
+        else if (currentCallRecordId) {
+          const { error } = await supabase
+            .from('calls')
+            .update({
+              notes: noteText
+            })
+            .eq('id', currentCallRecordId);
+
+          if (error) throw error;
+          console.log('Quick note saved to call record');
+          showNotification('Note saved to call', 'success');
+        }
+        // No contact or call record - show error
+        else {
+          showNotification('Could not save note - no contact or call found', 'error');
+          console.warn('No contact or call record to save note to');
+        }
+      } catch (err) {
+        console.error('Error saving note:', err);
+        showNotification('Failed to save note', 'error');
+      }
+
+      closeQuickNoteModal();
+    }
+
+    // Contact Search functions
+    let searchTimeout = null;
+
+    function searchContacts(query) {
+      const resultsContainer = document.getElementById('contactSearchResults');
+
+      if (!query || query.length < 2) {
+        resultsContainer.classList.remove('visible');
+        return;
+      }
+
+      // Debounce the search
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        try {
+          // Search in Supabase - search by name, phone, and email
+          const { data: contacts, error } = await supabase
+            .from('contacts')
+            .select('*')
+            .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`)
+            .limit(10);
+
+          if (error) throw error;
+
+          if (contacts && contacts.length > 0) {
+            resultsContainer.innerHTML = contacts.map(contact => {
+              const initials = (contact.first_name?.[0] || '') + (contact.last_name?.[0] || '');
+              const name = `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown';
+              const subtitle = contact.phone || contact.email || 'No contact info';
+              return `
+                <div class="search-result-item" onclick="selectSearchContact(${JSON.stringify(contact).replace(/"/g, '&quot;')})">
+                  <div class="avatar">${initials || '?'}</div>
+                  <div class="info">
+                    <div class="name">${name}</div>
+                    <div class="phone">${subtitle}</div>
+                  </div>
+                  ${contact.phone ? `<button class="call-btn" onclick="event.stopPropagation(); callSearchContact('${contact.phone}')">Call</button>` : ''}
+                </div>
+              `;
+            }).join('');
+          } else {
+            resultsContainer.innerHTML = '<div class="no-results">No contacts found</div>';
+          }
+
+          resultsContainer.classList.add('visible');
+        } catch (err) {
+          console.error('Search error:', err);
+          resultsContainer.innerHTML = '<div class="no-results">Search error</div>';
+          resultsContainer.classList.add('visible');
+        }
+      }, 300);
+    }
+
+    function selectSearchContact(contact) {
+      // Update the phone input
+      document.getElementById('phoneInput').value = contact.phone || '';
+      // Clear search
+      document.getElementById('contactSearchInput').value = '';
+      document.getElementById('contactSearchResults').classList.remove('visible');
+      // Update customer panel
+      currentContact = contact;
+      updateCustomerPanel(contact);
+    }
+
+    function callSearchContact(phone) {
+      document.getElementById('phoneInput').value = phone;
+      document.getElementById('contactSearchInput').value = '';
+      document.getElementById('contactSearchResults').classList.remove('visible');
+      // Trigger call
+      makeCall();
+    }
+
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+      const searchBar = document.querySelector('.contact-search-bar');
+      if (searchBar && !searchBar.contains(e.target)) {
+        document.getElementById('contactSearchResults').classList.remove('visible');
+      }
+    });
+
     // UI Updates
     function showCallUI() {
-      document.getElementById('dialPadContainer').classList.add('hidden');
-      document.getElementById('callBtn').classList.add('hidden');
-      document.getElementById('muteBtn').classList.remove('hidden');
-      document.getElementById('endCallBtn').classList.remove('hidden');
-      document.getElementById('holdBtn').classList.remove('hidden');
+      document.getElementById('dialPadContainer')?.classList.add('hidden');
+      document.getElementById('callBtn')?.classList.add('hidden');
+      document.getElementById('muteBtn')?.classList.remove('hidden');
+      document.getElementById('endCallBtn')?.classList.remove('hidden');
+      document.getElementById('holdBtn')?.classList.remove('hidden');
+      // Hide the dialer controls row (call button) and show in-call controls
+      const dialerControls = document.querySelector('.compact-dialer .dialer-controls');
+      if (dialerControls) dialerControls.style.display = 'none';
+      document.getElementById('inCallControls')?.classList.add('visible');
+      // Show call timer
+      const timerEl = document.getElementById('callTimer');
+      if (timerEl) timerEl.style.display = 'block';
     }
 
     function hideCallUI() {
-      document.getElementById('dialPadContainer').classList.remove('hidden');
-      document.getElementById('callBtn').classList.remove('hidden');
-      document.getElementById('muteBtn').classList.add('hidden');
-      document.getElementById('endCallBtn').classList.add('hidden');
-      document.getElementById('holdBtn').classList.add('hidden');
-      document.getElementById('outcomePanel').classList.add('hidden');
+      document.getElementById('dialPadContainer')?.classList.remove('hidden');
+      document.getElementById('callBtn')?.classList.remove('hidden');
+      document.getElementById('muteBtn')?.classList.add('hidden');
+      document.getElementById('endCallBtn')?.classList.add('hidden');
+      document.getElementById('holdBtn')?.classList.add('hidden');
+      document.getElementById('outcomePanel')?.classList.add('hidden');
+      // Show the dialer controls row and hide in-call controls
+      const dialerControls = document.querySelector('.compact-dialer .dialer-controls');
+      if (dialerControls) dialerControls.style.display = 'flex';
+      document.getElementById('inCallControls')?.classList.remove('visible');
+      document.getElementById('callControlMute')?.classList.remove('active');
+      document.getElementById('callControlHold')?.classList.remove('active');
+      // Hide call timer
+      const timerEl = document.getElementById('callTimer');
+      if (timerEl) timerEl.style.display = 'none';
     }
 
     function updateCallState(state) {
@@ -5801,11 +8374,13 @@ What do you say?`
       document.getElementById('transcriptStatus').className = 'badge badge-info';
 
       // Hide customer info and scripts
-      document.getElementById('customerInfoCard').style.display = 'none';
-      document.getElementById('scriptsCard').style.display = 'none';
+      const customerInfoCard = document.getElementById('customerInfoCard');
+      const scriptsCard = document.getElementById('scriptsCard');
+      if (customerInfoCard) customerInfoCard.style.display = 'none';
+      if (scriptsCard) scriptsCard.style.display = 'none';
 
       // Hide AI coach
-      document.getElementById('aiCoachBox').classList.add('hidden');
+      document.getElementById('aiCoachBox')?.classList.add('hidden');
 
       // Reset lead source
       resetLeadSource();

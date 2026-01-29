@@ -62,6 +62,10 @@ app.get('/newsfeed', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'newsfeed.html'));
 });
 
+app.get('/coaching-lab', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'coaching-lab.html'));
+});
+
 // Health check endpoint for Railway deployment and debugging
 app.get('/health', async (req, res) => {
   const startTime = Date.now();
@@ -802,6 +806,126 @@ app.post('/voice-incoming-status', (req, res) => {
   res.send(twiml.toString());
 });
 
+// ============ CALL TRANSFER ENDPOINTS ============
+
+// Blind Transfer - immediately transfer the call to another number
+app.post('/api/call/transfer', async (req, res) => {
+  const { callSid, transferTo, transferType } = req.body;
+
+  if (!callSid || !transferTo) {
+    return res.status(400).json({ success: false, error: 'Missing callSid or transferTo' });
+  }
+
+  console.log(`Transfer request: ${transferType} transfer of ${callSid} to ${transferTo}`);
+
+  try {
+    if (transferType === 'blind') {
+      // Blind transfer: Update the call with new TwiML that dials the transfer number
+      const twiml = new twilio.twiml.VoiceResponse();
+      twiml.say({ voice: 'alice' }, 'Please hold while we transfer your call.');
+
+      const dial = twiml.dial({
+        callerId: process.env.TWILIO_PHONE_NUMBER,
+        timeout: 30,
+        action: `https://${req.headers.host}/transfer-status`
+      });
+      dial.number(transferTo);
+
+      // Update the call with the new TwiML
+      await twilioClient.calls(callSid).update({
+        twiml: twiml.toString()
+      });
+
+      res.json({
+        success: true,
+        message: `Call transferred to ${transferTo}`,
+        transferType: 'blind'
+      });
+    } else {
+      // Warm transfer: Create a conference for the warm handoff
+      // First, put the current call into a conference
+      const conferenceName = `transfer-${callSid}-${Date.now()}`;
+
+      const twiml = new twilio.twiml.VoiceResponse();
+      twiml.say({ voice: 'alice' }, 'Please hold while we connect you.');
+
+      const dial = twiml.dial();
+      dial.conference({
+        startConferenceOnEnter: true,
+        endConferenceOnExit: false,
+        waitUrl: 'http://twimlets.com/holdmusic?Bucket=com.twilio.music.soft-rock'
+      }, conferenceName);
+
+      // Update the current call to join the conference
+      await twilioClient.calls(callSid).update({
+        twiml: twiml.toString()
+      });
+
+      // Make an outbound call to the transfer target and add them to the conference
+      const outboundCall = await twilioClient.calls.create({
+        to: transferTo,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        twiml: `<Response><Dial><Conference startConferenceOnEnter="true" endConferenceOnExit="true">${conferenceName}</Conference></Dial></Response>`
+      });
+
+      res.json({
+        success: true,
+        message: `Warm transfer initiated to ${transferTo}`,
+        transferType: 'warm',
+        conferenceName: conferenceName,
+        outboundCallSid: outboundCall.sid
+      });
+    }
+  } catch (error) {
+    console.error('Transfer error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Transfer failed'
+    });
+  }
+});
+
+// Transfer status callback
+app.post('/transfer-status', (req, res) => {
+  const dialStatus = req.body.DialCallStatus;
+  console.log('Transfer dial completed:', dialStatus, req.body);
+
+  const twiml = new twilio.twiml.VoiceResponse();
+
+  if (dialStatus === 'completed') {
+    // Transfer successful
+    twiml.hangup();
+  } else {
+    // Transfer failed
+    twiml.say({ voice: 'alice' }, 'We were unable to complete the transfer. Goodbye.');
+    twiml.hangup();
+  }
+
+  res.type('text/xml');
+  res.send(twiml.toString());
+});
+
+// Complete warm transfer (agent drops from conference)
+app.post('/api/call/transfer/complete', async (req, res) => {
+  const { conferenceName, agentCallSid } = req.body;
+
+  if (!conferenceName) {
+    return res.status(400).json({ success: false, error: 'Missing conferenceName' });
+  }
+
+  try {
+    // If we have the agent's call SID, we can end just their leg
+    if (agentCallSid) {
+      await twilioClient.calls(agentCallSid).update({ status: 'completed' });
+    }
+
+    res.json({ success: true, message: 'Agent dropped from conference' });
+  } catch (error) {
+    console.error('Error completing transfer:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Recording callback - store recording URL when complete
 app.post('/recording-callback', async (req, res) => {
   const { RecordingUrl, CallSid, RecordingDuration } = req.body;
@@ -928,10 +1052,13 @@ app.post('/transcription-realtime', async (req, res) => {
                 const knowledgeBaseId = callData?.knowledgeBaseId || null;
                 getAICoachingSuggestion(CallSid, transcript, knowledgeBaseId).then(coachingResult => {
                   if (coachingResult) {
+                    // Extract type and rename to coachingType to avoid conflict with message type
+                    const { type: coachingType, ...restCoaching } = coachingResult;
                     const coachMsg = {
                       type: 'ai_coaching',
+                      coachingType,
                       callSid: CallSid,
-                      ...coachingResult,
+                      ...restCoaching,
                       timestamp
                     };
                     broadcastToClients(coachMsg, (client) => client.role === 'rep');
@@ -1283,74 +1410,517 @@ app.get('/active-calls', (req, res) => {
 
 // ============ KNOWLEDGE BASE & SCRIPT MATCHING ============
 
+// Track active flows per call: callSid -> { flowId, currentNodeId, stepNumber }
+const activeCallFlows = new Map();
+
 /**
- * Detect if customer speech matches any trigger phrases in the knowledge base
+ * Detect objection category from customer text
+ * @param {string} text - Customer text to analyze
+ * @param {string} knowledgeBaseId - Knowledge base to search in
+ * @returns {Object|null} - Best matching category with score
+ */
+async function detectObjectionCategory(text, knowledgeBaseId) {
+  if (!supabase || !text) return null;
+
+  try {
+    const { data: categories, error } = await supabase
+      .from('objection_categories')
+      .select('id, name, display_name, icon, color, detection_keywords')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    if (error || !categories || categories.length === 0) return null;
+
+    const lowerText = text.toLowerCase();
+    let bestCategory = null;
+    let bestScore = 0;
+
+    for (const category of categories) {
+      if (!category.detection_keywords || category.detection_keywords.length === 0) continue;
+
+      let score = 0;
+      for (const keyword of category.detection_keywords) {
+        if (lowerText.includes(keyword.toLowerCase())) {
+          // Exact phrase match scores higher
+          score += keyword.includes(' ') ? 3 : 1;
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestCategory = { ...category, matchScore: score };
+      }
+    }
+
+    if (bestCategory && bestScore > 0) {
+      console.log(`Objection category detected: ${bestCategory.display_name} (score: ${bestScore})`);
+    }
+
+    return bestCategory;
+  } catch (error) {
+    console.error('Category detection error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get conversation flow for an objection category
+ * @param {string} categoryId - Objection category UUID
+ * @returns {Object|null} - Flow with first node
+ */
+async function getFlowForCategory(categoryId) {
+  if (!supabase || !categoryId) return null;
+
+  try {
+    // Get flow for this category
+    const { data: flows, error } = await supabase
+      .from('conversation_flows')
+      .select('id, name, description')
+      .eq('entry_category_id', categoryId)
+      .eq('is_active', true)
+      .limit(1);
+
+    if (error || !flows || flows.length === 0) return null;
+
+    const flow = flows[0];
+
+    // Get the entry node
+    const { data: nodes, error: nodeError } = await supabase
+      .from('flow_nodes')
+      .select('id, node_type, step_number, title, script_text, story_text, tips, expected_responses')
+      .eq('flow_id', flow.id)
+      .eq('node_type', 'entry')
+      .limit(1);
+
+    if (nodeError || !nodes || nodes.length === 0) return null;
+
+    // Get total steps in flow
+    const { count } = await supabase
+      .from('flow_nodes')
+      .select('*', { count: 'exact', head: true })
+      .eq('flow_id', flow.id);
+
+    return {
+      flow,
+      firstNode: nodes[0],
+      totalSteps: count || 1
+    };
+  } catch (error) {
+    console.error('Get flow error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get next node in a flow based on customer response
+ * @param {string} currentNodeId - Current node UUID
+ * @param {string} customerText - Customer's response text
+ * @returns {Object|null} - Next node or null if flow complete
+ */
+async function getNextFlowNode(currentNodeId, customerText) {
+  if (!supabase || !currentNodeId) return null;
+
+  try {
+    // Get branches from current node
+    const { data: branches, error } = await supabase
+      .from('flow_branches')
+      .select('id, to_node_id, trigger_keywords, label, is_default')
+      .eq('from_node_id', currentNodeId)
+      .order('is_default', { ascending: true })
+      .order('sort_order');
+
+    if (error || !branches || branches.length === 0) return null;
+
+    const lowerText = customerText ? customerText.toLowerCase() : '';
+    let bestBranch = null;
+    let bestScore = 0;
+
+    for (const branch of branches) {
+      if (branch.trigger_keywords && branch.trigger_keywords.length > 0) {
+        let score = 0;
+        for (const keyword of branch.trigger_keywords) {
+          if (lowerText.includes(keyword.toLowerCase())) {
+            score++;
+          }
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestBranch = branch;
+        }
+      } else if (branch.is_default && !bestBranch) {
+        bestBranch = branch;
+      }
+    }
+
+    if (!bestBranch) return null;
+
+    // Get the next node
+    const { data: nodes, error: nodeError } = await supabase
+      .from('flow_nodes')
+      .select('id, node_type, step_number, title, script_text, story_text, tips, expected_responses')
+      .eq('id', bestBranch.to_node_id)
+      .limit(1);
+
+    if (nodeError || !nodes || nodes.length === 0) return null;
+
+    return {
+      node: nodes[0],
+      branchLabel: bestBranch.label
+    };
+  } catch (error) {
+    console.error('Get next node error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * AI-powered script selection using Claude Haiku
+ * @param {string} recentCustomerText - Recent customer statements
+ * @param {Array} scripts - Available scripts with id, title, trigger_phrases
+ * @param {Array} recentTranscript - Last few transcript entries for context
+ * @param {number} timeoutMs - Timeout in milliseconds (default 800ms)
+ * @returns {Object} - { scriptIndex, aiSelected, latencyMs } - scriptIndex is array index or null
+ */
+async function selectScriptWithAI(recentCustomerText, scripts, recentTranscript, timeoutMs = 800) {
+  if (!anthropic || !scripts || scripts.length === 0) {
+    return { scriptIndex: null, aiSelected: false, latencyMs: 0 };
+  }
+
+  const startTime = Date.now();
+
+  try {
+    // Build compact script list using 1-based indices (simpler for AI than UUIDs)
+    const scriptList = scripts.map((s, idx) => {
+      const triggers = (s.trigger_phrases || []).slice(0, 5).join(', ');
+      return `${idx + 1}|${s.title}|${triggers}`;
+    }).join('\n');
+
+    // Build conversation context (last 4 turns)
+    const conversationContext = recentTranscript
+      .slice(-4)
+      .map(t => `${t.speaker === 'customer' ? 'Customer' : 'Rep'}: ${t.text}`)
+      .join('\n');
+
+    const prompt = `You are a sales coaching assistant. Select the most relevant script for the customer's objection.
+
+SCRIPTS (Number|Title|Sample Triggers):
+${scriptList}
+
+RECENT CONVERSATION:
+${conversationContext}
+
+CUSTOMER JUST SAID: "${recentCustomerText}"
+
+Instructions:
+- Return ONLY the script number (1-${scripts.length}) that best matches the customer's objection/concern
+- Return 0 if no script is a good fit
+- Consider the conversation context, not just keywords
+- Be selective - only match if there's a clear connection
+
+SCRIPT NUMBER:`;
+
+    // Use Promise.race for reliable timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI_TIMEOUT')), timeoutMs);
+    });
+
+    const apiPromise = anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 10,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const response = await Promise.race([apiPromise, timeoutPromise]);
+
+    const latencyMs = Date.now() - startTime;
+    const responseText = response.content[0]?.text?.trim() || '';
+
+    // Parse the response - expect just a number
+    const match = responseText.match(/^(\d+)/);
+    if (!match) {
+      console.log(`[AI Script Select] Invalid response: "${responseText}" (${latencyMs}ms)`);
+      return { scriptIndex: null, aiSelected: false, latencyMs };
+    }
+
+    const selectedNum = parseInt(match[1], 10);
+
+    // Return 0 means no good match
+    if (selectedNum === 0) {
+      console.log(`[AI Script Select] AI returned no match (${latencyMs}ms)`);
+      return { scriptIndex: null, aiSelected: true, latencyMs };
+    }
+
+    // Convert 1-based number to 0-based index and validate
+    const scriptIndex = selectedNum - 1;
+    if (scriptIndex < 0 || scriptIndex >= scripts.length) {
+      console.log(`[AI Script Select] Invalid script number: ${selectedNum} (${latencyMs}ms)`);
+      return { scriptIndex: null, aiSelected: false, latencyMs };
+    }
+
+    console.log(`[AI Script Select] Selected "${scripts[scriptIndex].title}" (${latencyMs}ms)`);
+    return { scriptIndex, aiSelected: true, latencyMs };
+
+  } catch (error) {
+    const latencyMs = Date.now() - startTime;
+
+    if (error.message === 'AI_TIMEOUT') {
+      console.log(`[AI Script Select] Timeout after ${latencyMs}ms, falling back to keywords`);
+    } else {
+      console.error(`[AI Script Select] Error: ${error.message} (${latencyMs}ms)`);
+    }
+
+    return { scriptIndex: null, aiSelected: false, latencyMs };
+  }
+}
+
+/**
+ * Enhanced script matching with word overlap and partial matching
+ * @param {string} text - Text to match against
+ * @param {Array} triggerPhrases - Array of trigger phrases
+ * @returns {number} - Match score
+ */
+function calculateScriptMatchScore(text, triggerPhrases) {
+  if (!text || !triggerPhrases || triggerPhrases.length === 0) return 0;
+
+  const lowerText = text.toLowerCase();
+  const textWords = lowerText.split(/\s+/).filter(w => w.length > 2);
+  let score = 0;
+
+  for (const phrase of triggerPhrases) {
+    const lowerPhrase = phrase.toLowerCase();
+
+    // Exact phrase match (highest score)
+    if (lowerText.includes(lowerPhrase)) {
+      score += 10 * (lowerPhrase.split(' ').length); // Multi-word phrases score higher
+      continue;
+    }
+
+    // Word overlap matching
+    const phraseWords = lowerPhrase.split(/\s+/).filter(w => w.length > 2);
+    let wordMatches = 0;
+    for (const phraseWord of phraseWords) {
+      if (textWords.some(textWord => textWord.includes(phraseWord) || phraseWord.includes(textWord))) {
+        wordMatches++;
+      }
+    }
+
+    if (wordMatches > 0) {
+      score += wordMatches * 2;
+    }
+  }
+
+  return score;
+}
+
+/**
+ * 4-Layer Matching Algorithm for AI Coaching
+ * Layer 1: Active Flow Check - Continue existing flow
+ * Layer 2: Objection Category Detection - Find category and start flow
+ * Layer 3: Enhanced Keyword Matching - Score-based script matching
+ * Layer 4: AI Fallback - Generate suggestion with context
+ *
  * @param {string} callSid - Call identifier
  * @param {string} knowledgeBaseId - Selected knowledge base UUID
- * @returns {Object|null} - Matching script or null
+ * @returns {Object|null} - Matching script, flow node, or null
  */
 async function detectScriptMatch(callSid, knowledgeBaseId) {
   if (!supabase || !knowledgeBaseId) return null;
 
   try {
-    // Get scripts with trigger phrases for this knowledge base
-    const { data: scripts, error } = await supabase
-      .from('scripts')
-      .select('id, title, trigger_phrases, script_text, story_text, tips, category')
-      .eq('knowledge_base_id', knowledgeBaseId)
-      .eq('is_active', true);
-
-    if (error || !scripts || scripts.length === 0) {
-      console.log('No scripts found for knowledge base:', knowledgeBaseId);
-      return null;
-    }
-
     // Get recent customer statements from transcript
     const transcript = callTranscripts.get(callSid) || [];
-    const recentCustomerText = transcript
+    const recentCustomerStatements = transcript
       .filter(t => t.speaker === 'customer')
-      .slice(-3)
+      .slice(-3);
+    const recentCustomerText = recentCustomerStatements
       .map(t => t.text.toLowerCase())
       .join(' ');
 
     if (!recentCustomerText) return null;
 
-    // Find best matching script based on trigger phrases
-    let bestMatch = null;
-    let bestScore = 0;
+    const latestCustomerText = recentCustomerStatements.length > 0
+      ? recentCustomerStatements[recentCustomerStatements.length - 1].text
+      : '';
 
-    for (const script of scripts) {
-      if (!script.trigger_phrases || script.trigger_phrases.length === 0) continue;
+    // ========== LAYER 1: Active Flow Check ==========
+    const activeFlow = activeCallFlows.get(callSid);
+    if (activeFlow) {
+      console.log(`[Layer 1] Checking active flow for call ${callSid}, current node: ${activeFlow.currentNodeId}`);
 
-      const matchCount = script.trigger_phrases.filter(phrase =>
-        recentCustomerText.includes(phrase.toLowerCase())
-      ).length;
+      const nextNodeResult = await getNextFlowNode(activeFlow.currentNodeId, latestCustomerText);
+      if (nextNodeResult) {
+        // Update flow progress
+        activeFlow.currentNodeId = nextNodeResult.node.id;
+        activeFlow.stepNumber = nextNodeResult.node.step_number;
+        activeCallFlows.set(callSid, activeFlow);
 
-      if (matchCount > bestScore) {
-        bestScore = matchCount;
-        bestMatch = script;
+        console.log(`[Layer 1] Flow continues: ${nextNodeResult.node.title} (Step ${nextNodeResult.node.step_number})`);
+
+        // Track flow progress
+        await supabase.from('call_flow_progress').update({
+          current_node_id: nextNodeResult.node.id,
+          steps_shown: activeFlow.stepNumber
+        }).eq('call_sid', callSid).eq('flow_id', activeFlow.flowId);
+
+        return {
+          ...nextNodeResult.node,
+          isFlowNode: true,
+          flowId: activeFlow.flowId,
+          flowName: activeFlow.flowName,
+          stepNumber: nextNodeResult.node.step_number,
+          totalSteps: activeFlow.totalSteps,
+          branchLabel: nextNodeResult.branchLabel
+        };
+      } else {
+        // Flow complete or no matching branch
+        console.log(`[Layer 1] Flow complete or no branch match, clearing flow`);
+        activeCallFlows.delete(callSid);
+
+        // Mark flow as completed
+        await supabase.from('call_flow_progress').update({
+          completed_at: new Date().toISOString(),
+          exit_reason: 'completed'
+        }).eq('call_sid', callSid).eq('flow_id', activeFlow.flowId);
       }
     }
 
-    if (bestMatch) {
-      console.log(`Script match found: "${bestMatch.title}" (score: ${bestScore})`);
+    // ========== LAYER 2: Objection Category Detection ==========
+    const category = await detectObjectionCategory(recentCustomerText, knowledgeBaseId);
+    if (category && category.matchScore >= 2) {
+      console.log(`[Layer 2] Objection detected: ${category.display_name}`);
 
-      // Track that this script was shown
+      // Try to get a flow for this category
+      const flowResult = await getFlowForCategory(category.id);
+      if (flowResult) {
+        console.log(`[Layer 2] Starting flow: ${flowResult.flow.name}`);
+
+        // Track flow start
+        activeCallFlows.set(callSid, {
+          flowId: flowResult.flow.id,
+          flowName: flowResult.flow.name,
+          currentNodeId: flowResult.firstNode.id,
+          stepNumber: 1,
+          totalSteps: flowResult.totalSteps,
+          category: category
+        });
+
+        // Record flow progress in database
+        await supabase.from('call_flow_progress').insert({
+          call_sid: callSid,
+          flow_id: flowResult.flow.id,
+          knowledge_base_id: knowledgeBaseId,
+          current_node_id: flowResult.firstNode.id,
+          steps_shown: 1
+        });
+
+        // Increment flow start counter
+        await supabase.from('conversation_flows')
+          .update({ times_started: (flowResult.flow.times_started || 0) + 1 })
+          .eq('id', flowResult.flow.id);
+
+        return {
+          ...flowResult.firstNode,
+          isFlowNode: true,
+          flowId: flowResult.flow.id,
+          flowName: flowResult.flow.name,
+          stepNumber: 1,
+          totalSteps: flowResult.totalSteps,
+          category: category
+        };
+      }
+    }
+
+    // ========== LAYER 3: AI-Powered Script Selection (with Keyword Fallback) ==========
+    const { data: scripts, error } = await supabase
+      .from('scripts')
+      .select('id, title, trigger_phrases, script_text, story_text, tips, category, objection_category_id, match_score_weight')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    if (error || !scripts || scripts.length === 0) {
+      console.log('[Layer 3] No scripts found for knowledge base:', knowledgeBaseId);
+      return null;
+    }
+
+    let bestMatch = null;
+    let bestScore = 0;
+    let matchMethod = 'keyword';
+    let aiLatencyMs = 0;
+
+    // Try AI selection first (800ms timeout)
+    const aiResult = await selectScriptWithAI(recentCustomerText, scripts, transcript, 800);
+    aiLatencyMs = aiResult.latencyMs;
+
+    if (aiResult.scriptIndex !== null) {
+      // AI found a match
+      bestMatch = scripts[aiResult.scriptIndex];
+      matchMethod = 'ai';
+      bestScore = 100; // AI matches bypass score threshold
+      console.log(`[Layer 3] AI selected script: "${bestMatch?.title}" (${aiLatencyMs}ms)`);
+    } else if (!aiResult.aiSelected) {
+      // AI failed or timed out - fall back to keyword matching
+      console.log(`[Layer 3] AI unavailable, falling back to keyword matching`);
+
+      for (const script of scripts) {
+        const score = calculateScriptMatchScore(recentCustomerText, script.trigger_phrases);
+        const weightedScore = score + (script.match_score_weight || 0);
+
+        if (weightedScore > bestScore && score > 0) {
+          bestScore = weightedScore;
+          bestMatch = script;
+        }
+      }
+
+      // Require minimum score threshold for keyword matches
+      if (!bestMatch || bestScore < 5) {
+        bestMatch = null;
+      }
+    }
+    // else: AI returned 0 (no good match) - continue to Layer 4
+
+    if (bestMatch && (matchMethod === 'ai' || bestScore >= 5)) {
+      console.log(`[Layer 3] Script match found: "${bestMatch.title}" (method: ${matchMethod}, score: ${bestScore})`);
+
+      // Track that this script was shown with match method analytics
       await supabase.from('call_script_usage').insert({
         call_sid: callSid,
         script_id: bestMatch.id,
         knowledge_base_id: knowledgeBaseId,
-        shown_at: new Date().toISOString()
+        shown_at: new Date().toISOString(),
+        match_method: matchMethod,
+        ai_latency_ms: aiLatencyMs > 0 ? aiLatencyMs : null
       });
 
       // Increment times_shown counter
       await supabase
         .from('scripts')
-        .update({ times_shown: bestMatch.times_shown ? bestMatch.times_shown + 1 : 1 })
+        .update({ times_shown: (bestMatch.times_shown || 0) + 1 })
         .eq('id', bestMatch.id);
+
+      // Get category info if available
+      let categoryInfo = null;
+      if (bestMatch.objection_category_id) {
+        const { data: cat } = await supabase
+          .from('objection_categories')
+          .select('name, display_name, icon, color')
+          .eq('id', bestMatch.objection_category_id)
+          .single();
+        categoryInfo = cat;
+      } else if (category) {
+        categoryInfo = category;
+      }
+
+      return {
+        ...bestMatch,
+        isFlowNode: false,
+        matchScore: bestScore,
+        matchMethod: matchMethod,
+        category: categoryInfo
+      };
     }
 
-    return bestMatch;
+    console.log('[Layer 3] No script match found');
+    return null;
   } catch (error) {
     console.error('Script match error:', error.message);
     return null;
@@ -1358,44 +1928,69 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
 }
 
 /**
- * Get AI coaching suggestion - first tries script matching, then falls back to AI
+ * Get AI coaching suggestion - uses 4-layer matching then falls back to AI
  * @param {string} callSid - Call identifier
  * @param {string} latestTranscript - Most recent transcript text
  * @param {string} knowledgeBaseId - Selected knowledge base UUID (optional)
- * @returns {Object|null} - Coaching response with type 'script' or 'ai'
+ * @returns {Object|null} - Coaching response with type 'script', 'flow', or 'ai'
  */
 async function getAICoachingSuggestion(callSid, latestTranscript, knowledgeBaseId = null) {
   const transcript = callTranscripts.get(callSid) || [];
   if (transcript.length < 3) return null; // Need some context
 
-  // First, try to match a script from the knowledge base
+  // First, try the 4-layer matching algorithm
   if (knowledgeBaseId) {
-    const scriptMatch = await detectScriptMatch(callSid, knowledgeBaseId);
-    if (scriptMatch) {
-      return {
-        type: 'script',
-        scriptId: scriptMatch.id,
-        category: scriptMatch.category,
-        title: scriptMatch.title,
-        scriptText: scriptMatch.script_text,
-        storyText: scriptMatch.story_text,
-        tips: scriptMatch.tips
-      };
+    const match = await detectScriptMatch(callSid, knowledgeBaseId);
+    if (match) {
+      // Check if this is a flow node or a regular script
+      if (match.isFlowNode) {
+        return {
+          type: 'flow',
+          flowId: match.flowId,
+          flowName: match.flowName,
+          nodeId: match.id,
+          stepNumber: match.stepNumber,
+          totalSteps: match.totalSteps,
+          title: match.title,
+          scriptText: match.script_text,
+          storyText: match.story_text,
+          tips: match.tips,
+          expectedResponses: match.expected_responses,
+          category: match.category,
+          branchLabel: match.branchLabel
+        };
+      } else {
+        return {
+          type: 'script',
+          scriptId: match.id,
+          category: match.category,
+          title: match.title,
+          scriptText: match.script_text,
+          storyText: match.story_text,
+          tips: match.tips,
+          matchScore: match.matchScore
+        };
+      }
     }
   }
 
-  // Fall back to AI-generated suggestion
+  // Fall back to AI-generated suggestion (Layer 4)
   if (!anthropic) {
-    console.log('Anthropic API key not configured - skipping AI coaching');
+    console.log('[Layer 4] Anthropic API key not configured - skipping AI coaching');
     return null;
   }
+
+  console.log('[Layer 4] Using AI fallback for coaching suggestion');
 
   // Get last 10 exchanges for context
   const recentTranscript = transcript.slice(-10).map(t => `${t.speaker}: ${t.text}`).join('\n');
 
-  // Build context about the knowledge base if available
+  // Build enhanced context about the knowledge base
   let kbContext = '';
+  let objectionCategoryContext = '';
+
   if (knowledgeBaseId && supabase) {
+    // Get KB info
     const { data: kb } = await supabase
       .from('knowledge_bases')
       .select('name, description, industry')
@@ -1403,32 +1998,89 @@ async function getAICoachingSuggestion(callSid, latestTranscript, knowledgeBaseI
       .single();
 
     if (kb) {
-      kbContext = `\nContext: This is a ${kb.industry || 'general'} sales call using the "${kb.name}" approach. ${kb.description || ''}`;
+      kbContext = `\nKnowledge Base: "${kb.name}" (${kb.industry || 'general'} industry). ${kb.description || ''}`;
+    }
+
+    // Get objection categories for context
+    const { data: categories } = await supabase
+      .from('objection_categories')
+      .select('name, display_name, detection_keywords')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    if (categories && categories.length > 0) {
+      objectionCategoryContext = `\nObjection Types to Watch For:\n${categories.map(c =>
+        `- ${c.display_name}: ${c.detection_keywords.slice(0, 5).join(', ')}`
+      ).join('\n')}`;
+    }
+
+    // Get recent customer text and try to identify likely objection
+    const recentCustomerText = transcript
+      .filter(t => t.speaker === 'customer')
+      .slice(-3)
+      .map(t => t.text.toLowerCase())
+      .join(' ');
+
+    const detectedCategory = await detectObjectionCategory(recentCustomerText, knowledgeBaseId);
+    if (detectedCategory) {
+      objectionCategoryContext += `\n\nDETECTED OBJECTION TYPE: ${detectedCategory.display_name}`;
+
+      // Try to get relevant scripts for this category to inform AI
+      const { data: categoryScripts } = await supabase
+        .from('scripts')
+        .select('title, script_text')
+        .eq('knowledge_base_id', knowledgeBaseId)
+        .eq('objection_category_id', detectedCategory.id)
+        .eq('is_active', true)
+        .limit(2);
+
+      if (categoryScripts && categoryScripts.length > 0) {
+        objectionCategoryContext += `\nRelevant Scripts:\n${categoryScripts.map(s =>
+          `- "${s.title}": ${s.script_text.substring(0, 100)}...`
+        ).join('\n')}`;
+      }
     }
   }
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 150,
-      system: `You are a real-time sales coach. Analyze the conversation and provide ONE brief, actionable suggestion to help the sales rep. Focus on:
-- Objection handling
-- Building rapport
-- Closing techniques
-- Asking better questions
-Keep suggestions under 25 words. Be specific and actionable. If no suggestion needed, respond with "NONE".${kbContext}`,
+      max_tokens: 200,
+      system: `You are a real-time sales coach providing guidance during a live call.
+
+Your job is to give ONE specific, word-for-word suggestion the rep can say NOW.
+
+Guidelines:
+- Provide the EXACT words to say, in quotes
+- Keep it under 30 words
+- Focus on the customer's last statement
+- If an objection is detected, address it directly
+- If no coaching needed, respond with "NONE"
+${kbContext}${objectionCategoryContext}`,
       messages: [{
         role: 'user',
-        content: `Recent call transcript:\n${recentTranscript}\n\nLatest: "${latestTranscript}"\n\nProvide one coaching tip:`
+        content: `Call Transcript:\n${recentTranscript}\n\nCustomer just said: "${latestTranscript}"\n\nWhat should the rep say next? Provide exact words in quotes:`
       }]
     });
 
     const suggestion = response.content[0].text.trim();
     if (suggestion === 'NONE' || suggestion.length < 5) return null;
 
+    // Try to detect what category this AI suggestion relates to
+    let aiCategory = null;
+    if (knowledgeBaseId) {
+      const recentCustomerText = transcript
+        .filter(t => t.speaker === 'customer')
+        .slice(-3)
+        .map(t => t.text.toLowerCase())
+        .join(' ');
+      aiCategory = await detectObjectionCategory(recentCustomerText, knowledgeBaseId);
+    }
+
     return {
       type: 'ai',
-      suggestion: suggestion
+      suggestion: suggestion,
+      category: aiCategory
     };
   } catch (error) {
     console.error('AI coaching error:', error.message);
@@ -1739,6 +2391,10 @@ app.post('/api/scripts', async (req, res) => {
  * PUT /api/scripts/:id
  */
 app.put('/api/scripts/:id', async (req, res) => {
+  console.log('=== PUT /api/scripts/:id DEBUG ===');
+  console.log('Script ID from URL:', req.params.id);
+  console.log('Request body:', req.body);
+
   if (!supabase) {
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
@@ -1746,22 +2402,36 @@ app.put('/api/scripts/:id', async (req, res) => {
   try {
     const { category, title, trigger_phrases, script_text, story_text, tips } = req.body;
 
+    // Build update object with only provided fields
+    const updateData = { updated_at: new Date().toISOString() };
+    if (category !== undefined) updateData.category = category;
+    if (title !== undefined) updateData.title = title;
+    if (trigger_phrases !== undefined) updateData.trigger_phrases = trigger_phrases;
+    if (script_text !== undefined) updateData.script_text = script_text;
+    if (story_text !== undefined) updateData.story_text = story_text;
+    if (tips !== undefined) updateData.tips = tips;
+
+    console.log('Update data:', updateData);
+
     const { data, error } = await supabase
       .from('scripts')
-      .update({
-        category,
-        title,
-        trigger_phrases,
-        script_text,
-        story_text,
-        tips,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', req.params.id)
       .select()
       .single();
 
+    console.log('Supabase response - data:', data);
+    console.log('Supabase response - error:', error);
+
     if (error) throw error;
+
+    // Check if a row was actually updated
+    if (!data) {
+      console.log('No data returned - script not found');
+      return res.status(404).json({ success: false, error: 'Script not found' });
+    }
+
+    console.log('Script updated successfully:', data.id);
     res.json({ success: true, script: data });
   } catch (error) {
     console.error('Error updating script:', error);
@@ -1788,6 +2458,1057 @@ app.delete('/api/scripts/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting script:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ OBJECTION CATEGORIES API ENDPOINTS ============
+
+/**
+ * Get objection categories for a knowledge base
+ * GET /api/knowledge-bases/:kbId/categories
+ */
+app.get('/api/knowledge-bases/:kbId/categories', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('objection_categories')
+      .select('*')
+      .eq('knowledge_base_id', req.params.kbId)
+      .eq('is_active', true)
+      .order('sort_order');
+
+    if (error) throw error;
+    res.json({ success: true, categories: data });
+  } catch (error) {
+    console.error('Error fetching objection categories:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Create a new objection category
+ * POST /api/objection-categories
+ */
+app.post('/api/objection-categories', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { knowledge_base_id, name, display_name, icon, color, detection_keywords, sort_order } = req.body;
+
+    const { data, error } = await supabase
+      .from('objection_categories')
+      .insert({
+        knowledge_base_id,
+        name,
+        display_name,
+        icon,
+        color,
+        detection_keywords: detection_keywords || [],
+        sort_order: sort_order || 0,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, category: data });
+  } catch (error) {
+    console.error('Error creating objection category:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update an objection category
+ * PUT /api/objection-categories/:id
+ */
+app.put('/api/objection-categories/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { name, display_name, icon, color, detection_keywords, sort_order } = req.body;
+
+    const { data, error } = await supabase
+      .from('objection_categories')
+      .update({
+        name,
+        display_name,
+        icon,
+        color,
+        detection_keywords,
+        sort_order,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, category: data });
+  } catch (error) {
+    console.error('Error updating objection category:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete an objection category
+ * DELETE /api/objection-categories/:id
+ */
+app.delete('/api/objection-categories/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('objection_categories')
+      .update({ is_active: false })
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting objection category:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ CONVERSATION FLOWS API ENDPOINTS ============
+
+/**
+ * Get conversation flows for a knowledge base
+ * GET /api/knowledge-bases/:kbId/flows
+ */
+app.get('/api/knowledge-bases/:kbId/flows', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('conversation_flows')
+      .select(`
+        *,
+        objection_categories!entry_category_id(id, name, display_name, icon, color)
+      `)
+      .eq('knowledge_base_id', req.params.kbId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, flows: data });
+  } catch (error) {
+    console.error('Error fetching conversation flows:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get a single conversation flow with nodes
+ * GET /api/flows/:id
+ */
+app.get('/api/flows/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    // Get flow
+    const { data: flow, error: flowError } = await supabase
+      .from('conversation_flows')
+      .select(`
+        *,
+        objection_categories!entry_category_id(id, name, display_name, icon, color)
+      `)
+      .eq('id', req.params.id)
+      .single();
+
+    if (flowError) throw flowError;
+
+    // Get nodes
+    const { data: nodes, error: nodesError } = await supabase
+      .from('flow_nodes')
+      .select('*')
+      .eq('flow_id', req.params.id)
+      .order('step_number')
+      .order('sort_order');
+
+    if (nodesError) throw nodesError;
+
+    // Get branches
+    const nodeIds = nodes.map(n => n.id);
+    const { data: branches, error: branchesError } = await supabase
+      .from('flow_branches')
+      .select('*')
+      .in('from_node_id', nodeIds);
+
+    if (branchesError) throw branchesError;
+
+    res.json({ success: true, flow, nodes, branches });
+  } catch (error) {
+    console.error('Error fetching conversation flow:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Create a new conversation flow
+ * POST /api/flows
+ */
+app.post('/api/flows', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { knowledge_base_id, name, description, entry_category_id, entry_triggers } = req.body;
+
+    const { data, error } = await supabase
+      .from('conversation_flows')
+      .insert({
+        knowledge_base_id,
+        name,
+        description,
+        entry_category_id,
+        entry_triggers: entry_triggers || [],
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, flow: data });
+  } catch (error) {
+    console.error('Error creating conversation flow:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update a conversation flow
+ * PUT /api/flows/:id
+ */
+app.put('/api/flows/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { name, description, entry_category_id, entry_triggers, is_active } = req.body;
+
+    const { data, error } = await supabase
+      .from('conversation_flows')
+      .update({
+        name,
+        description,
+        entry_category_id,
+        entry_triggers,
+        is_active,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, flow: data });
+  } catch (error) {
+    console.error('Error updating conversation flow:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete a conversation flow
+ * DELETE /api/flows/:id
+ */
+app.delete('/api/flows/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('conversation_flows')
+      .update({ is_active: false })
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting conversation flow:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ FLOW NODES API ENDPOINTS ============
+
+/**
+ * Create a flow node
+ * POST /api/flow-nodes
+ */
+app.post('/api/flow-nodes', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { flow_id, node_type, step_number, title, script_text, story_text, tips, expected_responses, is_optional, sort_order } = req.body;
+
+    const { data, error } = await supabase
+      .from('flow_nodes')
+      .insert({
+        flow_id,
+        node_type,
+        step_number,
+        title,
+        script_text,
+        story_text,
+        tips,
+        expected_responses: expected_responses || [],
+        is_optional: is_optional || false,
+        sort_order: sort_order || 0
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, node: data });
+  } catch (error) {
+    console.error('Error creating flow node:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update a flow node
+ * PUT /api/flow-nodes/:id
+ */
+app.put('/api/flow-nodes/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { node_type, step_number, title, script_text, story_text, tips, expected_responses, is_optional, sort_order } = req.body;
+
+    // Build update object with only provided fields
+    const updateData = { updated_at: new Date().toISOString() };
+    if (node_type !== undefined) updateData.node_type = node_type;
+    if (step_number !== undefined) updateData.step_number = step_number;
+    if (title !== undefined) updateData.title = title;
+    if (script_text !== undefined) updateData.script_text = script_text;
+    if (story_text !== undefined) updateData.story_text = story_text;
+    if (tips !== undefined) updateData.tips = tips;
+    if (expected_responses !== undefined) updateData.expected_responses = expected_responses;
+    if (is_optional !== undefined) updateData.is_optional = is_optional;
+    if (sort_order !== undefined) updateData.sort_order = sort_order;
+
+    const { data, error } = await supabase
+      .from('flow_nodes')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Check if a row was actually updated
+    if (!data) {
+      return res.status(404).json({ success: false, error: 'Flow node not found' });
+    }
+
+    res.json({ success: true, node: data });
+  } catch (error) {
+    console.error('Error updating flow node:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete a flow node
+ * DELETE /api/flow-nodes/:id
+ */
+app.delete('/api/flow-nodes/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('flow_nodes')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting flow node:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ FLOW BRANCHES API ENDPOINTS ============
+
+/**
+ * Create a flow branch
+ * POST /api/flow-branches
+ */
+app.post('/api/flow-branches', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { from_node_id, to_node_id, trigger_keywords, label, is_default, sort_order } = req.body;
+
+    const { data, error } = await supabase
+      .from('flow_branches')
+      .insert({
+        from_node_id,
+        to_node_id,
+        trigger_keywords: trigger_keywords || [],
+        label,
+        is_default: is_default || false,
+        sort_order: sort_order || 0
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, branch: data });
+  } catch (error) {
+    console.error('Error creating flow branch:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete a flow branch
+ * DELETE /api/flow-branches/:id
+ */
+app.delete('/api/flow-branches/:id', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('flow_branches')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting flow branch:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ ACTIVE FLOW MANAGEMENT ============
+
+/**
+ * Clear active flow for a call (allows starting a new flow)
+ * DELETE /api/calls/:callSid/active-flow
+ */
+app.delete('/api/calls/:callSid/active-flow', (req, res) => {
+  const { callSid } = req.params;
+  if (activeCallFlows.has(callSid)) {
+    activeCallFlows.delete(callSid);
+    console.log(`Active flow cleared for call ${callSid}`);
+    res.json({ success: true, message: 'Active flow cleared' });
+  } else {
+    res.json({ success: true, message: 'No active flow to clear' });
+  }
+});
+
+/**
+ * Get current flow state for a call
+ * GET /api/calls/:callSid/flow-state
+ */
+app.get('/api/calls/:callSid/flow-state', (req, res) => {
+  const { callSid } = req.params;
+  const flowState = activeCallFlows.get(callSid);
+  res.json({
+    success: true,
+    hasActiveFlow: !!flowState,
+    flowState: flowState || null
+  });
+});
+
+// ============ COACHING LAB API ENDPOINTS ============
+
+/**
+ * Build WHY explanation for a coaching match
+ * @param {string} text - Customer text that was analyzed
+ * @param {Object} category - Detected category with keywords
+ * @param {Object} match - The matching coaching result
+ * @param {Array} allCategories - All categories checked
+ * @returns {Object} - Detailed explanation of why this triggered
+ */
+function buildWhyExplanation(text, category, match, allCategories = []) {
+  const lowerText = text.toLowerCase();
+  const why = {
+    keywordsFound: [],
+    keywordsChecked: [],
+    confidenceBreakdown: [],
+    source: {},
+    alternatives: []
+  };
+
+  // Extract matched keywords
+  if (category && category.detection_keywords) {
+    for (const keyword of category.detection_keywords) {
+      const lowerKeyword = keyword.toLowerCase();
+      if (lowerText.includes(lowerKeyword)) {
+        why.keywordsFound.push(keyword);
+      } else {
+        why.keywordsChecked.push(keyword);
+      }
+    }
+  }
+
+  // Build confidence breakdown
+  let totalScore = 0;
+  if (why.keywordsFound.length > 0) {
+    // Primary keyword detection
+    const primaryScore = 40;
+    totalScore += primaryScore;
+    why.confidenceBreakdown.push({
+      factor: `Primary keyword "${why.keywordsFound[0]}"`,
+      points: primaryScore
+    });
+
+    // Additional keywords
+    if (why.keywordsFound.length > 1) {
+      const additionalScore = (why.keywordsFound.length - 1) * 15;
+      totalScore += additionalScore;
+      why.confidenceBreakdown.push({
+        factor: `${why.keywordsFound.length - 1} additional keyword(s)`,
+        points: additionalScore
+      });
+    }
+
+    // Modifier detection (intensifiers like "too", "very", "really")
+    const modifiers = ['too', 'very', 'really', 'so', 'way', 'extremely', 'super'];
+    const foundModifiers = modifiers.filter(m => lowerText.includes(m));
+    if (foundModifiers.length > 0) {
+      const modifierScore = 20;
+      totalScore += modifierScore;
+      why.confidenceBreakdown.push({
+        factor: `Intensifier "${foundModifiers[0]}"`,
+        points: modifierScore
+      });
+    }
+
+    // Context bonus (sentence structure suggests objection)
+    const objectionPhrases = ['can\'t', 'don\'t', 'won\'t', 'not', 'no', 'but'];
+    if (objectionPhrases.some(p => lowerText.includes(p))) {
+      const contextScore = 15;
+      totalScore += contextScore;
+      why.confidenceBreakdown.push({
+        factor: 'Objection context detected',
+        points: contextScore
+      });
+    }
+  }
+
+  why.confidence = Math.min(totalScore, 100);
+
+  // Source information
+  if (match) {
+    if (match.isFlowNode) {
+      why.source = {
+        type: 'flow',
+        flowName: match.flowName || 'Unknown Flow',
+        nodeName: match.title || 'Step',
+        stepNumber: match.stepNumber || 1,
+        totalSteps: match.totalSteps || 1
+      };
+    } else {
+      why.source = {
+        type: 'script',
+        scriptId: match.id,
+        scriptTitle: match.title || 'Script',
+        category: category?.display_name || 'General'
+      };
+    }
+  }
+
+  // Build alternatives from other categories
+  if (allCategories && allCategories.length > 0) {
+    why.alternatives = allCategories
+      .filter(c => c.id !== category?.id && c.matchScore > 0)
+      .slice(0, 3)
+      .map(c => ({
+        category: c.display_name,
+        score: c.matchScore,
+        icon: c.icon
+      }));
+  }
+
+  return why;
+}
+
+/**
+ * Test coaching match - main endpoint for Coaching Lab
+ * POST /api/coaching-lab/test
+ * Body: { text, knowledgeBaseId, currentFlowId?, currentNodeId? }
+ */
+app.post('/api/coaching-lab/test', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { text, knowledgeBaseId, currentFlowId, currentNodeId } = req.body;
+
+    if (!text || !knowledgeBaseId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: text, knowledgeBaseId'
+      });
+    }
+
+    const lowerText = text.toLowerCase();
+
+    // Get all categories for this KB (for alternatives)
+    const { data: allCategories, error: catError } = await supabase
+      .from('objection_categories')
+      .select('id, name, display_name, icon, color, detection_keywords')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    if (catError) {
+      console.error('Error fetching categories:', catError);
+    }
+
+    // Score all categories
+    const scoredCategories = (allCategories || []).map(category => {
+      let score = 0;
+      if (category.detection_keywords) {
+        for (const keyword of category.detection_keywords) {
+          if (lowerText.includes(keyword.toLowerCase())) {
+            score += keyword.includes(' ') ? 3 : 1;
+          }
+        }
+      }
+      return { ...category, matchScore: score };
+    }).sort((a, b) => b.matchScore - a.matchScore);
+
+    // Best matching category
+    const bestCategory = scoredCategories.find(c => c.matchScore > 0) || null;
+
+    let match = null;
+    let coachingResult = null;
+
+    // LAYER 1: Check if we're continuing an active flow
+    if (currentNodeId) {
+      const nextNodeResult = await getNextFlowNode(currentNodeId, text);
+      if (nextNodeResult) {
+        match = {
+          ...nextNodeResult.node,
+          isFlowNode: true,
+          flowId: currentFlowId,
+          stepNumber: nextNodeResult.node.step_number,
+          branchLabel: nextNodeResult.branchLabel
+        };
+
+        // Get flow info for total steps
+        const { data: flowInfo } = await supabase
+          .from('conversation_flows')
+          .select('name')
+          .eq('id', currentFlowId)
+          .single();
+
+        const { count: totalSteps } = await supabase
+          .from('flow_nodes')
+          .select('*', { count: 'exact', head: true })
+          .eq('flow_id', currentFlowId);
+
+        match.flowName = flowInfo?.name || 'Flow';
+        match.totalSteps = totalSteps || 1;
+      }
+    }
+
+    // LAYER 2: Try to start a new flow for detected category
+    if (!match && bestCategory && bestCategory.matchScore >= 1) {
+      const flowResult = await getFlowForCategory(bestCategory.id);
+      if (flowResult) {
+        match = {
+          ...flowResult.firstNode,
+          isFlowNode: true,
+          flowId: flowResult.flow.id,
+          flowName: flowResult.flow.name,
+          stepNumber: 1,
+          totalSteps: flowResult.totalSteps,
+          category: bestCategory
+        };
+      }
+    }
+
+    // LAYER 3: Try to find a matching script
+    if (!match && bestCategory) {
+      const { data: scripts } = await supabase
+        .from('scripts')
+        .select('*')
+        .eq('knowledge_base_id', knowledgeBaseId)
+        .eq('objection_category_id', bestCategory.id)
+        .eq('is_active', true)
+        .order('times_used', { ascending: false })
+        .limit(1);
+
+      if (scripts && scripts.length > 0) {
+        match = scripts[0];
+      }
+    }
+
+    // LAYER 4: General script matching by trigger phrases
+    if (!match) {
+      const { data: allScripts } = await supabase
+        .from('scripts')
+        .select('*')
+        .eq('knowledge_base_id', knowledgeBaseId)
+        .eq('is_active', true);
+
+      if (allScripts) {
+        let bestScript = null;
+        let bestScriptScore = 0;
+
+        for (const script of allScripts) {
+          if (script.trigger_phrases) {
+            let score = 0;
+            for (const phrase of script.trigger_phrases) {
+              if (lowerText.includes(phrase.toLowerCase())) {
+                score += phrase.includes(' ') ? 3 : 1;
+              }
+            }
+            if (score > bestScriptScore) {
+              bestScriptScore = score;
+              bestScript = script;
+            }
+          }
+        }
+
+        if (bestScript && bestScriptScore > 0) {
+          match = bestScript;
+        }
+      }
+    }
+
+    // Build WHY explanation
+    const why = buildWhyExplanation(text, bestCategory, match, scoredCategories);
+
+    // Build response
+    if (match) {
+      coachingResult = {
+        type: match.isFlowNode ? 'flow' : 'script',
+        category: bestCategory ? {
+          id: bestCategory.id,
+          name: bestCategory.name,
+          displayName: bestCategory.display_name,
+          icon: bestCategory.icon,
+          color: bestCategory.color
+        } : null,
+        coaching: {
+          id: match.id,
+          title: match.title,
+          scriptText: match.script_text,
+          storyText: match.story_text,
+          tips: match.tips,
+          expectedResponses: match.expected_responses
+        },
+        flow: match.isFlowNode ? {
+          flowId: match.flowId,
+          flowName: match.flowName,
+          currentNodeId: match.id,
+          stepNumber: match.stepNumber,
+          totalSteps: match.totalSteps,
+          branchLabel: match.branchLabel
+        } : null,
+        why
+      };
+    } else {
+      // No match - return AI suggestion placeholder
+      coachingResult = {
+        type: 'no_match',
+        category: bestCategory ? {
+          id: bestCategory.id,
+          name: bestCategory.name,
+          displayName: bestCategory.display_name,
+          icon: bestCategory.icon,
+          color: bestCategory.color
+        } : null,
+        coaching: null,
+        flow: null,
+        why: {
+          ...why,
+          message: 'No matching script or flow found. Consider adding a new script for this scenario.'
+        }
+      };
+    }
+
+    res.json({
+      success: true,
+      input: { text, knowledgeBaseId },
+      result: coachingResult
+    });
+
+  } catch (error) {
+    console.error('Coaching lab test error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get list of recent calls with transcripts
+ * GET /api/calls
+ * Query: ?limit=20&hasTranscript=true
+ */
+app.get('/api/calls', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const hasTranscript = req.query.hasTranscript === 'true';
+
+    let query = supabase
+      .from('calls')
+      .select(`
+        id,
+        external_call_id,
+        phone_number,
+        direction,
+        status,
+        duration_seconds,
+        outcome,
+        started_at,
+        ended_at,
+        call_transcripts (id)
+      `)
+      .order('started_at', { ascending: false })
+      .limit(limit);
+
+    // Filter to only calls with transcripts if requested
+    if (hasTranscript) {
+      query = query.not('call_transcripts', 'is', null);
+    }
+
+    const { data: calls, error } = await query;
+
+    if (error) {
+      console.error('Error fetching calls:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    // Format response
+    const formattedCalls = calls.map(call => ({
+      id: call.id,
+      callSid: call.external_call_id,
+      phone: call.phone_number,
+      direction: call.direction,
+      status: call.status,
+      duration: call.duration_seconds,
+      outcome: call.outcome,
+      date: call.started_at,
+      hasTranscript: call.call_transcripts && call.call_transcripts.length > 0
+    }));
+
+    res.json({
+      success: true,
+      calls: formattedCalls
+    });
+
+  } catch (error) {
+    console.error('Error in /api/calls:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Get full transcript for a call
+ * GET /api/calls/:callSid/transcript
+ */
+app.get('/api/calls/:callSid/transcript', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { callSid } = req.params;
+
+    // Get call by external_call_id
+    const { data: call, error: callError } = await supabase
+      .from('calls')
+      .select('id, phone_number, direction, started_at, duration_seconds')
+      .eq('external_call_id', callSid)
+      .single();
+
+    if (callError || !call) {
+      return res.status(404).json({
+        success: false,
+        error: 'Call not found'
+      });
+    }
+
+    // Get transcript
+    const { data: transcript, error: transcriptError } = await supabase
+      .from('call_transcripts')
+      .select('id, segments, full_text, word_count, duration_seconds')
+      .eq('call_id', call.id)
+      .single();
+
+    if (transcriptError || !transcript) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transcript not found for this call'
+      });
+    }
+
+    res.json({
+      success: true,
+      call: {
+        id: call.id,
+        callSid,
+        phone: call.phone_number,
+        direction: call.direction,
+        date: call.started_at,
+        duration: call.duration_seconds
+      },
+      transcript: {
+        id: transcript.id,
+        segments: transcript.segments || [],
+        fullText: transcript.full_text,
+        wordCount: transcript.word_count,
+        duration: transcript.duration_seconds
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching transcript:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Replay coaching for a call - analyze each turn and return what coaching would have triggered
+ * GET /api/calls/:callSid/coaching-replay
+ * Query: ?knowledgeBaseId=uuid
+ */
+app.get('/api/calls/:callSid/coaching-replay', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  try {
+    const { callSid } = req.params;
+    const { knowledgeBaseId } = req.query;
+
+    if (!knowledgeBaseId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required query parameter: knowledgeBaseId'
+      });
+    }
+
+    // Get call
+    const { data: call, error: callError } = await supabase
+      .from('calls')
+      .select('id')
+      .eq('external_call_id', callSid)
+      .single();
+
+    if (callError || !call) {
+      return res.status(404).json({ success: false, error: 'Call not found' });
+    }
+
+    // Get transcript
+    const { data: transcript, error: transcriptError } = await supabase
+      .from('call_transcripts')
+      .select('segments')
+      .eq('call_id', call.id)
+      .single();
+
+    if (transcriptError || !transcript) {
+      return res.status(404).json({ success: false, error: 'Transcript not found' });
+    }
+
+    const segments = transcript.segments || [];
+    const coachingMoments = [];
+
+    // Get all categories for this KB
+    const { data: allCategories } = await supabase
+      .from('objection_categories')
+      .select('id, name, display_name, icon, color, detection_keywords')
+      .eq('knowledge_base_id', knowledgeBaseId)
+      .eq('is_active', true);
+
+    // Analyze each customer turn
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      if (segment.speaker === 'customer' && segment.text) {
+        const lowerText = segment.text.toLowerCase();
+
+        // Score categories
+        const scoredCategories = (allCategories || []).map(category => {
+          let score = 0;
+          if (category.detection_keywords) {
+            for (const keyword of category.detection_keywords) {
+              if (lowerText.includes(keyword.toLowerCase())) {
+                score += keyword.includes(' ') ? 3 : 1;
+              }
+            }
+          }
+          return { ...category, matchScore: score };
+        }).sort((a, b) => b.matchScore - a.matchScore);
+
+        const bestCategory = scoredCategories.find(c => c.matchScore > 0);
+
+        if (bestCategory) {
+          // Find matching keywords
+          const matchedKeywords = bestCategory.detection_keywords.filter(
+            kw => lowerText.includes(kw.toLowerCase())
+          );
+
+          coachingMoments.push({
+            turnIndex: i,
+            timestamp: segment.timestamp,
+            text: segment.text,
+            category: {
+              id: bestCategory.id,
+              name: bestCategory.name,
+              displayName: bestCategory.display_name,
+              icon: bestCategory.icon,
+              color: bestCategory.color
+            },
+            matchedKeywords,
+            confidence: Math.min(bestCategory.matchScore * 25, 100)
+          });
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      callSid,
+      totalTurns: segments.length,
+      coachingMoments
+    });
+
+  } catch (error) {
+    console.error('Error in coaching replay:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -2189,10 +3910,13 @@ wss.on('connection', (ws, req) => {
                   const knowledgeBaseId = callData?.knowledgeBaseId || null;
                   const coachingResult = await getAICoachingSuggestion(callSid, transcript, knowledgeBaseId);
                   if (coachingResult) {
+                    // Extract type and rename to coachingType to avoid conflict with message type
+                    const { type: coachingType, ...restCoaching } = coachingResult;
                     const coachMsg = {
                       type: 'ai_coaching',
+                      coachingType,
                       callSid,
-                      ...coachingResult,
+                      ...restCoaching,
                       timestamp
                     };
                     broadcastToClients(coachMsg, (client) => client.role === 'rep');
@@ -2350,10 +4074,13 @@ wss.on('connection', (ws, req) => {
                 const knowledgeBaseId = callData?.knowledgeBaseId || null;
                 const coachingResult = await getAICoachingSuggestion(callSid, transcript, knowledgeBaseId);
                 if (coachingResult) {
+                  // Extract type and rename to coachingType to avoid conflict with message type
+                  const { type: coachingType, ...restCoaching } = coachingResult;
                   const coachMsg = {
                     type: 'ai_coaching',
+                    coachingType,
                     callSid,
-                    ...coachingResult,
+                    ...restCoaching,
                     timestamp
                   };
                   // Send to rep on this call
@@ -2376,6 +4103,8 @@ wss.on('connection', (ws, req) => {
               isFinal: isFinal,
               timestamp
             };
+
+            console.log(`[Transcript] ${isFinal ? 'FINAL' : 'interim'} from ${currentSpeaker}: "${transcript.substring(0, 50)}..."`);
 
             // Send to reps
             broadcastToClients(message, (client) => client.role === 'rep');
