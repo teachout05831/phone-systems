@@ -6993,7 +6993,8 @@ What do you say?`
         // Find or create contact for the caller
         const contact = await findOrCreateContact(phoneNumber);
         currentContactId = contact?.id || null;
-        console.log('createCallRecordForIncoming: contact found/created:', currentContactId);
+        currentContact = contact || null;  // Also set currentContact for notes
+        console.log('createCallRecordForIncoming: contact found/created:', currentContactId, contact);
 
         const insertData = {
           company_id: companyId,
@@ -7041,7 +7042,8 @@ What do you say?`
         // First, try to find or create a contact for this phone number
         const contact = await findOrCreateContact(phoneNumber);
         currentContactId = contact?.id || null;
-        console.log('createCallRecord: contact found/created:', currentContactId);
+        currentContact = contact || null;  // Also set currentContact for notes
+        console.log('createCallRecord: contact found/created:', currentContactId, contact);
 
         const insertData = {
           company_id: companyId,
@@ -7434,6 +7436,10 @@ What do you say?`
 
     async function saveQuickNote() {
       const noteText = document.getElementById('quickNoteText').value.trim();
+      console.log('[Note] Saving note:', noteText);
+      console.log('[Note] currentContact:', currentContact);
+      console.log('[Note] currentCallRecordId:', currentCallRecordId);
+
       if (!noteText) {
         alert('Please enter a note');
         return;
@@ -7441,13 +7447,15 @@ What do you say?`
 
       try {
         // Try to save to contact_notes if we have a contact
-        if (currentContact && currentContact.id) {
+        if (currentContact && currentContact.id && companyId && currentUser) {
           const { error } = await supabase
             .from('contact_notes')
             .insert({
               contact_id: currentContact.id,
-              note: noteText,
-              created_at: new Date().toISOString()
+              company_id: companyId,
+              content: noteText,
+              created_by: currentUser.id,
+              is_pinned: false
             });
 
           if (error) throw error;
