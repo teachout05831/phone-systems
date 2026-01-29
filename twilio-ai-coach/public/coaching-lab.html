@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Coaching Lab - DialPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    /* Coaching Lab Page Styles - Override global max-width */
+    .main-content {
+      max-width: none !important;
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .lab-content {
+      padding: var(--spacing-lg);
+      max-width: calc(100% - 40px);
+      margin: 0 auto;
+    }
+
+    .lab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .lab-header h2 {
+      font-size: 20px;
+      color: var(--gray-800);
+      margin: 0;
+    }
+
+    .lab-header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Source Toggle */
+    .source-toggle {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .source-tabs {
+      display: flex;
+      background: var(--gray-100);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .source-tab {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .source-tab:hover {
+      color: var(--gray-700);
+    }
+
+    .source-tab.active {
+      background: white;
+      color: var(--gray-800);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .call-select {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+    }
+
+    .call-select.hidden {
+      display: none;
+    }
+
+    .call-select label {
+      font-size: 14px;
+      color: var(--gray-600);
+      white-space: nowrap;
+    }
+
+    .call-select select {
+      flex: 1;
+      max-width: 350px;
+    }
+
+    .manual-hint {
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    /* 2-Column Layout */
+    .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .lab-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .lab-panel {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 300px);
+      min-height: 500px;
+    }
+
+    .lab-panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lab-panel-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Timeline Items */
+    .timeline-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--gray-50);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .timeline-item:hover {
+      background: var(--gray-50);
+    }
+
+    .timeline-item.selected {
+      background: #fffbeb;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--gray-400);
+      font-family: 'Monaco', 'Menlo', monospace;
+      margin-bottom: 4px;
+    }
+
+    .speaker {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .speaker.customer { color: #b45309; }
+    .speaker.rep { color: #1d4ed8; }
+
+    .message-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--gray-700);
+    }
+
+    .trigger-word {
+      background: #fef3c7;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      border-bottom: 2px solid #f59e0b;
+    }
+
+    /* Inline Coaching Trigger Badge */
+    .coaching-trigger-inline {
+      margin-top: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .coaching-trigger-inline:hover {
+      transform: scale(1.01);
+    }
+
+    .trigger-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .trigger-badge {
+      width: 24px;
+      height: 24px;
+      background: #f59e0b;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .trigger-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+    }
+
+    .trigger-keywords {
+      font-size: 11px;
+      color: #b45309;
+    }
+
+    /* Manual Input Section */
+    .manual-input {
+      padding: 16px 18px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .input-speaker-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .speaker-btn {
+      padding: 8px 16px;
+      border: 2px solid var(--gray-200);
+      background: white;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .speaker-btn.active.customer {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #b45309;
+    }
+
+    .speaker-btn.active.rep {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Full Coaching Card */
+    .coaching-full-card {
+      margin: 16px;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .cfc-header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cfc-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .cfc-badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .cfc-time {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .cfc-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .cfc-section:last-child {
+      border-bottom: none;
+    }
+
+    .cfc-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .cfc-customer-said {
+      font-size: 14px;
+      color: var(--gray-700);
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #f59e0b;
+      line-height: 1.5;
+    }
+
+    /* WHY Section */
+    .cfc-why {
+      background: #1f2937;
+      padding: 14px 16px;
+      color: white;
+    }
+
+    .cfc-why-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .why-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .why-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .why-content {
+      flex: 1;
+    }
+
+    .why-label {
+      color: #9ca3af;
+      font-size: 11px;
+    }
+
+    .why-value {
+      color: #d1d5db;
+    }
+
+    .why-highlight {
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .why-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .why-keyword {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .why-keyword.found {
+      background: #166534;
+      color: #dcfce7;
+    }
+
+    .why-keyword.not-found {
+      background: #374151;
+      color: #6b7280;
+    }
+
+    /* AI Suggestion Section */
+    .cfc-suggestion {
+      background: #f0f9ff;
+    }
+
+    .cfc-script {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--gray-800);
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .cfc-tip {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: #fefce8;
+      border-left: 3px solid #eab308;
+      font-size: 12px;
+      color: #713f12;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* Edit Section */
+    .cfc-edit {
+      background: var(--gray-50);
+    }
+
+    .edit-field {
+      margin-bottom: 12px;
+    }
+
+    .edit-field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 80px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .edit-textarea-sm {
+      min-height: 60px;
+    }
+
+    .edit-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .edit-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .edit-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .edit-btn.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .edit-btn.success {
+      background: #22c55e;
+      color: white;
+      border-color: #22c55e;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-400);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 {
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      color: var(--gray-400);
+      font-size: 14px;
+    }
+
+    /* Clear button */
+    .clear-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .clear-btn:hover {
+      background: var(--gray-50);
+    }
+
+    /* No Match State */
+    .no-match-card {
+      margin: 16px;
+      padding: 24px;
+      background: var(--gray-50);
+      border: 2px dashed var(--gray-200);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .no-match-card h3 {
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+
+    .no-match-card p {
+      color: var(--gray-500);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Flow Progress */
+    .flow-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f0fdf4;
+      border-bottom: 1px solid #86efac;
+    }
+
+    .flow-progress span {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    /* Context Panel Styles */
+    .lab-layout.with-context {
+      grid-template-columns: 1fr 1fr 400px;
+      gap: 28px;
+    }
+
+    @media (max-width: 1600px) {
+      .lab-layout.with-context {
+        grid-template-columns: 1fr 1fr 340px;
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 1400px) {
+      .lab-layout.with-context {
+        grid-template-columns: 1fr 1fr 320px;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .lab-layout.with-context {
+        grid-template-columns: 1fr 1fr;
+      }
+      /* Context panel becomes a slide-out overlay on smaller screens */
+      .context-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        height: 100vh;
+        width: 380px;
+        z-index: 1000;
+        border-radius: 0;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .lab-layout.with-context {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .context-panel {
+      background: #f8fafc;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 2px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 280px);
+      min-height: 550px;
+    }
+
+    .context-panel-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .context-panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-toggle-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .context-toggle-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .context-toggle-btn.active {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1d4ed8;
+    }
+
+    /* Context Panel Tabs */
+    .context-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 16px;
+      background: white;
+    }
+
+    .context-tab {
+      padding: 14px 18px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s ease;
+    }
+
+    .context-tab:hover {
+      color: var(--gray-700);
+    }
+
+    .context-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .context-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .context-tab-pane {
+      display: none;
+    }
+
+    .context-tab-pane.active {
+      display: block;
+    }
+
+    /* Context Summary Section */
+    .context-section {
+      margin-bottom: 20px;
+    }
+
+    .context-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .context-summary-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--gray-700);
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid #3b82f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .context-empty {
+      color: var(--gray-400);
+      font-style: italic;
+      font-size: 12px;
+    }
+
+    /* Context Topics */
+    .context-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .context-topic {
+      padding: 6px 14px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Context Sentiment */
+    .context-sentiment {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .sentiment-icon {
+      font-size: 26px;
+    }
+
+    .sentiment-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .sentiment-positive { color: #16a34a; }
+    .sentiment-negative { color: #dc2626; }
+    .sentiment-neutral { color: #6b7280; }
+
+    /* Context Insights */
+    .context-insights {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .context-insight {
+      padding: 12px 16px;
+      background: #fefce8;
+      border-left: 4px solid #eab308;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px;
+      color: #713f12;
+      line-height: 1.5;
+    }
+
+    /* Context Loading */
+    .context-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--gray-200);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Context History */
+    .context-history-item {
+      padding: 14px 16px;
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .context-history-time {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .context-history-summary {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    /* Context Settings */
+    .context-setting {
+      margin-bottom: 20px;
+    }
+
+    .context-setting-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .context-setting-info {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 6px;
+    }
+
+    .context-prompt-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+      min-height: 120px;
+      resize: vertical;
+      font-family: 'Monaco', 'Menlo', monospace;
+      background: white;
+    }
+
+    .context-prompt-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Phase Badge in Context */
+    .context-phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Model Info */
+    .context-model-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #1f2937;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .context-model-info code {
+      color: #34d399;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">AI</div>
+          <span class="sidebar-logo-text">DialPro</span>
+        </a>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <span></span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Main Section -->
+        <div class="sidebar-nav-section">
+          <a href="dashboard.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📊</span>
+            <span class="sidebar-nav-label">Dashboard</span>
+          </a>
+          <a href="newsfeed.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📰</span>
+            <span class="sidebar-nav-label">Newsfeed</span>
+          </a>
+          <a href="activity.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚡</span>
+            <span class="sidebar-nav-label">Activity</span>
+          </a>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Contacts</div>
+          <a href="contacts.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-label">All Contacts</span>
+          </a>
+          <a href="contacts-import.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📥</span>
+            <span class="sidebar-nav-label">Import</span>
+          </a>
+        </div>
+
+        <!-- Communication Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Communication</div>
+          <a href="sms.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">💬</span>
+            <span class="sidebar-nav-label">SMS</span>
+          </a>
+          <a href="call.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📞</span>
+            <span class="sidebar-nav-label">Make Call</span>
+          </a>
+          <a href="history.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">History</span>
+          </a>
+          <a href="callbacks.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🔔</span>
+            <span class="sidebar-nav-label">Callbacks</span>
+          </a>
+        </div>
+
+        <!-- AI Tools Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">AI Tools</div>
+          <a href="agent-queue.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-label">Call Queue</span>
+          </a>
+          <a href="agent-monitor.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">🤖</span>
+            <span class="sidebar-nav-label">Live Monitor</span>
+          </a>
+        </div>
+
+        <!-- Sales Section -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-section-title">Sales</div>
+          <a href="pipeline.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">📈</span>
+            <span class="sidebar-nav-label">Pipeline</span>
+          </a>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="sidebar-nav-section" style="margin-top: auto;">
+          <a href="coaching-lab.html" class="sidebar-nav-item active">
+            <span class="sidebar-nav-icon">🧪</span>
+            <span class="sidebar-nav-label">Coaching Lab</span>
+          </a>
+          <a href="settings.html" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon">⚙️</span>
+            <span class="sidebar-nav-label">Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Section -->
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">SR</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Sales Rep</div>
+          <div class="sidebar-user-status">
+            <span class="status-dot"></span>
+            <span>Online</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="top-header-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <h1 class="page-title">Coaching Lab</h1>
+        </div>
+        <div class="top-header-right">
+          <select id="kb-select" class="form-select" style="min-width: 180px;">
+            <option value="">Loading...</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="lab-content">
+          <!-- Source Toggle -->
+          <div class="source-toggle">
+            <div class="source-tabs">
+              <button class="source-tab" data-mode="previous" onclick="setMode('previous')">
+                📞 Previous Call
+              </button>
+              <button class="source-tab active" data-mode="manual" onclick="setMode('manual')">
+                ✍️ Manual Test
+              </button>
+            </div>
+
+            <!-- Live Mode Toggle -->
+            <div class="live-mode-toggle" style="display: flex; align-items: center; gap: 8px; margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--gray-200);">
+              <label style="font-size: 13px; color: var(--gray-600); white-space: nowrap;">
+                <input type="checkbox" id="live-mode-toggle" onchange="toggleLiveMode()" style="margin-right: 6px;" checked>
+                Live Mode
+              </label>
+              <span class="live-mode-badge" id="live-mode-badge" style="display: inline-block; background: #10b981; color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600;">ON</span>
+            </div>
+
+            <!-- Phase Selector -->
+            <div class="phase-selector" style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+              <label style="font-size: 13px; color: var(--gray-600); white-space: nowrap;">Phase:</label>
+              <select id="phase-select" class="form-select" style="min-width: 140px; font-size: 13px; padding: 6px 10px;">
+                <option value="">Auto-detect</option>
+                <option value="intro">Intro</option>
+                <option value="discovery">Discovery</option>
+                <option value="presentation">Presentation</option>
+                <option value="pricing">Pricing</option>
+                <option value="objection_handling">Objection Handling</option>
+                <option value="closing">Closing</option>
+              </select>
+            </div>
+
+            <!-- Context Panel Toggle -->
+            <button class="context-toggle-btn" id="context-toggle-btn" onclick="toggleContextPanel()" style="margin-left: auto;">
+              <span>Context</span>
+              <span id="context-toggle-icon">+</span>
+            </button>
+
+            <!-- Call selector (for previous call mode) -->
+            <div class="call-select hidden" id="call-select-container">
+              <label>Call:</label>
+              <select id="call-select">
+                <option value="">Select a call...</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="loadCallTranscript()">Load</button>
+            </div>
+
+            <!-- Manual mode hint -->
+            <div class="manual-hint" id="manual-hint">
+              <span style="color: #10b981;">Live Mode:</span> Testing with phase filtering, AI selection, and context
+            </div>
+          </div>
+
+          <!-- 2-Column Layout -->
+          <div class="lab-layout">
+            <!-- LEFT: Conversation Timeline -->
+            <div class="lab-panel">
+              <div class="lab-panel-header">
+                <span>💬 Conversation</span>
+                <button class="clear-btn" onclick="clearConversation()">Clear All</button>
+              </div>
+              <div class="lab-panel-content" id="conversation-timeline">
+                <div class="empty-state" id="empty-conversation">
+                  <div class="empty-state-icon">💬</div>
+                  <h3>No messages yet</h3>
+                  <p>Type a customer message below to start testing</p>
+                </div>
+              </div>
+
+              <!-- Manual Input -->
+              <div class="manual-input">
+                <div class="input-speaker-toggle">
+                  <button class="speaker-btn customer active" onclick="setSpeaker('customer')">🏠 Customer</button>
+                  <button class="speaker-btn rep" onclick="setSpeaker('rep')">👤 Rep</button>
+                </div>
+                <div class="input-row">
+                  <input type="text" id="message-input" placeholder="Type what customer says and press Enter to test..." onkeypress="handleInputKeypress(event)">
+                  <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: Coaching Response -->
+            <div class="lab-panel">
+              <div class="lab-panel-header">🤖 Coaching Response</div>
+              <div class="lab-panel-content" id="coaching-panel">
+                <div class="empty-state" id="empty-coaching">
+                  <div class="empty-state-icon">🤖</div>
+                  <h3>No coaching yet</h3>
+                  <p>Send a customer message to see coaching suggestions</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTEXT: Context Panel (hidden by default) -->
+            <div class="context-panel" id="context-panel" style="display: none;">
+              <div class="context-panel-header">
+                <span class="context-panel-title">Context Window</span>
+              </div>
+
+              <!-- Tabs -->
+              <div class="context-tabs">
+                <button class="context-tab active" data-tab="current" onclick="setContextTab('current')">Current</button>
+                <button class="context-tab" data-tab="history" onclick="setContextTab('history')">History</button>
+                <button class="context-tab" data-tab="settings" onclick="setContextTab('settings')">Settings</button>
+              </div>
+
+              <div class="context-panel-content">
+                <!-- Current Tab -->
+                <div class="context-tab-pane active" id="context-tab-current">
+                  <!-- Phase -->
+                  <div class="context-section">
+                    <div class="context-section-label">Current Phase</div>
+                    <div id="context-phase">
+                      <span class="context-phase-badge" id="context-phase-badge">intro</span>
+                    </div>
+                  </div>
+
+                  <!-- Summary -->
+                  <div class="context-section">
+                    <div class="context-section-label">Summary</div>
+                    <div id="context-summary">
+                      <span class="context-empty">No context generated yet. Send messages to build context.</span>
+                    </div>
+                  </div>
+
+                  <!-- Topics -->
+                  <div class="context-section">
+                    <div class="context-section-label">Topics Discussed</div>
+                    <div class="context-topics" id="context-topics">
+                      <span class="context-empty">No topics identified</span>
+                    </div>
+                  </div>
+
+                  <!-- Sentiment -->
+                  <div class="context-section">
+                    <div class="context-section-label">Customer Sentiment</div>
+                    <div class="context-sentiment" id="context-sentiment">
+                      <span class="sentiment-icon">-</span>
+                      <span class="sentiment-label sentiment-neutral">Unknown</span>
+                    </div>
+                  </div>
+
+                  <!-- Insights -->
+                  <div class="context-section">
+                    <div class="context-section-label">Key Insights</div>
+                    <div class="context-insights" id="context-insights">
+                      <span class="context-empty">No insights yet</span>
+                    </div>
+                  </div>
+
+                  <!-- Model Info -->
+                  <div class="context-section">
+                    <div class="context-section-label">AI Model</div>
+                    <div class="context-model-info">
+                      <span>Model:</span>
+                      <code id="context-model">claude-3-haiku</code>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="context-tab-pane" id="context-tab-history">
+                  <div id="context-history-list">
+                    <span class="context-empty">No context history yet. Context updates every ~12 messages.</span>
+                  </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="context-tab-pane" id="context-tab-settings">
+                  <div class="context-setting">
+                    <label class="context-setting-label">Context Update Interval</label>
+                    <select id="context-update-interval" class="form-select" style="width: 100%;">
+                      <option value="6">Every 6 messages</option>
+                      <option value="12" selected>Every 12 messages (default)</option>
+                      <option value="20">Every 20 messages</option>
+                    </select>
+                    <div class="context-setting-info">How often to regenerate the context summary</div>
+                  </div>
+
+                  <div class="context-setting">
+                    <label class="context-setting-label">Custom Context Prompt</label>
+                    <textarea class="context-prompt-textarea" id="context-custom-prompt" placeholder="Leave empty for default prompt...">Summarize this sales call conversation. Include:
+- Brief summary (2-3 sentences)
+- Key topics discussed
+- Customer sentiment (positive/negative/neutral)
+- Important insights or objections raised</textarea>
+                    <div class="context-setting-info">Customize how context is generated</div>
+                  </div>
+
+                  <button class="btn btn-secondary" onclick="resetContextSettings()" style="width: 100%;">Reset to Defaults</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar functions
+    let sidebarCollapsed = false;
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarCollapsed = !sidebarCollapsed;
+      sidebar.classList.toggle('collapsed', sidebarCollapsed);
+      localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // State
+    let currentMode = 'manual';
+    let currentSpeaker = 'customer';
+    let conversation = [];
+    let coachingMoments = [];
+    let currentKnowledgeBaseId = null;
+    let currentFlowState = null;
+    let messageCounter = 0;
+    let useLiveMode = true; // Use same logic as live calls when true (enabled by default)
+    let showContextPanel = false; // Context panel visibility
+    let currentContextTab = 'current';
+    let contextData = {
+      phase: 'intro',
+      summary: null,
+      topics: [],
+      sentiment: 'neutral',
+      insights: [],
+      history: []
+    };
+
+    // Toggle Live Mode
+    function toggleLiveMode() {
+      useLiveMode = document.getElementById('live-mode-toggle').checked;
+      const badge = document.getElementById('live-mode-badge');
+      badge.style.display = useLiveMode ? 'inline-block' : 'none';
+
+      // Update hint text
+      const hint = document.getElementById('manual-hint');
+      if (useLiveMode) {
+        hint.innerHTML = '<span style="color: #10b981;">Live Mode:</span> Testing with phase filtering, AI selection, and context';
+      } else {
+        hint.textContent = 'Type customer messages below to test coaching responses';
+      }
+    }
+
+    // Get selected phase
+    function getSelectedPhase() {
+      const select = document.getElementById('phase-select');
+      return select?.value || '';
+    }
+
+    // Toggle Context Panel
+    function toggleContextPanel() {
+      console.log('[Coaching Lab] Toggle context panel, current state:', showContextPanel);
+      showContextPanel = !showContextPanel;
+      const panel = document.getElementById('context-panel');
+      const layout = document.querySelector('.lab-layout');
+      const btn = document.getElementById('context-toggle-btn');
+      const icon = document.getElementById('context-toggle-icon');
+
+      console.log('[Coaching Lab] Context panel elements:', { panel: !!panel, layout: !!layout, btn: !!btn, icon: !!icon });
+
+      if (showContextPanel) {
+        panel.style.display = 'flex';
+        layout.classList.add('with-context');
+        btn.classList.add('active');
+        icon.textContent = '×';
+        console.log('[Coaching Lab] Context panel SHOWN');
+      } else {
+        panel.style.display = 'none';
+        layout.classList.remove('with-context');
+        btn.classList.remove('active');
+        icon.textContent = '+';
+        console.log('[Coaching Lab] Context panel HIDDEN');
+      }
+    }
+
+    // Set Context Tab
+    function setContextTab(tabName) {
+      currentContextTab = tabName;
+
+      // Update tab buttons
+      document.querySelectorAll('.context-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+      });
+
+      // Update tab panes
+      document.querySelectorAll('.context-tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === `context-tab-${tabName}`);
+      });
+    }
+
+    // Update Context Panel with data
+    function updateContextPanel(data) {
+      if (!data) return;
+
+      // Update phase
+      if (data.phase) {
+        contextData.phase = data.phase;
+        const phaseBadge = document.getElementById('context-phase-badge');
+        const phaseLabels = {
+          intro: 'Intro',
+          discovery: 'Discovery',
+          presentation: 'Presentation',
+          pricing: 'Pricing',
+          objection_handling: 'Objection Handling',
+          closing: 'Closing'
+        };
+        phaseBadge.textContent = phaseLabels[data.phase] || data.phase;
+      }
+
+      // Update summary
+      if (data.summary) {
+        contextData.summary = data.summary;
+        const intervalInfo = data.updateInterval && data.messageCount
+          ? `<div class="context-meta" style="font-size: 10px; color: var(--gray-400); margin-top: 8px;">Messages: ${data.messageCount} | Updates every ${data.updateInterval} messages</div>`
+          : '';
+        document.getElementById('context-summary').innerHTML = `
+          <div class="context-summary-text">${data.summary}</div>
+          ${intervalInfo}
+        `;
+      }
+
+      // Update topics
+      if (data.topics && data.topics.length > 0) {
+        contextData.topics = data.topics;
+        const topicsHtml = data.topics.map(t => `<span class="context-topic">${t}</span>`).join('');
+        document.getElementById('context-topics').innerHTML = topicsHtml;
+      }
+
+      // Update sentiment
+      if (data.sentiment) {
+        contextData.sentiment = data.sentiment;
+        const sentimentIcons = { positive: '😊', negative: '😟', neutral: '😐' };
+        const sentimentLabels = { positive: 'Positive', negative: 'Negative', neutral: 'Neutral' };
+        document.getElementById('context-sentiment').innerHTML = `
+          <span class="sentiment-icon">${sentimentIcons[data.sentiment] || '😐'}</span>
+          <span class="sentiment-label sentiment-${data.sentiment}">${sentimentLabels[data.sentiment] || 'Unknown'}</span>
+        `;
+      }
+
+      // Update insights
+      if (data.insights && data.insights.length > 0) {
+        contextData.insights = data.insights;
+        const insightsHtml = data.insights.map(i => `<div class="context-insight">${i}</div>`).join('');
+        document.getElementById('context-insights').innerHTML = insightsHtml;
+      }
+
+      // Add to history
+      if (data.summary) {
+        const historyEntry = {
+          time: new Date().toLocaleTimeString(),
+          summary: data.summary,
+          phase: data.phase
+        };
+        contextData.history.unshift(historyEntry);
+
+        // Update history tab
+        const historyHtml = contextData.history.slice(0, 10).map(h => `
+          <div class="context-history-item">
+            <div class="context-history-time">${h.time} - ${h.phase || 'unknown'}</div>
+            <div class="context-history-summary">${h.summary}</div>
+          </div>
+        `).join('');
+        document.getElementById('context-history-list').innerHTML = historyHtml || '<span class="context-empty">No context history yet.</span>';
+      }
+    }
+
+    // Show loading state in context panel
+    function showContextLoading() {
+      document.getElementById('context-phase-badge').textContent = '...';
+      document.getElementById('context-summary').innerHTML = `
+        <div class="context-loading">
+          <div class="loading-spinner"></div>
+          <span>Analyzing conversation...</span>
+        </div>
+      `;
+      document.getElementById('context-topics').innerHTML = '<span class="context-empty">Loading...</span>';
+      document.getElementById('context-sentiment').innerHTML = '<span class="context-empty">Loading...</span>';
+      document.getElementById('context-insights').innerHTML = '<span class="context-empty">Loading...</span>';
+    }
+
+    // Reset Context Settings
+    function resetContextSettings() {
+      document.getElementById('context-update-interval').value = '12';
+      document.getElementById('context-custom-prompt').value = `Summarize this sales call conversation. Include:
+- Brief summary (2-3 sentences)
+- Key topics discussed
+- Customer sentiment (positive/negative/neutral)
+- Important insights or objections raised`;
+    }
+
+    // Clear context data when clearing conversation
+    function clearContextData() {
+      contextData = {
+        phase: 'intro',
+        summary: null,
+        topics: [],
+        sentiment: 'neutral',
+        insights: [],
+        history: []
+      };
+
+      document.getElementById('context-phase-badge').textContent = 'intro';
+      document.getElementById('context-summary').innerHTML = '<span class="context-empty">No context generated yet. Send messages to build context.</span>';
+      document.getElementById('context-topics').innerHTML = '<span class="context-empty">No topics identified</span>';
+      document.getElementById('context-sentiment').innerHTML = `
+        <span class="sentiment-icon">-</span>
+        <span class="sentiment-label sentiment-neutral">Unknown</span>
+      `;
+      document.getElementById('context-insights').innerHTML = '<span class="context-empty">No insights yet</span>';
+      document.getElementById('context-history-list').innerHTML = '<span class="context-empty">No context history yet. Context updates every ~12 messages.</span>';
+    }
+
+    // Check AI status
+    async function checkAIStatus() {
+      try {
+        const response = await fetch('/api/coaching-lab/status');
+        const data = await response.json();
+
+        const liveModeLabel = document.querySelector('.live-mode-toggle label');
+        if (data.success && data.aiEnabled) {
+          console.log('[Coaching Lab] AI is enabled - full Live Mode available');
+          // Update the Live Mode label to show AI is available
+          if (liveModeLabel) {
+            liveModeLabel.innerHTML = `
+              <input type="checkbox" id="live-mode-toggle" onchange="toggleLiveMode()" style="margin-right: 6px;" checked>
+              Live Mode <span style="color: #8b5cf6; font-size: 10px;">(AI)</span>
+            `;
+          }
+        } else {
+          console.warn('[Coaching Lab] AI not configured - using keyword matching only');
+          // Update the Live Mode label to show AI is NOT available
+          if (liveModeLabel) {
+            liveModeLabel.innerHTML = `
+              <input type="checkbox" id="live-mode-toggle" onchange="toggleLiveMode()" style="margin-right: 6px;" checked>
+              Live Mode <span style="color: #f59e0b; font-size: 10px;">(Keywords Only)</span>
+            `;
+          }
+          // Show warning in manual hint
+          const hint = document.getElementById('manual-hint');
+          if (hint) {
+            hint.innerHTML = '<span style="color: #f59e0b;">Keywords Mode:</span> AI not configured - set ANTHROPIC_API_KEY for smarter matching';
+          }
+        }
+        return data;
+      } catch (error) {
+        console.error('Error checking AI status:', error);
+        return { aiEnabled: false };
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Restore sidebar state
+      const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (savedCollapsed && window.innerWidth > 1024) {
+        sidebarCollapsed = true;
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+
+      await loadKnowledgeBases();
+      await loadRecentCalls();
+      await checkAIStatus();
+
+      // Load demo conversation
+      loadDemoConversation();
+    });
+
+    // Load demo conversation to show how it works
+    async function loadDemoConversation() {
+      const demoMessages = [
+        { speaker: 'rep', text: "Hi, this is Mike from Solar Solutions. I'm calling about the quote you requested. Is this a good time?" },
+        { speaker: 'customer', text: "Oh yeah, I got the quote in my email." },
+        { speaker: 'rep', text: "Great! What did you think? Any questions I can answer?" },
+        { speaker: 'customer', text: "Honestly, it's way too expensive for us right now. We weren't expecting it to cost that much." }
+      ];
+
+      for (const msg of demoMessages) {
+        messageCounter++;
+        const message = {
+          id: messageCounter,
+          speaker: msg.speaker,
+          text: msg.text,
+          timestamp: new Date().toISOString()
+        };
+        conversation.push(message);
+        renderMessage(message);
+
+        // Test coaching for customer messages
+        if (msg.speaker === 'customer' && currentKnowledgeBaseId) {
+          await testCoaching(message);
+        }
+      }
+    }
+
+    // Load Knowledge Bases
+    async function loadKnowledgeBases() {
+      try {
+        const response = await fetch('/api/knowledge-bases');
+        const data = await response.json();
+
+        const select = document.getElementById('kb-select');
+        select.innerHTML = '';
+
+        const kbList = data.data || data.knowledgeBases || [];
+        if (kbList.length > 0) {
+          kbList.forEach(kb => {
+            const option = document.createElement('option');
+            option.value = kb.id;
+            option.textContent = kb.name;
+            if (kb.is_default) {
+              option.selected = true;
+              currentKnowledgeBaseId = kb.id;
+            }
+            select.appendChild(option);
+          });
+
+          if (!currentKnowledgeBaseId && kbList.length > 0) {
+            currentKnowledgeBaseId = kbList[0].id;
+          }
+        } else {
+          select.innerHTML = '<option value="">No knowledge bases found</option>';
+        }
+
+        select.addEventListener('change', (e) => {
+          currentKnowledgeBaseId = e.target.value;
+          currentFlowState = null;
+        });
+      } catch (error) {
+        console.error('Error loading knowledge bases:', error);
+      }
+    }
+
+    // Load Recent Calls
+    // Map test call IDs to friendly names
+    const TEST_CALL_NAMES = {
+      'test_full_cycle_001': 'Test Model 1 - Full Sales Cycle',
+      'test_price_objection_002': 'Test Model 2 - Price Objection',
+      'test_discovery_003': 'Test Model 3 - Discovery Deep Dive',
+      'test_closing_004': 'Test Model 4 - Closing Techniques',
+      'test_objections_005': 'Test Model 5 - Multiple Objections'
+    };
+
+    async function loadRecentCalls() {
+      try {
+        console.log('[Coaching Lab] Loading recent calls...');
+        const response = await fetch('/api/calls?limit=20&hasTranscript=true');
+        const data = await response.json();
+        console.log('[Coaching Lab] Calls API response:', data);
+
+        const select = document.getElementById('call-select');
+        select.innerHTML = '<option value="">Select a call...</option>';
+
+        if (data.success && data.calls) {
+          console.log(`[Coaching Lab] Found ${data.calls.length} calls with transcripts`);
+          // Separate test calls from real calls
+          const testCalls = [];
+          const realCalls = [];
+
+          data.calls.forEach(call => {
+            if (call.hasTranscript) {
+              if (call.callSid && call.callSid.startsWith('test_')) {
+                testCalls.push(call);
+              } else {
+                realCalls.push(call);
+              }
+            }
+          });
+
+          // Add test calls group if any exist
+          if (testCalls.length > 0) {
+            const testGroup = document.createElement('optgroup');
+            testGroup.label = 'Test Scenarios';
+
+            testCalls.forEach(call => {
+              const option = document.createElement('option');
+              option.value = call.callSid;
+              const friendlyName = TEST_CALL_NAMES[call.callSid] || call.callSid;
+              const duration = call.duration ? `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}` : '0:00';
+              option.textContent = `${friendlyName} (${duration})`;
+              testGroup.appendChild(option);
+            });
+
+            select.appendChild(testGroup);
+          }
+
+          // Add real calls group if any exist
+          if (realCalls.length > 0) {
+            const realGroup = document.createElement('optgroup');
+            realGroup.label = 'Recent Calls';
+
+            realCalls.forEach(call => {
+              const option = document.createElement('option');
+              option.value = call.callSid;
+              const date = new Date(call.date).toLocaleDateString();
+              const duration = call.duration ? `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}` : '0:00';
+              option.textContent = `${call.phone} - ${date} (${duration})`;
+              realGroup.appendChild(option);
+            });
+
+            select.appendChild(realGroup);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading calls:', error);
+      }
+    }
+
+    // Mode Toggle
+    function setMode(mode) {
+      currentMode = mode;
+
+      document.querySelectorAll('.source-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.mode === mode);
+      });
+
+      document.getElementById('call-select-container').classList.toggle('hidden', mode !== 'previous');
+      document.getElementById('manual-hint').classList.toggle('hidden', mode !== 'manual');
+
+      if (mode === 'manual') {
+        clearConversation();
+      }
+    }
+
+    // Speaker Toggle
+    function setSpeaker(speaker) {
+      currentSpeaker = speaker;
+      document.querySelectorAll('.speaker-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`.speaker-btn.${speaker}`).classList.add('active');
+
+      const input = document.getElementById('message-input');
+      input.placeholder = speaker === 'customer'
+        ? 'Type what customer says and press Enter to test...'
+        : 'Type what rep says (no coaching will trigger)...';
+    }
+
+    // Handle Input Keypress
+    function handleInputKeypress(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    // Send Message
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      input.value = '';
+      messageCounter++;
+
+      const message = {
+        id: messageCounter,
+        speaker: currentSpeaker,
+        text: text,
+        timestamp: new Date().toISOString()
+      };
+      conversation.push(message);
+
+      renderMessage(message);
+
+      if (currentSpeaker === 'customer' && currentKnowledgeBaseId) {
+        await testCoaching(message);
+      }
+    }
+
+    // Render Message
+    function renderMessage(message, coachingData = null) {
+      const timeline = document.getElementById('conversation-timeline');
+      const emptyState = document.getElementById('empty-conversation');
+
+      if (emptyState) {
+        emptyState.style.display = 'none';
+      }
+
+      const div = document.createElement('div');
+      div.className = 'timeline-item';
+      div.id = `message-${message.id}`;
+
+      div.innerHTML = `
+        <div class="timestamp">Message ${message.id}</div>
+        <div class="speaker ${message.speaker}">${message.speaker === 'customer' ? '🏠 Customer' : '👤 Rep'}</div>
+        <div class="message-text">${highlightTriggerWords(message.text, coachingData)}</div>
+      `;
+
+      timeline.appendChild(div);
+      timeline.scrollTop = timeline.scrollHeight;
+    }
+
+    // Highlight Trigger Words
+    function highlightTriggerWords(text, coachingData) {
+      if (!coachingData || !coachingData.result || !coachingData.result.why) {
+        return text;
+      }
+
+      const keywords = coachingData.result.why.keywordsFound || [];
+      let highlighted = text;
+
+      keywords.forEach(keyword => {
+        const regex = new RegExp(`(${keyword})`, 'gi');
+        highlighted = highlighted.replace(regex, '<span class="trigger-word">$1</span>');
+      });
+
+      return highlighted;
+    }
+
+    // Test Coaching
+    async function testCoaching(message) {
+      try {
+        // Build request payload
+        const payload = {
+          text: message.text,
+          knowledgeBaseId: currentKnowledgeBaseId,
+          currentFlowId: currentFlowState?.flowId,
+          currentNodeId: currentFlowState?.currentNodeId
+        };
+
+        // Add live mode parameters if enabled
+        if (useLiveMode) {
+          payload.useLiveMode = true;
+          payload.conversationHistory = conversation.map(m => ({
+            speaker: m.speaker,
+            text: m.text,
+            timestamp: m.timestamp
+          }));
+          // Include context settings
+          payload.contextUpdateInterval = parseInt(document.getElementById('context-update-interval')?.value) || 12;
+        }
+
+        // Add phase if manually selected
+        const selectedPhase = getSelectedPhase();
+        if (selectedPhase) {
+          payload.phase = selectedPhase;
+        }
+
+        const response = await fetch('/api/coaching-lab/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update context panel if context data is returned
+          if (data.context) {
+            updateContextPanel(data.context);
+          }
+
+          // Also update phase from why data if available
+          if (data.result?.why?.phase) {
+            updateContextPanel({ phase: data.result.why.phase });
+          }
+
+          if (data.result.flow) {
+            currentFlowState = {
+              flowId: data.result.flow.flowId,
+              flowName: data.result.flow.flowName,
+              currentNodeId: data.result.flow.currentNodeId,
+              stepNumber: data.result.flow.stepNumber,
+              totalSteps: data.result.flow.totalSteps
+            };
+          }
+
+          const coachingMoment = {
+            messageId: message.id,
+            ...data.result
+          };
+          coachingMoments.push(coachingMoment);
+
+          const messageEl = document.getElementById(`message-${message.id}`);
+          if (messageEl && data.result.type !== 'no_match') {
+            const category = data.result.category;
+            const why = data.result.why;
+
+            // Build trigger info with phase and match method
+            let triggerInfo = `Detected: "${why?.keywordsFound?.[0] || 'pattern'}" → ${why?.confidence || 0}% confidence`;
+            if (why?.phase) {
+              triggerInfo += ` | Phase: ${why.phase}`;
+            }
+            if (why?.matchMethod) {
+              triggerInfo += ` | Method: ${why.matchMethod}`;
+            }
+            if (why?.usedLiveMode) {
+              triggerInfo += ' | 🔴 Live';
+            }
+
+            const triggerDiv = document.createElement('div');
+            triggerDiv.className = 'coaching-trigger-inline';
+            triggerDiv.onclick = () => showCoachingDetail(message.id);
+            triggerDiv.innerHTML = `
+              <div class="trigger-header">
+                <span class="trigger-badge">${coachingMoments.length}</span>
+                <span class="trigger-title">${category?.icon || '💡'} ${category?.displayName || 'Coaching'} Triggered</span>
+              </div>
+              <div class="trigger-keywords">
+                ${triggerInfo}
+              </div>
+            `;
+            messageEl.appendChild(triggerDiv);
+
+            const textEl = messageEl.querySelector('.message-text');
+            if (textEl) {
+              textEl.innerHTML = highlightTriggerWords(message.text, data);
+            }
+          }
+
+          renderCoachingCard(coachingMoment);
+        }
+      } catch (error) {
+        console.error('Error testing coaching:', error);
+      }
+    }
+
+    // Show Coaching Detail
+    function showCoachingDetail(messageId) {
+      const moment = coachingMoments.find(m => m.messageId === messageId);
+      if (moment) {
+        renderCoachingCard(moment);
+
+        document.querySelectorAll('.timeline-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+        document.getElementById(`message-${messageId}`)?.classList.add('selected');
+      }
+    }
+
+    // Render Coaching Card
+    function renderCoachingCard(moment) {
+      const panel = document.getElementById('coaching-panel');
+      const emptyState = document.getElementById('empty-coaching');
+
+      if (emptyState) {
+        emptyState.style.display = 'none';
+      }
+
+      if (moment.type === 'no_match') {
+        panel.innerHTML = `
+          <div class="no-match-card">
+            <h3>No Match Found</h3>
+            <p>${moment.why?.message || 'No matching script or flow found for this text.'}</p>
+            <button class="btn btn-primary" onclick="window.location.href='/settings'">Add New Script</button>
+          </div>
+        `;
+        return;
+      }
+
+      const message = conversation.find(m => m.id === moment.messageId);
+      const category = moment.category;
+      const coaching = moment.coaching;
+      const why = moment.why;
+      const flow = moment.flow;
+
+      let flowProgressHtml = '';
+      if (flow) {
+        flowProgressHtml = `
+          <div class="flow-progress">
+            <span>Flow: ${flow.flowName}</span>
+            <span style="margin-left: auto;">Step ${flow.stepNumber} of ${flow.totalSteps}</span>
+          </div>
+        `;
+      }
+
+      let keywordsHtml = '';
+      if (why?.keywordsFound?.length > 0 || why?.keywordsChecked?.length > 0) {
+        keywordsHtml = '<div class="why-keywords">';
+        (why.keywordsFound || []).forEach(kw => {
+          keywordsHtml += `<span class="why-keyword found">"${kw}" ✓</span>`;
+        });
+        (why.keywordsChecked || []).slice(0, 4).forEach(kw => {
+          keywordsHtml += `<span class="why-keyword not-found">${kw}</span>`;
+        });
+        keywordsHtml += '</div>';
+      }
+
+      let confidenceHtml = '';
+      if (why?.confidenceBreakdown?.length > 0) {
+        confidenceHtml = why.confidenceBreakdown.map(b => `${b.factor} (+${b.points}%)`).join(', ');
+      }
+
+      let alternativesHtml = '';
+      if (why?.alternatives?.length > 0) {
+        alternativesHtml = `
+          <div class="why-row">
+            <span class="why-icon">🔀</span>
+            <div class="why-content">
+              <div class="why-label">Alternatives Considered:</div>
+              <div class="why-value">
+                ${why.alternatives.map(a => `${a.icon || ''} ${a.category} (${a.score})`).join(', ')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      panel.innerHTML = `
+        <div class="coaching-full-card">
+          ${flowProgressHtml}
+          <div class="cfc-header">
+            <div class="cfc-title">
+              <span class="cfc-badge">${coachingMoments.indexOf(moment) + 1}</span>
+              ${category?.icon || '💡'} ${category?.displayName || 'Coaching'}
+            </div>
+            <div class="cfc-time">Just now</div>
+          </div>
+
+          <div class="cfc-section">
+            <div class="cfc-section-label">Customer Said</div>
+            <div class="cfc-customer-said">
+              "${highlightTriggerWords(message?.text || '', { result: moment })}"
+            </div>
+          </div>
+
+          <div class="cfc-why">
+            <div class="cfc-why-header">🧠 Why This Triggered</div>
+            <div class="why-row">
+              <span class="why-icon">🤖</span>
+              <div class="why-content">
+                <div class="why-label">Match Method:</div>
+                <div class="why-value">
+                  ${why?.matchMethod === 'ai'
+                    ? '<span style="color: #8b5cf6; font-weight: 600;">AI Selected</span> (Claude analyzed conversation context)'
+                    : why?.matchMethod === 'keyword'
+                    ? '<span style="color: #f59e0b; font-weight: 600;">Keyword Match</span>'
+                    : '<span style="color: #6b7280;">Standard</span>'
+                  }
+                  ${why?.phase ? ` | Phase: <span style="color: #3b82f6;">${why.phase}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            ${keywordsHtml ? `
+            <div class="why-row">
+              <span class="why-icon">🔍</span>
+              <div class="why-content">
+                <div class="why-label">Keywords Found:</div>
+                ${keywordsHtml}
+              </div>
+            </div>
+            ` : ''}
+            <div class="why-row">
+              <span class="why-icon">📊</span>
+              <div class="why-content">
+                <div class="why-label">Confidence:</div>
+                <div class="why-value">
+                  <span class="why-highlight">${why?.confidence || 0}%</span>
+                  ${confidenceHtml ? ` — ${confidenceHtml}` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="why-row">
+              <span class="why-icon">📚</span>
+              <div class="why-content">
+                <div class="why-label">Source:</div>
+                <div class="why-value">
+                  ${why?.source?.type === 'flow'
+                    ? `${why.source.flowName} → Step ${why.source.stepNumber} of ${why.source.totalSteps}`
+                    : `${why?.source?.scriptTitle || 'Script'} (${why?.source?.category || 'General'})`
+                  }
+                </div>
+              </div>
+            </div>
+            ${alternativesHtml}
+          </div>
+
+          <div class="cfc-section cfc-suggestion">
+            <div class="cfc-section-label">💬 Say This</div>
+            <div class="cfc-script">
+              "${coaching?.scriptText || 'No script available'}"
+            </div>
+            ${coaching?.storyText ? `
+              <div class="cfc-story" style="margin-top: 12px; padding: 12px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 0 8px 8px 0;">
+                <div style="font-size: 10px; font-weight: 600; color: #166534; text-transform: uppercase; margin-bottom: 4px;">📖 Story</div>
+                <div style="font-size: 13px; color: #15803d; line-height: 1.5;">${coaching.storyText}</div>
+              </div>
+            ` : ''}
+            ${coaching?.tips ? `
+              <div class="cfc-tip">
+                💡 ${coaching.tips}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="cfc-section cfc-edit">
+            <div class="cfc-section-label">✏️ Edit This Response</div>
+
+            <div class="edit-field">
+              <label class="edit-field-label">💬 Script</label>
+              <textarea class="edit-textarea" id="edit-script-text">${coaching?.scriptText || ''}</textarea>
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-field-label">📖 Story</label>
+              <textarea class="edit-textarea edit-textarea-sm" id="edit-story-text" placeholder="Add a story or example to make this more relatable...">${coaching?.storyText || ''}</textarea>
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-field-label">💡 Tips</label>
+              <textarea class="edit-textarea edit-textarea-sm" id="edit-tips-text" placeholder="Add tips for delivering this response...">${coaching?.tips || ''}</textarea>
+            </div>
+
+            <div style="font-size: 10px; color: #666; margin: 4px 0;">Script ID: ${coaching?.id || 'NONE'} | Type: ${moment.type}</div>
+            <div class="edit-buttons">
+              <button class="edit-btn success" onclick="saveToKB('${coaching?.id}', '${moment.type}')">💾 Save to KB</button>
+              <button class="edit-btn primary" onclick="testAgain()">🧪 Test Again</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Clear Conversation
+    function clearConversation() {
+      conversation = [];
+      coachingMoments = [];
+      currentFlowState = null;
+      messageCounter = 0;
+
+      // Clear context data
+      clearContextData();
+
+      document.getElementById('conversation-timeline').innerHTML = `
+        <div class="empty-state" id="empty-conversation">
+          <div class="empty-state-icon">💬</div>
+          <h3>No messages yet</h3>
+          <p>Type a customer message below to start testing</p>
+        </div>
+      `;
+
+      document.getElementById('coaching-panel').innerHTML = `
+        <div class="empty-state" id="empty-coaching">
+          <div class="empty-state-icon">🤖</div>
+          <h3>No coaching yet</h3>
+          <p>Send a customer message to see coaching suggestions</p>
+        </div>
+      `;
+    }
+
+    // Load Call Transcript
+    async function loadCallTranscript() {
+      const callSid = document.getElementById('call-select').value;
+      console.log('[Coaching Lab] Loading transcript for call:', callSid);
+      if (!callSid) {
+        console.log('[Coaching Lab] No call selected');
+        return;
+      }
+
+      clearConversation();
+
+      try {
+        const response = await fetch(`/api/calls/${callSid}/transcript`);
+        const data = await response.json();
+        console.log('[Coaching Lab] Transcript response:', data);
+
+        if (data.success && data.transcript) {
+          const segments = data.transcript.segments || [];
+          console.log(`[Coaching Lab] Loaded ${segments.length} segments`);
+
+          // Auto-show context panel when loading a previous call
+          if (!showContextPanel) {
+            console.log('[Coaching Lab] Auto-opening context panel');
+            toggleContextPanel();
+          }
+
+          for (const segment of segments) {
+            messageCounter++;
+            const message = {
+              id: messageCounter,
+              speaker: segment.speaker || 'customer',
+              text: segment.text,
+              timestamp: segment.timestamp
+            };
+            conversation.push(message);
+            renderMessage(message);
+          }
+
+          // Generate context for the loaded conversation
+          if (currentKnowledgeBaseId && conversation.length >= 3) {
+            showContextLoading();
+            await generateContextForPreviousCall();
+          }
+
+          if (currentKnowledgeBaseId) {
+            const replayResponse = await fetch(`/api/calls/${callSid}/coaching-replay?knowledgeBaseId=${currentKnowledgeBaseId}`);
+            const replayData = await replayResponse.json();
+
+            if (replayData.success && replayData.coachingMoments) {
+              replayData.coachingMoments.forEach((moment, index) => {
+                const messageEl = document.getElementById(`message-${moment.turnIndex + 1}`);
+                if (messageEl) {
+                  const triggerDiv = document.createElement('div');
+                  triggerDiv.className = 'coaching-trigger-inline';
+                  triggerDiv.innerHTML = `
+                    <div class="trigger-header">
+                      <span class="trigger-badge">${index + 1}</span>
+                      <span class="trigger-title">${moment.category?.icon || '💡'} ${moment.category?.displayName || 'Coaching'}</span>
+                    </div>
+                    <div class="trigger-keywords">
+                      Detected: "${moment.matchedKeywords?.[0] || 'pattern'}" → ${moment.confidence}% confidence
+                    </div>
+                  `;
+                  messageEl.appendChild(triggerDiv);
+                }
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading transcript:', error);
+      }
+    }
+
+    // Generate context for a previously loaded call
+    async function generateContextForPreviousCall() {
+      if (!currentKnowledgeBaseId || conversation.length < 3) return;
+
+      try {
+        // Get the last customer message to use as the trigger
+        const lastCustomerMsg = [...conversation].reverse().find(m => m.speaker === 'customer');
+        if (!lastCustomerMsg) return;
+
+        const payload = {
+          text: lastCustomerMsg.text,
+          knowledgeBaseId: currentKnowledgeBaseId,
+          useLiveMode: true,
+          conversationHistory: conversation.map(m => ({
+            speaker: m.speaker,
+            text: m.text,
+            timestamp: m.timestamp
+          })),
+          contextUpdateInterval: parseInt(document.getElementById('context-update-interval')?.value) || 12
+        };
+
+        const response = await fetch('/api/coaching-lab/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.context) {
+          updateContextPanel(data.context);
+          console.log('[Previous Call] Context generated:', data.context);
+        }
+      } catch (error) {
+        console.error('Error generating context for previous call:', error);
+      }
+    }
+
+    // Save to KB
+    async function saveToKB(coachingId, type) {
+      console.log('=== SAVE TO KB DEBUG ===');
+      console.log('Coaching ID:', coachingId);
+      console.log('Type:', type);
+
+      const scriptText = document.getElementById('edit-script-text').value;
+      const storyText = document.getElementById('edit-story-text').value;
+      const tips = document.getElementById('edit-tips-text').value;
+
+      console.log('Script Text:', scriptText);
+      console.log('Story Text:', storyText);
+      console.log('Tips:', tips);
+
+      if (!scriptText) {
+        alert('Please enter script text to save');
+        return;
+      }
+
+      // Check for invalid or missing coaching ID
+      if (!coachingId || coachingId === 'undefined' || coachingId === 'null') {
+        console.error('Invalid coaching ID:', coachingId);
+        alert('Cannot save: No valid script ID found. This coaching suggestion may not be linked to a saved script. Please add this as a new script in Settings > Knowledge Base.');
+        return;
+      }
+
+      try {
+        const endpoint = type === 'flow' ? `/api/flow-nodes/${coachingId}` : `/api/scripts/${coachingId}`;
+        const requestBody = {
+          script_text: scriptText,
+          story_text: storyText || null,
+          tips: tips || null
+        };
+
+        console.log('Endpoint:', endpoint);
+        console.log('Request body:', requestBody);
+
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success && (data.script || data.node)) {
+          console.log('Save successful!', data.script || data.node);
+          alert('Saved successfully to Knowledge Base!');
+        } else if (data.success && !data.script && !data.node) {
+          console.error('Script not found in response');
+          alert('Error: Script not found in database. It may have been deleted. Please add it as a new script in Settings > Knowledge Base.');
+        } else {
+          console.error('Save failed:', data.error);
+          alert('Error saving: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving:', error);
+        alert('Error saving: ' + error.message);
+      }
+    }
+
+    // Test Again
+    function testAgain() {
+      const lastCustomerMessage = [...conversation].reverse().find(m => m.speaker === 'customer');
+      if (lastCustomerMessage) {
+        document.getElementById('message-input').value = lastCustomerMessage.text;
+        document.getElementById('message-input').focus();
+      }
+    }
+  </script>
+</body>
+</html>

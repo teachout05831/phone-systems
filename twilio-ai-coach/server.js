@@ -194,6 +194,62 @@ const DEEPGRAM_BUFFER_MAX_SIZE = 200; // Max audio chunks to buffer during conne
 const AI_COACHING_INTERVAL = 2; // Trigger AI coaching every N final transcripts (changed from 3)
 const AI_COACHING_MIN_TRANSCRIPT_LENGTH = 3; // Minimum transcript exchanges before coaching
 
+// ============ CALL PHASE & CONTEXT TRACKING ============
+// Background context per call - stores AI-generated summaries
+const callContextSummaries = new Map(); // callSid -> { summary, topics, sentiment, insights, lastUpdatedAt, entryCount }
+
+// Phase tracking per call - stores current phase and history
+const callPhases = new Map(); // callSid -> { currentPhase, phaseHistory, lastTransitionAt }
+
+// Cooldown tracking for script suggestions
+const scriptCooldowns = new Map(); // callSid -> { lastSuggestionAt, recentlyShownScripts: Map(scriptId -> timestamp), suggestionCount }
+
+// Context update settings
+const CONTEXT_UPDATE_INTERVAL = 12; // Update context every N transcript entries
+const CONTEXT_UPDATE_TIMEOUT_MS = 2000; // Max time for context generation
+
+// Suggestion cooldown settings
+const SUGGESTION_COOLDOWN_MS = 30000; // 30 seconds between suggestions
+const SCRIPT_REPEAT_COOLDOWN_MS = 300000; // 5 minutes before repeating same script
+const MAX_SUGGESTIONS_PER_CALL = 20; // Maximum suggestions per call
+
+// Call phases in order
+const CALL_PHASES = ['intro', 'discovery', 'presentation', 'pricing', 'objection_handling', 'closing'];
+
+// Phase detection keywords (checked in order, first match wins)
+const PHASE_KEYWORDS = {
+  intro: [
+    'hello', 'hi there', 'good morning', 'good afternoon', 'good evening',
+    'my name is', 'calling from', 'reaching out', 'how are you'
+  ],
+  discovery: [
+    'tell me about', 'what challenges', 'currently using', 'what do you',
+    'how do you', 'what\'s your', 'biggest problem', 'main concern',
+    'looking for', 'what brings you', 'why did you', 'interested in'
+  ],
+  presentation: [
+    'let me show you', 'let me tell you', 'our solution', 'we offer',
+    'the benefit', 'what we do', 'how it works', 'feature', 'advantage',
+    'unlike other', 'what makes us', 'we can help'
+  ],
+  pricing: [
+    'price', 'cost', 'budget', 'how much', 'investment', 'payment',
+    'affordable', 'expensive', 'dollars', 'monthly', 'financing',
+    'pay', 'fee', 'charge', 'rate'
+  ],
+  objection_handling: [
+    'too expensive', 'not sure', 'think about it', 'talk to', 'spouse',
+    'husband', 'wife', 'partner', 'not interested', 'already have',
+    'don\'t need', 'bad timing', 'call back', 'send information',
+    'not right now', 'can\'t afford', 'competitors'
+  ],
+  closing: [
+    'ready to start', 'sign up', 'get started', 'next steps', 'move forward',
+    'schedule', 'appointment', 'book', 'confirm', 'credit card',
+    'let\'s do it', 'sounds good', 'go ahead', 'deal'
+  ]
+};
+
 // ============ SUPABASE HELPER FUNCTIONS ============
 // These functions handle call logging to Supabase database
 
@@ -1044,6 +1100,11 @@ app.post('/transcription-realtime', async (req, res) => {
                 confidence
               });
 
+              // Process for phase detection and context updates (non-blocking)
+              processTranscriptEntry(CallSid, transcript, speaker).catch(err => {
+                console.error('[Phase/Context] Error processing transcript:', err.message);
+              });
+
               // Trigger AI coaching
               const transcriptCount = callTranscripts.get(CallSid).length;
               if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
@@ -1579,14 +1640,16 @@ async function getNextFlowNode(currentNodeId, customerText) {
  * @param {Array} scripts - Available scripts with id, title, trigger_phrases
  * @param {Array} recentTranscript - Last few transcript entries for context
  * @param {number} timeoutMs - Timeout in milliseconds (default 800ms)
+ * @param {Object} enhancedContext - Optional { phase, contextSummary, feedbackContext }
  * @returns {Object} - { scriptIndex, aiSelected, latencyMs } - scriptIndex is array index or null
  */
-async function selectScriptWithAI(recentCustomerText, scripts, recentTranscript, timeoutMs = 800) {
+async function selectScriptWithAI(recentCustomerText, scripts, recentTranscript, timeoutMs = 800, enhancedContext = {}) {
   if (!anthropic || !scripts || scripts.length === 0) {
     return { scriptIndex: null, aiSelected: false, latencyMs: 0 };
   }
 
   const startTime = Date.now();
+  const { phase, contextSummary, feedbackContext } = enhancedContext;
 
   try {
     // Build compact script list using 1-based indices (simpler for AI than UUIDs)
@@ -1601,9 +1664,25 @@ async function selectScriptWithAI(recentCustomerText, scripts, recentTranscript,
       .map(t => `${t.speaker === 'customer' ? 'Customer' : 'Rep'}: ${t.text}`)
       .join('\n');
 
-    const prompt = `You are a sales coaching assistant. Select the most relevant script for the customer's objection.
+    // Build enhanced prompt with phase and context
+    let phaseSection = '';
+    if (phase) {
+      phaseSection = `CURRENT CALL PHASE: ${phase}\n\n`;
+    }
 
-SCRIPTS (Number|Title|Sample Triggers):
+    let contextSection = '';
+    if (contextSummary) {
+      contextSection = `CALL CONTEXT: ${contextSummary}\n\n`;
+    }
+
+    let feedbackSection = '';
+    if (feedbackContext) {
+      feedbackSection = `${feedbackContext}\n\n`;
+    }
+
+    const prompt = `You are a sales coaching assistant. Select the most relevant script for the current situation.
+
+${phaseSection}${contextSection}${feedbackSection}SCRIPTS (Number|Title|Sample Triggers):
 ${scriptList}
 
 RECENT CONVERSATION:
@@ -1612,9 +1691,10 @@ ${conversationContext}
 CUSTOMER JUST SAID: "${recentCustomerText}"
 
 Instructions:
-- Return ONLY the script number (1-${scripts.length}) that best matches the customer's objection/concern
+- Return ONLY the script number (1-${scripts.length}) that best matches the situation
 - Return 0 if no script is a good fit
-- Consider the conversation context, not just keywords
+- Consider the call phase - suggest scripts appropriate for this stage
+- If scripts were already shown and marked "not helpful", avoid similar ones
 - Be selective - only match if there's a clear connection
 
 SCRIPT NUMBER:`;
@@ -1712,12 +1792,463 @@ function calculateScriptMatchScore(text, triggerPhrases) {
   return score;
 }
 
+// ============ CALL PHASE & CONTEXT HELPER FUNCTIONS ============
+
+/**
+ * Detect the current call phase based on keywords in the text
+ * @param {string} callSid - Call identifier
+ * @param {string} text - Text to analyze
+ * @param {string} speaker - Who said it ('rep' or 'customer')
+ * @returns {Object|null} - { phase, confidence, detectedBy } or null if no change
+ */
+function detectCallPhase(callSid, text, speaker) {
+  if (!text) return null;
+
+  const lowerText = text.toLowerCase();
+  const currentPhaseInfo = callPhases.get(callSid) || { currentPhase: 'intro', phaseHistory: [], lastTransitionAt: Date.now() };
+  const currentPhase = currentPhaseInfo.currentPhase;
+  const currentPhaseIndex = CALL_PHASES.indexOf(currentPhase);
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  // Check each phase for keyword matches
+  for (const [phase, keywords] of Object.entries(PHASE_KEYWORDS)) {
+    const phaseIndex = CALL_PHASES.indexOf(phase);
+
+    // Typically phases progress forward, but allow backward for objections
+    // Give bonus to forward progression
+    let directionBonus = 0;
+    if (phaseIndex > currentPhaseIndex) {
+      directionBonus = 2; // Prefer forward progression
+    } else if (phase === 'objection_handling') {
+      directionBonus = 1; // Objections can happen anytime
+    }
+
+    let matchCount = 0;
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        matchCount++;
+      }
+    }
+
+    if (matchCount > 0) {
+      const score = matchCount + directionBonus;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = phase;
+      }
+    }
+  }
+
+  // Only transition if we found a match and it's different from current
+  if (bestMatch && bestMatch !== currentPhase && bestScore >= 1) {
+    return {
+      phase: bestMatch,
+      confidence: Math.min(bestScore / 5, 1), // Normalize to 0-1
+      detectedBy: 'keyword'
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Update the call phase and record the transition
+ * @param {string} callSid - Call identifier
+ * @param {string} newPhase - The new phase
+ * @param {Object} info - Detection info { confidence, detectedBy }
+ */
+async function updateCallPhase(callSid, newPhase, info) {
+  const now = Date.now();
+  const currentPhaseInfo = callPhases.get(callSid) || { currentPhase: 'intro', phaseHistory: [], lastTransitionAt: now };
+  const previousPhase = currentPhaseInfo.currentPhase;
+  const phaseDuration = Math.floor((now - currentPhaseInfo.lastTransitionAt) / 1000);
+
+  // Update in-memory state
+  currentPhaseInfo.phaseHistory.push({
+    phase: previousPhase,
+    duration: phaseDuration,
+    endedAt: now
+  });
+  currentPhaseInfo.currentPhase = newPhase;
+  currentPhaseInfo.lastTransitionAt = now;
+  callPhases.set(callSid, currentPhaseInfo);
+
+  console.log(`[Phase] Call ${callSid}: ${previousPhase} -> ${newPhase} (after ${phaseDuration}s, confidence: ${info.confidence?.toFixed(2) || 'N/A'})`);
+
+  // Broadcast phase change to UI
+  broadcastToClients({
+    type: 'phase_change',
+    callSid: callSid,
+    previousPhase: previousPhase,
+    currentPhase: newPhase,
+    confidence: info.confidence,
+    timestamp: new Date().toISOString()
+  });
+
+  // Record in database (async, don't await)
+  if (supabase) {
+    // Close previous phase record
+    supabase.from('call_phase_analytics')
+      .update({
+        ended_at: new Date().toISOString(),
+        duration_seconds: phaseDuration
+      })
+      .eq('call_sid', callSid)
+      .eq('phase', previousPhase)
+      .is('ended_at', null)
+      .then(({ error }) => {
+        if (error) console.error('[Phase] Error closing phase record:', error.message);
+      });
+
+    // Create new phase record
+    supabase.from('call_phase_analytics')
+      .insert({
+        call_sid: callSid,
+        phase: newPhase,
+        started_at: new Date().toISOString(),
+        detected_by: info.detectedBy || 'keyword',
+        confidence_score: info.confidence || null
+      })
+      .then(({ error }) => {
+        if (error) console.error('[Phase] Error creating phase record:', error.message);
+      });
+  }
+}
+
+/**
+ * Initialize phase tracking for a new call
+ * @param {string} callSid - Call identifier
+ */
+async function initializeCallPhase(callSid) {
+  callPhases.set(callSid, {
+    currentPhase: 'intro',
+    phaseHistory: [],
+    lastTransitionAt: Date.now()
+  });
+
+  // Create initial phase record in DB
+  if (supabase) {
+    await supabase.from('call_phase_analytics').insert({
+      call_sid: callSid,
+      phase: 'intro',
+      started_at: new Date().toISOString(),
+      detected_by: 'default',
+      confidence_score: 1.0
+    });
+  }
+}
+
+/**
+ * Get the current phase for a call
+ * @param {string} callSid - Call identifier
+ * @returns {string} - Current phase name
+ */
+function getCurrentPhase(callSid) {
+  const phaseInfo = callPhases.get(callSid);
+  return phaseInfo?.currentPhase || 'intro';
+}
+
+/**
+ * Trigger background context update (non-blocking)
+ * Called periodically as transcript grows
+ * @param {string} callSid - Call identifier
+ */
+function updateCallContextBackground(callSid) {
+  const transcript = callTranscripts.get(callSid) || [];
+  const currentContext = callContextSummaries.get(callSid);
+
+  // Check if update is needed
+  const entryCount = transcript.length;
+  const lastEntryCount = currentContext?.entryCount || 0;
+
+  if (entryCount - lastEntryCount < CONTEXT_UPDATE_INTERVAL) {
+    return; // Not enough new entries
+  }
+
+  // Run update in background
+  generateContextSummary(callSid, transcript).catch(err => {
+    console.error(`[Context] Error generating summary for ${callSid}:`, err.message);
+  });
+}
+
+/**
+ * Generate AI context summary (background, with timeout)
+ * @param {string} callSid - Call identifier
+ * @param {Array} transcript - Full transcript array
+ */
+async function generateContextSummary(callSid, transcript) {
+  if (!anthropic || transcript.length < 5) return;
+
+  const startTime = Date.now();
+
+  try {
+    // Build transcript text (last 30 entries max for context generation)
+    const recentTranscript = transcript.slice(-30);
+    const transcriptText = recentTranscript
+      .map(t => `${t.speaker === 'customer' ? 'Customer' : 'Rep'}: ${t.text}`)
+      .join('\n');
+
+    const prompt = `Analyze this sales call excerpt and provide a brief context summary.
+
+CONVERSATION:
+${transcriptText}
+
+Respond in this exact JSON format (no markdown):
+{"summary":"1-2 sentence summary of conversation","topics":["topic1","topic2"],"sentiment":"positive|neutral|negative|mixed","insights":{"key_concern":"main customer concern if any","buying_signals":"any positive signals","objections":"any objections raised"}}`;
+
+    // Use Promise.race for timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('CONTEXT_TIMEOUT')), CONTEXT_UPDATE_TIMEOUT_MS);
+    });
+
+    const apiPromise = anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 200,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const response = await Promise.race([apiPromise, timeoutPromise]);
+    const responseText = response.content[0]?.text?.trim() || '';
+
+    // Parse JSON response
+    let contextData;
+    try {
+      contextData = JSON.parse(responseText);
+    } catch (e) {
+      console.log(`[Context] Failed to parse JSON response: ${responseText.substring(0, 100)}`);
+      return;
+    }
+
+    const latencyMs = Date.now() - startTime;
+
+    // Store in memory
+    callContextSummaries.set(callSid, {
+      summary: contextData.summary || '',
+      topics: contextData.topics || [],
+      sentiment: contextData.sentiment || 'neutral',
+      insights: contextData.insights || {},
+      lastUpdatedAt: Date.now(),
+      entryCount: transcript.length
+    });
+
+    console.log(`[Context] Updated summary for ${callSid} (${latencyMs}ms): ${contextData.summary?.substring(0, 50)}...`);
+
+    // Save snapshot to DB (async, don't await)
+    if (supabase) {
+      supabase.from('call_context_snapshots').insert({
+        call_sid: callSid,
+        summary: contextData.summary,
+        topics: contextData.topics,
+        customer_sentiment: contextData.sentiment,
+        key_insights: contextData.insights,
+        transcript_entry_count: transcript.length
+      }).then(({ error }) => {
+        if (error) console.error('[Context] Error saving snapshot:', error.message);
+      });
+    }
+
+  } catch (error) {
+    if (error.message === 'CONTEXT_TIMEOUT') {
+      console.log(`[Context] Timeout generating summary for ${callSid}`);
+    } else {
+      console.error(`[Context] Error generating summary:`, error.message);
+    }
+  }
+}
+
+/**
+ * Get the current context summary for a call
+ * @param {string} callSid - Call identifier
+ * @returns {Object|null} - Context object or null
+ */
+function getCallContext(callSid) {
+  return callContextSummaries.get(callSid) || null;
+}
+
+/**
+ * Check if a suggestion can be shown based on cooldowns
+ * @param {string} callSid - Call identifier
+ * @param {string} scriptId - Script UUID to check
+ * @returns {Object} - { canShow: boolean, reason: string }
+ */
+function canShowSuggestion(callSid, scriptId) {
+  const now = Date.now();
+  const cooldownInfo = scriptCooldowns.get(callSid);
+
+  if (!cooldownInfo) {
+    return { canShow: true, reason: 'first_suggestion' };
+  }
+
+  // Check max suggestions per call
+  if (cooldownInfo.suggestionCount >= MAX_SUGGESTIONS_PER_CALL) {
+    return { canShow: false, reason: 'max_suggestions_reached' };
+  }
+
+  // Check global cooldown
+  const timeSinceLastSuggestion = now - cooldownInfo.lastSuggestionAt;
+  if (timeSinceLastSuggestion < SUGGESTION_COOLDOWN_MS) {
+    return { canShow: false, reason: 'cooldown_active', remainingMs: SUGGESTION_COOLDOWN_MS - timeSinceLastSuggestion };
+  }
+
+  // Check script-specific cooldown
+  if (scriptId && cooldownInfo.recentlyShownScripts) {
+    const lastShownAt = cooldownInfo.recentlyShownScripts.get(scriptId);
+    if (lastShownAt) {
+      const timeSinceShown = now - lastShownAt;
+      if (timeSinceShown < SCRIPT_REPEAT_COOLDOWN_MS) {
+        return { canShow: false, reason: 'script_repeat_cooldown', scriptId };
+      }
+    }
+  }
+
+  return { canShow: true, reason: 'cooldown_clear' };
+}
+
+/**
+ * Record that a suggestion was shown
+ * @param {string} callSid - Call identifier
+ * @param {string} scriptId - Script UUID shown
+ */
+function recordSuggestionShown(callSid, scriptId) {
+  const now = Date.now();
+  let cooldownInfo = scriptCooldowns.get(callSid);
+
+  if (!cooldownInfo) {
+    cooldownInfo = {
+      lastSuggestionAt: now,
+      recentlyShownScripts: new Map(),
+      suggestionCount: 0
+    };
+  }
+
+  cooldownInfo.lastSuggestionAt = now;
+  cooldownInfo.suggestionCount++;
+
+  if (scriptId) {
+    cooldownInfo.recentlyShownScripts.set(scriptId, now);
+  }
+
+  scriptCooldowns.set(callSid, cooldownInfo);
+}
+
+/**
+ * Initialize cooldown tracking for a new call
+ * @param {string} callSid - Call identifier
+ */
+function initializeCooldowns(callSid) {
+  scriptCooldowns.set(callSid, {
+    lastSuggestionAt: 0,
+    recentlyShownScripts: new Map(),
+    suggestionCount: 0
+  });
+}
+
+/**
+ * Get scripts already used in this call with their feedback
+ * @param {string} callSid - Call identifier
+ * @returns {Array} - Array of { scriptId, title, wasUsed, wasHelpful }
+ */
+async function getScriptsUsedThisCall(callSid) {
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('call_script_usage')
+      .select('script_id, was_used, was_helpful, scripts(title)')
+      .eq('call_sid', callSid);
+
+    if (error || !data) return [];
+
+    return data.map(usage => ({
+      scriptId: usage.script_id,
+      title: usage.scripts?.title || 'Unknown',
+      wasUsed: usage.was_used || false,
+      wasHelpful: usage.was_helpful
+    }));
+  } catch (err) {
+    console.error('[Feedback] Error getting scripts used:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Build feedback context string for AI prompt
+ * @param {Array} usageHistory - Array from getScriptsUsedThisCall
+ * @returns {string} - Formatted string for AI prompt
+ */
+function buildFeedbackContext(usageHistory) {
+  if (!usageHistory || usageHistory.length === 0) return '';
+
+  const lines = usageHistory.map(u => {
+    let status = 'shown';
+    if (u.wasUsed && u.wasHelpful === true) status = 'helpful';
+    else if (u.wasUsed && u.wasHelpful === false) status = 'not helpful';
+    else if (u.wasUsed) status = 'used';
+    return `- "${u.title}" (${status})`;
+  });
+
+  return `SCRIPTS ALREADY SHOWN THIS CALL:\n${lines.join('\n')}`;
+}
+
+/**
+ * Clean up all Maps for a call when it ends
+ * @param {string} callSid - Call identifier
+ */
+function cleanupCallMaps(callSid) {
+  // Clean up context
+  callContextSummaries.delete(callSid);
+
+  // Clean up phase tracking
+  callPhases.delete(callSid);
+
+  // Clean up cooldowns
+  scriptCooldowns.delete(callSid);
+
+  console.log(`[Cleanup] Cleared Maps for call ${callSid}`);
+}
+
+/**
+ * Initialize all phase/context/cooldown tracking for a new call
+ * Called when a call starts
+ * @param {string} callSid - Call identifier
+ */
+async function initializeCallTracking(callSid) {
+  await initializeCallPhase(callSid);
+  initializeCooldowns(callSid);
+  console.log(`[Init] Initialized phase/context/cooldown tracking for call ${callSid}`);
+}
+
+/**
+ * Process a new transcript entry for phase detection and context updates
+ * Called after each final transcript is added
+ * @param {string} callSid - Call identifier
+ * @param {string} text - The transcript text
+ * @param {string} speaker - 'rep' or 'customer'
+ */
+async function processTranscriptEntry(callSid, text, speaker) {
+  // Detect if phase should change
+  const phaseChange = detectCallPhase(callSid, text, speaker);
+  if (phaseChange) {
+    await updateCallPhase(callSid, phaseChange.phase, {
+      confidence: phaseChange.confidence,
+      detectedBy: phaseChange.detectedBy
+    });
+  }
+
+  // Trigger background context update (non-blocking)
+  updateCallContextBackground(callSid);
+}
+
 /**
  * 4-Layer Matching Algorithm for AI Coaching
  * Layer 1: Active Flow Check - Continue existing flow
  * Layer 2: Objection Category Detection - Find category and start flow
- * Layer 3: Enhanced Keyword Matching - Score-based script matching
+ * Layer 3: Enhanced Keyword Matching - Score-based script matching (with phase filtering)
  * Layer 4: AI Fallback - Generate suggestion with context
+ *
+ * Now includes: Phase-aware filtering, cooldown checks, context summaries, feedback integration
  *
  * @param {string} callSid - Call identifier
  * @param {string} knowledgeBaseId - Selected knowledge base UUID
@@ -1727,6 +2258,14 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
   if (!supabase || !knowledgeBaseId) return null;
 
   try {
+    // ========== COOLDOWN CHECK ==========
+    // Check global suggestion cooldown first (skip if on cooldown)
+    const cooldownCheck = canShowSuggestion(callSid, null);
+    if (!cooldownCheck.canShow && cooldownCheck.reason !== 'first_suggestion') {
+      // Silently skip if on cooldown
+      return null;
+    }
+
     // Get recent customer statements from transcript
     const transcript = callTranscripts.get(callSid) || [];
     const recentCustomerStatements = transcript
@@ -1741,6 +2280,9 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
     const latestCustomerText = recentCustomerStatements.length > 0
       ? recentCustomerStatements[recentCustomerStatements.length - 1].text
       : '';
+
+    // ========== GET CURRENT PHASE ==========
+    const currentPhase = getCurrentPhase(callSid);
 
     // ========== LAYER 1: Active Flow Check ==========
     const activeFlow = activeCallFlows.get(callSid);
@@ -1831,37 +2373,66 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
     }
 
     // ========== LAYER 3: AI-Powered Script Selection (with Keyword Fallback) ==========
+    // Query scripts with phase filtering via applicable_phases column
     const { data: scripts, error } = await supabase
       .from('scripts')
-      .select('id, title, trigger_phrases, script_text, story_text, tips, category, objection_category_id, match_score_weight')
+      .select('id, title, trigger_phrases, script_text, story_text, tips, category, objection_category_id, match_score_weight, applicable_phases, phase_specific_guidance')
       .eq('knowledge_base_id', knowledgeBaseId)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .contains('applicable_phases', [currentPhase]); // Filter by current phase
 
     if (error || !scripts || scripts.length === 0) {
-      console.log('[Layer 3] No scripts found for knowledge base:', knowledgeBaseId);
+      console.log(`[Layer 3] No scripts found for knowledge base ${knowledgeBaseId} in phase ${currentPhase}`);
       return null;
     }
+
+    // Filter out scripts that are on individual cooldown
+    const availableScripts = scripts.filter(script => {
+      const scriptCooldownCheck = canShowSuggestion(callSid, script.id);
+      return scriptCooldownCheck.canShow || scriptCooldownCheck.reason === 'first_suggestion';
+    });
+
+    if (availableScripts.length === 0) {
+      console.log('[Layer 3] All matching scripts are on cooldown');
+      return null;
+    }
+
+    // ========== GET CONTEXT AND FEEDBACK ==========
+    const callContext = getCallContext(callSid);
+    const contextSummary = callContext?.summary || '';
+    const contextAvailable = !!contextSummary;
+
+    // Get scripts already used this call for feedback context
+    const usageHistory = await getScriptsUsedThisCall(callSid);
+    const feedbackContext = buildFeedbackContext(usageHistory);
+
+    // Build enhanced context for AI
+    const enhancedContext = {
+      phase: currentPhase,
+      contextSummary: contextSummary,
+      feedbackContext: feedbackContext
+    };
 
     let bestMatch = null;
     let bestScore = 0;
     let matchMethod = 'keyword';
     let aiLatencyMs = 0;
 
-    // Try AI selection first (800ms timeout)
-    const aiResult = await selectScriptWithAI(recentCustomerText, scripts, transcript, 800);
+    // Try AI selection first (800ms timeout) with enhanced context
+    const aiResult = await selectScriptWithAI(recentCustomerText, availableScripts, transcript, 800, enhancedContext);
     aiLatencyMs = aiResult.latencyMs;
 
     if (aiResult.scriptIndex !== null) {
-      // AI found a match
-      bestMatch = scripts[aiResult.scriptIndex];
+      // AI found a match (index is relative to availableScripts)
+      bestMatch = availableScripts[aiResult.scriptIndex];
       matchMethod = 'ai';
       bestScore = 100; // AI matches bypass score threshold
-      console.log(`[Layer 3] AI selected script: "${bestMatch?.title}" (${aiLatencyMs}ms)`);
+      console.log(`[Layer 3] AI selected script: "${bestMatch?.title}" (${aiLatencyMs}ms, phase: ${currentPhase})`);
     } else if (!aiResult.aiSelected) {
       // AI failed or timed out - fall back to keyword matching
       console.log(`[Layer 3] AI unavailable, falling back to keyword matching`);
 
-      for (const script of scripts) {
+      for (const script of availableScripts) {
         const score = calculateScriptMatchScore(recentCustomerText, script.trigger_phrases);
         const weightedScore = score + (script.match_score_weight || 0);
 
@@ -1879,16 +2450,21 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
     // else: AI returned 0 (no good match) - continue to Layer 4
 
     if (bestMatch && (matchMethod === 'ai' || bestScore >= 5)) {
-      console.log(`[Layer 3] Script match found: "${bestMatch.title}" (method: ${matchMethod}, score: ${bestScore})`);
+      console.log(`[Layer 3] Script match found: "${bestMatch.title}" (method: ${matchMethod}, score: ${bestScore}, phase: ${currentPhase})`);
 
-      // Track that this script was shown with match method analytics
+      // Record suggestion shown for cooldown tracking
+      recordSuggestionShown(callSid, bestMatch.id);
+
+      // Track that this script was shown with match method analytics and phase
       await supabase.from('call_script_usage').insert({
         call_sid: callSid,
         script_id: bestMatch.id,
         knowledge_base_id: knowledgeBaseId,
         shown_at: new Date().toISOString(),
         match_method: matchMethod,
-        ai_latency_ms: aiLatencyMs > 0 ? aiLatencyMs : null
+        ai_latency_ms: aiLatencyMs > 0 ? aiLatencyMs : null,
+        call_phase: currentPhase,
+        context_summary_used: contextAvailable
       });
 
       // Increment times_shown counter
@@ -1896,6 +2472,15 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
         .from('scripts')
         .update({ times_shown: (bestMatch.times_shown || 0) + 1 })
         .eq('id', bestMatch.id);
+
+      // Update phase analytics - increment scripts_shown_count (async, non-blocking)
+      supabase.rpc('increment_phase_scripts_shown', {
+        p_call_sid: callSid,
+        p_phase: currentPhase
+      }).then(() => {}).catch(() => {
+        // Fallback: If RPC doesn't exist, just log it
+        console.log('[Phase] Note: increment_phase_scripts_shown RPC not available');
+      });
 
       // Get category info if available
       let categoryInfo = null;
@@ -1910,12 +2495,18 @@ async function detectScriptMatch(callSid, knowledgeBaseId) {
         categoryInfo = category;
       }
 
+      // Get phase-specific guidance if available
+      const phaseGuidance = bestMatch.phase_specific_guidance?.[currentPhase] || null;
+
       return {
         ...bestMatch,
         isFlowNode: false,
         matchScore: bestScore,
         matchMethod: matchMethod,
-        category: categoryInfo
+        category: categoryInfo,
+        currentPhase: currentPhase,
+        phaseGuidance: phaseGuidance,
+        contextUsed: contextAvailable
       };
     }
 
@@ -3061,9 +3652,30 @@ function buildWhyExplanation(text, category, match, allCategories = []) {
 }
 
 /**
+ * Get coaching lab status - check if AI is configured
+ * GET /api/coaching-lab/status
+ */
+app.get('/api/coaching-lab/status', (req, res) => {
+  res.json({
+    success: true,
+    aiEnabled: !!anthropic,
+    databaseEnabled: !!supabase,
+    features: {
+      aiScriptSelection: !!anthropic,
+      aiContextGeneration: !!anthropic,
+      phaseDetection: true,
+      keywordMatching: true
+    }
+  });
+});
+
+/**
  * Test coaching match - main endpoint for Coaching Lab
  * POST /api/coaching-lab/test
- * Body: { text, knowledgeBaseId, currentFlowId?, currentNodeId? }
+ * Body: { text, knowledgeBaseId, currentFlowId?, currentNodeId?, phase?, useLiveMode?, conversationHistory? }
+ *
+ * NEW: If useLiveMode is true, uses the same detectScriptMatch function as live calls
+ * with phase filtering, AI selection, and context awareness.
  */
 app.post('/api/coaching-lab/test', async (req, res) => {
   if (!supabase) {
@@ -3071,7 +3683,8 @@ app.post('/api/coaching-lab/test', async (req, res) => {
   }
 
   try {
-    const { text, knowledgeBaseId, currentFlowId, currentNodeId } = req.body;
+    const { text, knowledgeBaseId, currentFlowId, currentNodeId, phase, useLiveMode, conversationHistory, contextUpdateInterval } = req.body;
+    const effectiveContextInterval = contextUpdateInterval || CONTEXT_UPDATE_INTERVAL; // Use setting or default
 
     if (!text || !knowledgeBaseId) {
       return res.status(400).json({
@@ -3111,6 +3724,239 @@ app.post('/api/coaching-lab/test', async (req, res) => {
 
     let match = null;
     let coachingResult = null;
+
+    // ========== LIVE MODE: Use the same logic as live calls ==========
+    if (useLiveMode) {
+      // Create a temporary callSid for this test session
+      const testCallSid = `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Set up temporary transcript from conversation history
+      if (conversationHistory && conversationHistory.length > 0) {
+        callTranscripts.set(testCallSid, conversationHistory.map(msg => ({
+          speaker: msg.speaker,
+          text: msg.text,
+          timestamp: msg.timestamp || new Date().toISOString(),
+          isFinal: true
+        })));
+      } else {
+        // Create minimal transcript with just the test text
+        callTranscripts.set(testCallSid, [{
+          speaker: 'customer',
+          text: text,
+          timestamp: new Date().toISOString(),
+          isFinal: true
+        }]);
+      }
+
+      // Set up phase if provided, otherwise detect from text
+      if (phase) {
+        callPhases.set(testCallSid, {
+          currentPhase: phase,
+          phaseHistory: [],
+          lastTransitionAt: Date.now()
+        });
+      } else {
+        const detectedPhase = detectCallPhase(testCallSid, text, 'customer');
+        callPhases.set(testCallSid, {
+          currentPhase: detectedPhase?.phase || 'intro',
+          phaseHistory: [],
+          lastTransitionAt: Date.now()
+        });
+      }
+
+      // Initialize cooldowns (won't affect test results)
+      initializeCooldowns(testCallSid);
+
+      const currentPhase = callPhases.get(testCallSid)?.currentPhase || 'intro';
+
+      // LAYER 1: Check if we're continuing an active flow
+      if (currentNodeId) {
+        const nextNodeResult = await getNextFlowNode(currentNodeId, text);
+        if (nextNodeResult) {
+          const { data: flowInfo } = await supabase
+            .from('conversation_flows')
+            .select('name')
+            .eq('id', currentFlowId)
+            .single();
+
+          const { count: totalSteps } = await supabase
+            .from('flow_nodes')
+            .select('*', { count: 'exact', head: true })
+            .eq('flow_id', currentFlowId);
+
+          match = {
+            ...nextNodeResult.node,
+            isFlowNode: true,
+            flowId: currentFlowId,
+            flowName: flowInfo?.name || 'Flow',
+            stepNumber: nextNodeResult.node.step_number,
+            totalSteps: totalSteps || 1,
+            branchLabel: nextNodeResult.branchLabel
+          };
+        }
+      }
+
+      // LAYER 2-4: Use detectScriptMatch (same as live calls - includes AI, phase filtering)
+      if (!match) {
+        try {
+          match = await detectScriptMatch(testCallSid, knowledgeBaseId);
+        } catch (err) {
+          console.error('[Coaching Lab Live] Error in detectScriptMatch:', err.message);
+        }
+      }
+
+      // Clean up temporary data
+      callTranscripts.delete(testCallSid);
+      callPhases.delete(testCallSid);
+      scriptCooldowns.delete(testCallSid);
+
+      // Build WHY explanation with live mode info
+      const why = buildWhyExplanation(text, bestCategory, match, scoredCategories);
+      why.phase = currentPhase;
+      why.usedLiveMode = true;
+      if (match?.matchMethod) why.matchMethod = match.matchMethod;
+      if (match?.contextUsed) why.contextUsed = true;
+
+      // Build response
+      if (match) {
+        coachingResult = {
+          type: match.isFlowNode ? 'flow' : 'script',
+          category: match.category || (bestCategory ? {
+            id: bestCategory.id,
+            name: bestCategory.name,
+            displayName: bestCategory.display_name,
+            icon: bestCategory.icon,
+            color: bestCategory.color
+          } : null),
+          coaching: {
+            id: match.id,
+            title: match.title,
+            scriptText: match.script_text,
+            storyText: match.story_text,
+            tips: match.phaseGuidance || match.tips,
+            expectedResponses: match.expected_responses
+          },
+          flow: match.isFlowNode ? {
+            flowId: match.flowId,
+            flowName: match.flowName,
+            currentNodeId: match.id,
+            stepNumber: match.stepNumber,
+            totalSteps: match.totalSteps,
+            branchLabel: match.branchLabel
+          } : null,
+          phase: currentPhase,
+          matchMethod: match.matchMethod,
+          why
+        };
+      } else {
+        coachingResult = {
+          type: 'no_match',
+          category: bestCategory ? {
+            id: bestCategory.id,
+            name: bestCategory.name,
+            displayName: bestCategory.display_name,
+            icon: bestCategory.icon,
+            color: bestCategory.color
+          } : null,
+          coaching: null,
+          flow: null,
+          phase: currentPhase,
+          why: {
+            ...why,
+            message: `No matching script found for phase "${currentPhase}". Try adding scripts applicable to this phase.`
+          }
+        };
+      }
+
+      // Generate context data for the UI if we have conversation history
+      let contextResponse = null;
+      const historyLength = conversationHistory?.length || 0;
+
+      // In Coaching Lab, always generate context if we have enough messages
+      // The interval setting shows what would happen in live calls
+      console.log(`[Context] History: ${historyLength}, Interval setting: ${effectiveContextInterval}`);
+
+      if (conversationHistory && historyLength >= 3) {
+        // Generate quick context summary for the UI
+        try {
+          const recentTranscript = conversationHistory.slice(-20);
+          const transcriptText = recentTranscript
+            .map(t => `${t.speaker === 'customer' ? 'Customer' : 'Rep'}: ${t.text}`)
+            .join('\n');
+
+          // Quick context generation with short timeout
+          if (anthropic) {
+            const contextPrompt = `Analyze this sales call excerpt and provide a brief context summary.
+
+CONVERSATION:
+${transcriptText}
+
+Respond in this exact JSON format (no markdown):
+{"summary":"1-2 sentence summary of conversation","topics":["topic1","topic2"],"sentiment":"positive|neutral|negative","insights":["insight1","insight2"]}`;
+
+            const contextApiPromise = anthropic.messages.create({
+              model: 'claude-3-haiku-20240307',
+              max_tokens: 200,
+              messages: [{ role: 'user', content: contextPrompt }]
+            });
+
+            const contextTimeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('CONTEXT_TIMEOUT')), 1500);
+            });
+
+            try {
+              const contextApiResponse = await Promise.race([contextApiPromise, contextTimeoutPromise]);
+              const contextText = contextApiResponse.content[0]?.text?.trim() || '';
+              const parsed = JSON.parse(contextText);
+              contextResponse = {
+                phase: currentPhase,
+                summary: parsed.summary || null,
+                topics: parsed.topics || [],
+                sentiment: parsed.sentiment || 'neutral',
+                insights: parsed.insights || [],
+                updateInterval: effectiveContextInterval,
+                messageCount: historyLength
+              };
+            } catch (contextErr) {
+              // Context generation failed, use basic fallback
+              contextResponse = {
+                phase: currentPhase,
+                summary: null,
+                topics: [],
+                sentiment: 'neutral',
+                insights: [],
+                updateInterval: effectiveContextInterval,
+                messageCount: historyLength
+              };
+            }
+          }
+        } catch (contextGenErr) {
+          console.log('[Coaching Lab] Context generation error:', contextGenErr.message);
+        }
+      }
+
+      // Add phase info even without full context
+      if (!contextResponse) {
+        contextResponse = {
+          phase: currentPhase,
+          summary: null,
+          topics: [],
+          sentiment: 'neutral',
+          insights: [],
+          updateInterval: effectiveContextInterval,
+          messageCount: historyLength
+        };
+      }
+
+      return res.json({
+        success: true,
+        input: { text, knowledgeBaseId, phase: currentPhase, useLiveMode: true },
+        result: coachingResult,
+        context: contextResponse
+      });
+    }
+
+    // ========== ORIGINAL MODE (Legacy) ==========
 
     // LAYER 1: Check if we're continuing an active flow
     if (currentNodeId) {
@@ -3258,10 +4104,21 @@ app.post('/api/coaching-lab/test', async (req, res) => {
       };
     }
 
+    // For legacy mode, detect phase from text and return basic context
+    const detectedPhase = detectCallPhase(null, text, 'customer');
+    const legacyPhase = phase || detectedPhase?.phase || 'intro';
+
     res.json({
       success: true,
       input: { text, knowledgeBaseId },
-      result: coachingResult
+      result: coachingResult,
+      context: {
+        phase: legacyPhase,
+        summary: null,
+        topics: [],
+        sentiment: 'neutral',
+        insights: []
+      }
     });
 
   } catch (error) {
@@ -3299,14 +4156,17 @@ app.get('/api/calls', async (req, res) => {
         call_transcripts (id)
       `)
       .order('started_at', { ascending: false })
-      .limit(limit);
-
-    // Filter to only calls with transcripts if requested
-    if (hasTranscript) {
-      query = query.not('call_transcripts', 'is', null);
-    }
+      .limit(hasTranscript ? limit * 3 : limit); // Fetch more if filtering, to ensure we get enough
 
     const { data: calls, error } = await query;
+
+    // Filter to only calls with transcripts in JavaScript (Supabase nested filter doesn't work reliably)
+    let filteredCalls = calls || [];
+    if (hasTranscript) {
+      filteredCalls = filteredCalls.filter(call =>
+        call.call_transcripts && call.call_transcripts.length > 0
+      ).slice(0, limit);
+    }
 
     if (error) {
       console.error('Error fetching calls:', error);
@@ -3314,7 +4174,7 @@ app.get('/api/calls', async (req, res) => {
     }
 
     // Format response
-    const formattedCalls = calls.map(call => ({
+    const formattedCalls = filteredCalls.map(call => ({
       id: call.id,
       callSid: call.external_call_id,
       phone: call.phone_number,
@@ -3902,6 +4762,11 @@ wss.on('connection', (ws, req) => {
                   isFinal: true
                 });
 
+                // Process for phase detection and context updates (non-blocking)
+                processTranscriptEntry(callSid, transcript, currentSpeaker).catch(err => {
+                  console.error('[Phase/Context] Error processing transcript:', err.message);
+                });
+
                 // Trigger AI coaching
                 const transcriptCount = callTranscripts.get(callSid).length;
                 if (transcriptCount >= AI_COACHING_MIN_TRANSCRIPT_LENGTH &&
@@ -4064,6 +4929,11 @@ wss.on('connection', (ws, req) => {
                 text: transcript,
                 timestamp,
                 isFinal: true
+              });
+
+              // Process for phase detection and context updates (non-blocking)
+              processTranscriptEntry(callSid, transcript, currentSpeaker).catch(err => {
+                console.error('[Phase/Context] Error processing transcript:', err.message);
               });
 
               // Trigger AI coaching more frequently (every AI_COACHING_INTERVAL final transcripts)
@@ -4250,6 +5120,11 @@ wss.on('connection', (ws, req) => {
           // Initialize transcript storage
           callTranscripts.set(callSid, []);
 
+          // Initialize phase/context/cooldown tracking for this call
+          initializeCallTracking(callSid).catch(err => {
+            console.error('[Init] Error initializing call tracking:', err.message);
+          });
+
           // Note: Call record is created by the browser client (with company_id)
           // Server will update the record with transcript/recording info later
 
@@ -4339,6 +5214,9 @@ wss.on('connection', (ws, req) => {
             endedAt: new Date().toISOString()
           });
 
+          // Clean up phase/context/cooldown Maps for this call
+          cleanupCallMaps(callSid);
+
           // Save transcript to Supabase if we have one
           if (transcript.length > 0) {
             await saveTranscript(callSid, transcript);
@@ -4394,4 +5272,9 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Open http://localhost:${PORT} in your browser`);
+  console.log(`\n=== Configuration Status ===`);
+  console.log(`  AI (Claude): ${anthropic ? '✓ Enabled' : '✗ Disabled (set ANTHROPIC_API_KEY for AI features)'}`);
+  console.log(`  Database: ${supabase ? '✓ Connected' : '✗ Not connected'}`);
+  console.log(`  Coaching Lab: /coaching-lab.html`);
+  console.log(`============================\n`);
 });
