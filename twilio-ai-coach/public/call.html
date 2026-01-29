@@ -5345,17 +5345,36 @@ What do you say?`
     // Save customer note
     async function saveCustomerNote() {
       const noteText = document.getElementById('callNotes')?.value?.trim();
-      if (!noteText) return;
+      if (!noteText) {
+        showNotification('Please enter a note', 'warning');
+        return;
+      }
+
+      console.log('[Note] saveCustomerNote called');
+      console.log('[Note] currentContactId:', currentContactId);
+      console.log('[Note] currentContact:', currentContact);
+      console.log('[Note] companyId:', companyId);
+      console.log('[Note] currentUser:', currentUser?.id);
 
       // If we have a contact, save the note
-      if (currentContactId && currentUser) {
+      if ((currentContactId || currentContact?.id) && currentUser && companyId) {
+        const contactId = currentContactId || currentContact?.id;
         try {
-          await supabase.from('contact_notes').insert({
-            contact_id: currentContactId,
-            user_id: currentUser.id,
+          const { data, error } = await supabase.from('contact_notes').insert({
+            contact_id: contactId,
+            company_id: companyId,
             content: noteText,
-            created_at: new Date().toISOString()
-          });
+            created_by: currentUser.id,
+            is_pinned: false
+          }).select().single();
+
+          if (error) {
+            console.error('[Note] Supabase error:', error);
+            showNotification('Failed to save note: ' + error.message, 'error');
+            return;
+          }
+
+          console.log('[Note] Note saved successfully:', data);
 
           // Add to notes list UI
           const notesList = document.getElementById('notesList');
@@ -5371,12 +5390,19 @@ What do you say?`
 
           // Clear input
           document.getElementById('callNotes').value = '';
+          showNotification('Note saved', 'success');
         } catch (error) {
-          console.error('Error saving note:', error);
+          console.error('[Note] Error saving note:', error);
+          showNotification('Failed to save note', 'error');
         }
       } else {
-        // No contact selected, just clear the input
-        alert('Please select a contact first');
+        // No contact selected
+        console.warn('[Note] Cannot save - missing:', {
+          contactId: currentContactId || currentContact?.id,
+          companyId,
+          userId: currentUser?.id
+        });
+        showNotification('Please select a contact first to save notes', 'warning');
       }
     }
 
@@ -5643,29 +5669,49 @@ What do you say?`
     // Load customer notes
     async function loadCustomerNotes(contactId) {
       const notesList = document.getElementById('notesList');
-      if (!notesList || !contactId) return;
+      if (!notesList || !contactId) {
+        console.log('[Notes] Cannot load - notesList:', !!notesList, 'contactId:', contactId);
+        return;
+      }
+
+      if (!companyId) {
+        console.warn('[Notes] No companyId available');
+        return;
+      }
+
+      console.log('[Notes] Loading notes for contact:', contactId, 'company:', companyId);
 
       try {
-        const { data: notes } = await supabase
+        const { data: notes, error } = await supabase
           .from('contact_notes')
           .select('*')
           .eq('contact_id', contactId)
+          .eq('company_id', companyId)
+          .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(20);
 
+        if (error) {
+          console.error('[Notes] Error loading notes:', error);
+          return;
+        }
+
+        console.log('[Notes] Loaded', notes?.length || 0, 'notes');
+
         if (!notes || notes.length === 0) {
-          notesList.innerHTML = '';
+          notesList.innerHTML = '<div class="empty-notes" style="color: var(--gray-400); font-size: 0.85rem; padding: 10px;">No notes yet</div>';
           return;
         }
 
         notesList.innerHTML = notes.map(n => `
-          <div class="note-item">
+          <div class="note-item${n.is_pinned ? ' pinned' : ''}">
+            ${n.is_pinned ? '<span class="pin-icon" style="color: var(--primary); margin-right: 4px;">📌</span>' : ''}
             <div class="note-text">${n.content}</div>
             <div class="note-meta">${formatTimeAgo(n.created_at)}</div>
           </div>
         `).join('');
       } catch (error) {
-        console.error('Error loading notes:', error);
+        console.error('[Notes] Error loading notes:', error);
       }
     }
 

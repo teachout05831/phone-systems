@@ -457,6 +457,40 @@ function openEditKBModal(kb) {
 
 ---
 
+### Issue: Notes not saving from call page
+
+**Symptoms:**
+- Click "Save Note" in Notes tab on call page
+- Note doesn't save, no error shown
+- Notes don't appear when viewing contact later
+
+**Root Cause:** `saveCustomerNote()` used wrong field names for `contact_notes` table:
+- Used `user_id` instead of `created_by`
+- Used `note` instead of `content` (in quickNote)
+- Missing required `company_id` field
+- Missing required `is_pinned` field
+
+**Fix:**
+Updated `saveCustomerNote()` in call.html to use correct fields:
+```javascript
+await supabase.from('contact_notes').insert({
+  contact_id: contactId,
+  company_id: companyId,
+  content: noteText,
+  created_by: currentUser.id,
+  is_pinned: false
+});
+```
+
+Also fixed `loadCustomerNotes()` to include `company_id` filter for security.
+
+**Files:** `twilio-ai-coach/public/call.html`
+
+**Pattern:** When inserting to `contact_notes` table, required fields are:
+- `contact_id`, `company_id`, `content`, `created_by`, `is_pinned`
+
+---
+
 ## Add New Fixes Here
 
 When you fix something new, add it to the appropriate section above.
