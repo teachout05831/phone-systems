@@ -5468,11 +5468,31 @@ app.post('/api/sms/incoming', async (req, res) => {
     console.log(`Incoming SMS from ${From}: ${Body}`);
 
     if (supabase) {
-      // Find or create conversation
+      // Normalize phone number - strip to just digits
+      const normalizePhone = (phone) => {
+        if (!phone) return '';
+        const digits = phone.replace(/\D/g, '');
+        // Remove leading 1 for US numbers if present
+        return digits.startsWith('1') && digits.length === 11 ? digits.slice(1) : digits;
+      };
+
+      const fromDigits = normalizePhone(From);
+
+      // Try multiple phone number formats
+      const phoneFormats = [
+        From,                                    // Original: +16029030482
+        fromDigits,                              // Just digits: 6029030482
+        `+1${fromDigits}`,                       // With +1: +16029030482
+        `1${fromDigits}`,                        // With 1: 16029030482
+        fromDigits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3'), // Formatted: (602) 903-0482
+      ];
+
+      // Find conversation with any matching phone format
       let { data: conversation } = await supabase
         .from('sms_conversations')
         .select('id, company_id')
-        .eq('phone_number', From)
+        .in('phone_number', phoneFormats)
+        .limit(1)
         .single();
 
       if (!conversation) {
