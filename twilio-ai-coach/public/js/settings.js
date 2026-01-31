@@ -1122,3 +1122,490 @@ saveSettings = async function() {
   // Then save other settings
   await originalSaveSettingsFunc();
 };
+
+// ===========================================
+// RBSOFT SMS GATEWAY SETTINGS
+// ===========================================
+
+let rbsoftCompanyId = null;
+let rbsoftConfig = null;
+let rbsoftDevices = [];
+let rbsoftHasChanges = false;
+
+/**
+ * Load RBsoft settings when page loads
+ */
+async function loadRBsoftSettings() {
+  try {
+    const { user, error: authError } = await getCurrentUser();
+    if (authError || !user) return;
+
+    // Get user's company_id from company_members
+    const { data: memberData, error: memberError } = await supabase
+      .from('company_members')
+      .select('company_id, role')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (memberError || !memberData?.company_id) {
+      console.log('No company found for user');
+      showRBsoftNotAvailable();
+      return;
+    }
+
+    rbsoftCompanyId = memberData.company_id;
+    const userRole = memberData.role;
+
+    // Check if user is admin (can edit settings)
+    const canEdit = ['owner', 'admin'].includes(userRole);
+
+    // Get backend URL
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+
+    // Fetch RBsoft settings from backend
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft?companyId=${rbsoftCompanyId}`);
+    const data = await response.json();
+
+    if (!data.success) {
+      console.error('Failed to load RBsoft settings:', data.error);
+      showRBsoftNotAvailable();
+      return;
+    }
+
+    rbsoftConfig = data.config;
+    rbsoftDevices = data.devices || [];
+
+    // Apply settings to UI
+    applyRBsoftSettingsToUI(canEdit);
+
+  } catch (error) {
+    console.error('Error loading RBsoft settings:', error);
+    showRBsoftNotAvailable();
+  }
+}
+
+/**
+ * Show the "not available" state
+ */
+function showRBsoftNotAvailable() {
+  const notAvailable = document.getElementById('rbsoftNotAvailable');
+  const configSection = document.getElementById('rbsoftConfigSection');
+  const enabledToggle = document.getElementById('rbsoftEnabled');
+
+  if (notAvailable) notAvailable.style.display = 'block';
+  if (configSection) configSection.style.display = 'none';
+  if (enabledToggle) {
+    enabledToggle.checked = false;
+    enabledToggle.disabled = true;
+  }
+}
+
+/**
+ * Apply loaded RBsoft settings to the UI
+ */
+function applyRBsoftSettingsToUI(canEdit = true) {
+  const notAvailable = document.getElementById('rbsoftNotAvailable');
+  const configSection = document.getElementById('rbsoftConfigSection');
+  const enabledToggle = document.getElementById('rbsoftEnabled');
+  const apiUrlInput = document.getElementById('rbsoftApiUrl');
+  const apiKeyInput = document.getElementById('rbsoftApiKey');
+
+  // Hide "not available" message
+  if (notAvailable) notAvailable.style.display = 'none';
+  if (configSection) configSection.style.display = 'block';
+
+  // Set toggle state
+  if (enabledToggle) {
+    enabledToggle.checked = rbsoftConfig?.enabled || false;
+    enabledToggle.disabled = !canEdit;
+  }
+
+  // Set API config
+  if (apiUrlInput) {
+    apiUrlInput.value = rbsoftConfig?.apiUrl || '';
+    apiUrlInput.disabled = !canEdit;
+  }
+
+  if (apiKeyInput) {
+    apiKeyInput.value = rbsoftConfig?.hasApiKey ? '••••••••' : '';
+    apiKeyInput.disabled = !canEdit;
+  }
+
+  // Render devices
+  renderRBsoftDevices(canEdit);
+}
+
+/**
+ * Render the devices list
+ */
+function renderRBsoftDevices(canEdit = true) {
+  const container = document.getElementById('rbsoftDevicesList');
+  if (!container) return;
+
+  if (!rbsoftDevices || rbsoftDevices.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: var(--spacing-lg); color: var(--gray-500);">
+        <p style="margin: 0;">No devices configured yet.</p>
+        <p style="margin-top: var(--spacing-sm); font-size: 0.875rem;">Add a device from your RBsoft panel to start sending SMS.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const devicesHtml = rbsoftDevices.map(device => {
+    const statusColor = device.status === 'online' ? 'var(--success)' :
+                       device.status === 'offline' ? 'var(--gray-400)' :
+                       'var(--warning)';
+    const statusLabel = device.status === 'online' ? 'Online' :
+                       device.status === 'offline' ? 'Offline' :
+                       'Unknown';
+    // Escape for JavaScript string context (escape single quotes and backslashes)
+    const escapedName = escapeHtml(device.name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+    return `
+      <div class="rbsoft-device-item" style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md); border: 1px solid var(--gray-200); border-radius: var(--radius-md); margin-bottom: var(--spacing-sm);">
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: var(--gray-800);">${escapeHtml(device.name)}</div>
+          <div style="font-size: 0.75rem; color: var(--gray-500);">
+            ${device.phone_number ? escapeHtml(device.phone_number) : 'No phone number'}
+            <span style="margin-left: var(--spacing-sm); padding: 2px 8px; border-radius: 10px; background: ${statusColor}20; color: ${statusColor}; font-size: 0.7rem;">
+              ${statusLabel}
+            </span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+          <label class="toggle-switch" style="width: 40px; height: 22px;" title="${device.is_active ? 'Active' : 'Inactive'}">
+            <input type="checkbox" ${device.is_active ? 'checked' : ''} ${!canEdit ? 'disabled' : ''} onchange="toggleRBsoftDeviceActive('${device.id}', this.checked)">
+            <span class="toggle-slider" style="--toggle-size: 16px;"></span>
+          </label>
+          ${canEdit ? `<button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; color: var(--danger);" onclick="deleteRBsoftDevice('${device.id}', '${escapedName}')" title="Delete device">&times;</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = devicesHtml;
+}
+
+/**
+ * Toggle RBsoft enabled state
+ */
+async function toggleRBsoftEnabled(enabled) {
+  if (!rbsoftCompanyId) return;
+
+  try {
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: rbsoftCompanyId,
+        enabled: enabled
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update setting');
+    }
+
+    rbsoftConfig.enabled = enabled;
+    showRBsoftStatus('success', `RBsoft ${enabled ? 'enabled' : 'disabled'} successfully`);
+
+  } catch (error) {
+    console.error('Error toggling RBsoft:', error);
+    // Revert toggle
+    document.getElementById('rbsoftEnabled').checked = !enabled;
+    showRBsoftStatus('error', error.message);
+  }
+}
+
+/**
+ * Mark RBsoft settings as changed
+ */
+function markRBsoftChanged() {
+  rbsoftHasChanges = true;
+}
+
+/**
+ * Save RBsoft settings
+ */
+async function saveRBsoftSettings() {
+  if (!rbsoftCompanyId) {
+    showRBsoftStatus('error', 'No company ID available');
+    return;
+  }
+
+  try {
+    const apiUrl = document.getElementById('rbsoftApiUrl')?.value?.trim();
+    const apiKey = document.getElementById('rbsoftApiKey')?.value?.trim();
+
+    if (!apiUrl) {
+      showRBsoftStatus('error', 'API URL is required');
+      return;
+    }
+
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: rbsoftCompanyId,
+        apiUrl: apiUrl,
+        apiKey: apiKey
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to save settings');
+    }
+
+    rbsoftHasChanges = false;
+    rbsoftConfig.apiUrl = apiUrl;
+    if (apiKey && apiKey !== '••••••••') {
+      rbsoftConfig.hasApiKey = true;
+    }
+
+    showRBsoftStatus('success', 'Settings saved successfully');
+
+  } catch (error) {
+    console.error('Error saving RBsoft settings:', error);
+    showRBsoftStatus('error', error.message);
+  }
+}
+
+/**
+ * Test RBsoft connection
+ */
+async function testRBsoftConnection() {
+  if (!rbsoftCompanyId) {
+    showRBsoftStatus('error', 'No company ID available');
+    return;
+  }
+
+  try {
+    showRBsoftStatus('info', 'Testing connection...');
+
+    const apiUrl = document.getElementById('rbsoftApiUrl')?.value?.trim();
+    const apiKey = document.getElementById('rbsoftApiKey')?.value?.trim();
+
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: rbsoftCompanyId,
+        apiUrl: apiUrl && apiUrl !== rbsoftConfig?.apiUrl ? apiUrl : undefined,
+        apiKey: apiKey && apiKey !== '••••••••' ? apiKey : undefined
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showRBsoftStatus('success', `Connection successful! ${data.deviceCount !== undefined ? `Found ${data.deviceCount} devices.` : ''}`);
+    } else {
+      showRBsoftStatus('error', data.error || 'Connection failed');
+    }
+
+  } catch (error) {
+    console.error('Error testing RBsoft connection:', error);
+    showRBsoftStatus('error', error.message || 'Connection test failed');
+  }
+}
+
+/**
+ * Toggle API key visibility
+ */
+function toggleRBsoftApiKeyVisibility() {
+  const input = document.getElementById('rbsoftApiKey');
+  const toggleText = document.getElementById('rbsoftApiKeyToggleText');
+
+  if (input && toggleText) {
+    if (input.type === 'password') {
+      input.type = 'text';
+      toggleText.textContent = 'Hide';
+    } else {
+      input.type = 'password';
+      toggleText.textContent = 'Show';
+    }
+  }
+}
+
+/**
+ * Show RBsoft status message
+ */
+function showRBsoftStatus(type, message) {
+  const statusEl = document.getElementById('rbsoftConnectionStatus');
+  if (!statusEl) return;
+
+  statusEl.style.display = 'block';
+  statusEl.style.padding = 'var(--spacing-md)';
+  statusEl.style.borderRadius = 'var(--radius-md)';
+  statusEl.style.fontSize = '0.875rem';
+
+  switch (type) {
+    case 'success':
+      statusEl.style.background = 'var(--success-light, #dcfce7)';
+      statusEl.style.color = 'var(--success, #16a34a)';
+      statusEl.innerHTML = '&#10003; ' + message;
+      break;
+    case 'error':
+      statusEl.style.background = 'var(--danger-light, #fee2e2)';
+      statusEl.style.color = 'var(--danger, #dc2626)';
+      statusEl.innerHTML = '&#10007; ' + message;
+      break;
+    case 'info':
+    default:
+      statusEl.style.background = 'var(--gray-100)';
+      statusEl.style.color = 'var(--gray-700)';
+      statusEl.innerHTML = message;
+      break;
+  }
+
+  // Auto-hide after 5 seconds for success messages
+  if (type === 'success') {
+    setTimeout(() => {
+      statusEl.style.display = 'none';
+    }, 5000);
+  }
+}
+
+/**
+ * Show add device modal
+ */
+function showAddRBsoftDeviceModal() {
+  const modal = document.getElementById('rbsoftDeviceModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.getElementById('rbsoftDeviceName').value = '';
+    document.getElementById('rbsoftDeviceId').value = '';
+    document.getElementById('rbsoftDevicePhone').value = '';
+  }
+}
+
+/**
+ * Close add device modal
+ */
+function closeRBsoftDeviceModal() {
+  const modal = document.getElementById('rbsoftDeviceModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+/**
+ * Add a new RBsoft device
+ */
+async function addRBsoftDevice() {
+  const name = document.getElementById('rbsoftDeviceName')?.value?.trim();
+  const deviceId = document.getElementById('rbsoftDeviceId')?.value?.trim();
+  const phoneNumber = document.getElementById('rbsoftDevicePhone')?.value?.trim();
+
+  if (!name || !deviceId) {
+    alert('Device name and Device ID are required');
+    return;
+  }
+
+  try {
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft/devices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: rbsoftCompanyId,
+        deviceId: deviceId,
+        name: name,
+        phoneNumber: phoneNumber || null
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to add device');
+    }
+
+    // Add to local list and re-render
+    rbsoftDevices.push(data.device);
+    renderRBsoftDevices(true);
+    closeRBsoftDeviceModal();
+    showRBsoftStatus('success', `Device "${name}" added successfully`);
+
+  } catch (error) {
+    console.error('Error adding RBsoft device:', error);
+    alert('Failed to add device: ' + error.message);
+  }
+}
+
+/**
+ * Toggle device active state
+ */
+async function toggleRBsoftDeviceActive(deviceId, isActive) {
+  try {
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft/devices/${deviceId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: isActive })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update device');
+    }
+
+    // Update local state
+    const device = rbsoftDevices.find(d => d.id === deviceId);
+    if (device) {
+      device.is_active = isActive;
+    }
+
+  } catch (error) {
+    console.error('Error updating device:', error);
+    // Reload to get correct state
+    loadRBsoftSettings();
+  }
+}
+
+/**
+ * Delete an RBsoft device
+ */
+async function deleteRBsoftDevice(deviceId, deviceName) {
+  if (!confirm(`Are you sure you want to delete the device "${deviceName}"?`)) {
+    return;
+  }
+
+  try {
+    const backendUrl = localStorage.getItem('backendUrl') || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/settings/rbsoft/devices/${deviceId}`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete device');
+    }
+
+    // Remove from local list and re-render
+    rbsoftDevices = rbsoftDevices.filter(d => d.id !== deviceId);
+    renderRBsoftDevices(true);
+    showRBsoftStatus('success', `Device "${deviceName}" deleted`);
+
+  } catch (error) {
+    console.error('Error deleting device:', error);
+    alert('Failed to delete device: ' + error.message);
+  }
+}
+
+// Load RBsoft settings when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  // Wait for main init to complete, then load RBsoft settings
+  setTimeout(loadRBsoftSettings, 700);
+});

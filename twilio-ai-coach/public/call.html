@@ -5305,13 +5305,18 @@ What do you say?`
 
     // Toggle dialpad visibility
     function toggleDialpad() {
+      console.log('[Dialpad] Toggling dialpad visibility');
       const dialpad = document.getElementById('dialpadGrid');
       const toggleText = document.getElementById('dialpadToggleText');
       if (dialpad) {
         dialpad.classList.toggle('visible');
+        const isVisible = dialpad.classList.contains('visible');
+        console.log('[Dialpad] Dialpad now visible:', isVisible);
         if (toggleText) {
-          toggleText.textContent = dialpad.classList.contains('visible') ? 'Hide Keypad' : 'Show Keypad';
+          toggleText.textContent = isVisible ? 'Hide Keypad' : 'Show Keypad';
         }
+      } else {
+        console.warn('[Dialpad] dialpadGrid element not found');
       }
     }
 
@@ -7308,8 +7313,20 @@ What do you say?`
     }
 
     function endCall() {
+      console.log('[EndCall] Button clicked, connection:', connection);
       if (connection) {
-        connection.disconnect();
+        console.log('[EndCall] Disconnecting call...');
+        try {
+          connection.disconnect();
+          console.log('[EndCall] disconnect() called successfully');
+        } catch (err) {
+          console.error('[EndCall] Error disconnecting:', err);
+        }
+      } else {
+        console.warn('[EndCall] No active connection to end');
+        // Still update UI in case connection was lost
+        hideCallUI();
+        updateCallState('READY');
       }
     }
 
@@ -7343,29 +7360,43 @@ What do you say?`
     }
 
     function toggleHold() {
+      console.log('[Hold] Button clicked, connection:', connection);
       // Twilio Voice SDK doesn't have native hold - simulate with mute
       // In a production environment, hold would require server-side TwiML
       if (connection) {
         const holdBtn = document.getElementById('holdBtn');
         const callControlHold = document.getElementById('callControlHold');
         const isOnHold = holdBtn?.classList.contains('active');
+        console.log('[Hold] Current hold state:', isOnHold);
 
-        if (!isOnHold) {
-          // Put on hold - mute the call
-          connection.mute(true);
-          holdBtn?.classList.add('active');
-          callControlHold?.classList.add('active');
-          updateCallState('On Hold');
-        } else {
-          // Resume from hold - unmute
-          connection.mute(false);
-          holdBtn?.classList.remove('active');
-          callControlHold?.classList.remove('active');
-          updateCallState('Connected');
-          // Also update mute button state
-          document.getElementById('muteBtn')?.classList.remove('active');
-          document.getElementById('callControlMute')?.classList.remove('active');
+        try {
+          if (!isOnHold) {
+            // Put on hold - mute the call
+            connection.mute(true);
+            holdBtn?.classList.add('active');
+            callControlHold?.classList.add('active');
+            updateCallState('On Hold');
+            showNotification('Call on hold', 'info');
+            console.log('[Hold] Call placed on hold');
+          } else {
+            // Resume from hold - unmute
+            connection.mute(false);
+            holdBtn?.classList.remove('active');
+            callControlHold?.classList.remove('active');
+            updateCallState('Connected');
+            // Also update mute button state
+            document.getElementById('muteBtn')?.classList.remove('active');
+            document.getElementById('callControlMute')?.classList.remove('active');
+            showNotification('Call resumed', 'info');
+            console.log('[Hold] Call resumed');
+          }
+        } catch (err) {
+          console.error('[Hold] Error toggling hold:', err);
+          showNotification('Hold failed: ' + err.message, 'error');
         }
+      } else {
+        console.warn('[Hold] No active connection');
+        showNotification('Cannot hold - no active call', 'warning');
       }
     }
 
@@ -7373,6 +7404,11 @@ What do you say?`
     let transferType = 'blind';
 
     function openTransferModal() {
+      console.log('[Transfer] Opening transfer modal');
+      if (!connection) {
+        showNotification('Cannot transfer - no active call', 'warning');
+        return;
+      }
       document.getElementById('transferModal').classList.add('visible');
       document.getElementById('transferNumber').value = '';
       document.getElementById('transferNumber').focus();
@@ -7469,6 +7505,7 @@ What do you say?`
 
     // Quick Note functions
     function addQuickNote() {
+      console.log('[Note] Opening quick note modal');
       document.getElementById('quickNoteModal').classList.add('visible');
       document.getElementById('quickNoteText').value = '';
       document.getElementById('quickNoteText').focus();

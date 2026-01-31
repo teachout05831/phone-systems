@@ -1892,6 +1892,101 @@
                 </div>
               </div>
             </div>
+
+            <!-- RBsoft SMS Gateway -->
+            <div class="settings-card" id="rbsoftSettingsCard">
+              <div class="settings-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h3>RBsoft SMS Gateway</h3>
+                  <p>Send SMS through your own Android devices</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="rbsoftEnabled" onchange="toggleRBsoftEnabled(this.checked)">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="settings-card-body" id="rbsoftSettingsBody">
+                <!-- Not Available State (shown when admin hasn't enabled for company) -->
+                <div id="rbsoftNotAvailable" style="display: none; text-align: center; padding: var(--spacing-xl); color: var(--gray-500);">
+                  <div style="font-size: 2.5rem; margin-bottom: var(--spacing-md);">🔒</div>
+                  <p style="margin: 0;">RBsoft SMS Gateway is not available for your company.</p>
+                  <p style="margin-top: var(--spacing-sm); font-size: 0.875rem;">Contact your administrator to enable this feature.</p>
+                </div>
+
+                <!-- Config Section (shown when enabled) -->
+                <div id="rbsoftConfigSection">
+                  <div class="form-group" style="margin-bottom: var(--spacing-lg);">
+                    <label class="form-label">API URL</label>
+                    <input type="url" class="input" id="rbsoftApiUrl" placeholder="https://your-rbsoft-server.com/api" onchange="markRBsoftChanged()">
+                    <div class="form-hint">The base URL for your RBsoft API server</div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: var(--spacing-lg);">
+                    <label class="form-label">API Key</label>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                      <input type="password" class="input" id="rbsoftApiKey" placeholder="Enter your API key" onchange="markRBsoftChanged()" style="flex: 1;">
+                      <button class="btn btn-secondary" onclick="toggleRBsoftApiKeyVisibility()" style="white-space: nowrap;">
+                        <span id="rbsoftApiKeyToggleText">Show</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg);">
+                    <button class="btn btn-primary" onclick="saveRBsoftSettings()">Save Settings</button>
+                    <button class="btn btn-secondary" onclick="testRBsoftConnection()">Test Connection</button>
+                  </div>
+
+                  <div id="rbsoftConnectionStatus" style="margin-bottom: var(--spacing-lg); display: none;"></div>
+
+                  <!-- Devices Section -->
+                  <div style="border-top: 1px solid var(--gray-200); padding-top: var(--spacing-lg); margin-top: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                      <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Connected Devices</h4>
+                      <button class="btn btn-primary" onclick="showAddRBsoftDeviceModal()" style="padding: 6px 12px; font-size: 0.75rem;">+ Add Device</button>
+                    </div>
+
+                    <div id="rbsoftDevicesList">
+                      <div style="text-align: center; padding: var(--spacing-lg); color: var(--gray-500);">
+                        <p style="margin: 0;">No devices configured yet.</p>
+                        <p style="margin-top: var(--spacing-sm); font-size: 0.875rem;">Add a device from your RBsoft panel to start sending SMS.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add RBsoft Device Modal -->
+            <div id="rbsoftDeviceModal" class="modal" style="display: none;">
+              <div class="modal-backdrop" onclick="closeRBsoftDeviceModal()"></div>
+              <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                  <h3>Add RBsoft Device</h3>
+                  <button class="modal-close" onclick="closeRBsoftDeviceModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label class="form-label">Device Name</label>
+                    <input type="text" class="input" id="rbsoftDeviceName" placeholder="e.g., Sales Phone 1">
+                    <div class="form-hint">A friendly name for this device</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Device ID</label>
+                    <input type="text" class="input" id="rbsoftDeviceId" placeholder="e.g., abc123-def456-ghi789">
+                    <div class="form-hint">The device ID from your RBsoft panel</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Phone Number (optional)</label>
+                    <input type="tel" class="input" id="rbsoftDevicePhone" placeholder="+1 (555) 123-4567">
+                    <div class="form-hint">The phone number of the SIM card</div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" onclick="closeRBsoftDeviceModal()">Cancel</button>
+                  <button class="btn btn-primary" onclick="addRBsoftDevice()">Add Device</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Knowledge Bases Settings - Split View -->

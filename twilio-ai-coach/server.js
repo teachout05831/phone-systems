@@ -7,6 +7,11 @@ const twilio = require('twilio');
 const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
+const { RBsoftService, RBsoftRateLimiter, RBsoftLoadBalancer } = require('./services/rbsoft');
+
+// RBsoft SMS Gateway instances (per company, lazy loaded)
+const rbsoftInstances = new Map(); // companyId -> { service, rateLimiter, loadBalancer }
+const rbsoftRateLimiter = new RBsoftRateLimiter();
 
 const app = express();
 const server = http.createServer(app);
@@ -802,6 +807,455 @@ app.post('/api/settings/transcription-provider', (req, res) => {
     res.status(400).json({ success: false, error: 'Invalid provider. Use "deepgram", "elevenlabs", or "twilio"' });
   }
 });
+
+// ============ RBSOFT SMS GATEWAY SETTINGS ============
+
+/**
+ * Get RBsoft configuration for a company
+ * GET /api/settings/rbsoft?companyId=xxx
+ */
+app.get('/api/settings/rbsoft', async (req, res) => {
+  try {
+    const { companyId } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({ success: false, error: 'companyId is required' });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    // Get company settings
+    const { data: settings, error } = await supabase
+      .from('company_settings')
+      .select('rbsoft_enabled, rbsoft_api_url, rbsoft_api_key, rbsoft_webhook_secret')
+      .eq('company_id', companyId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    // Get devices for this company
+    const { data: devices, error: devicesError } = await supabase
+      .from('rbsoft_devices')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: true });
+
+    if (devicesError) {
+      console.error('Error fetching devices:', devicesError);
+    }
+
+    res.json({
+      success: true,
+      config: {
+        enabled: settings?.rbsoft_enabled || false,
+        apiUrl: settings?.rbsoft_api_url || '',
+        apiKey: settings?.rbsoft_api_key ? '••••••••' : '', // Mask API key
+        hasApiKey: !!settings?.rbsoft_api_key,
+        webhookSecret: settings?.rbsoft_webhook_secret ? '••••••••' : '',
+        hasWebhookSecret: !!settings?.rbsoft_webhook_secret
+      },
+      devices: devices || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching RBsoft settings:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Save RBsoft configuration for a company
+ * POST /api/settings/rbsoft
+ * Body: { companyId, enabled, apiUrl, apiKey, webhookSecret }
+ */
+app.post('/api/settings/rbsoft', async (req, res) => {
+  try {
+    const { companyId, enabled, apiUrl, apiKey, webhookSecret } = req.body;
+
+    if (!companyId) {
+      return res.status(400).json({ success: false, error: 'companyId is required' });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    // Build update object (only include fields that were provided)
+    const updateData = {
+      company_id: companyId,
+      updated_at: new Date().toISOString()
+    };
+
+    if (enabled !== undefined) updateData.rbsoft_enabled = enabled;
+    if (apiUrl !== undefined) updateData.rbsoft_api_url = apiUrl;
+    if (apiKey !== undefined && apiKey !== '••••••••') updateData.rbsoft_api_key = apiKey;
+    if (webhookSecret !== undefined && webhookSecret !== '••••••••') updateData.rbsoft_webhook_secret = webhookSecret;
+
+    // Upsert company settings
+    const { error } = await supabase
+      .from('company_settings')
+      .upsert(updateData, { onConflict: 'company_id' });
+
+    if (error) throw error;
+
+    // Clear cached RBsoft instance for this company
+    rbsoftInstances.delete(companyId);
+
+    console.log(`RBsoft settings updated for company ${companyId}`);
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Error saving RBsoft settings:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Test RBsoft connection
+ * POST /api/settings/rbsoft/test
+ * Body: { companyId } or { apiUrl, apiKey }
+ */
+app.post('/api/settings/rbsoft/test', async (req, res) => {
+  try {
+    const { companyId, apiUrl, apiKey } = req.body;
+
+    let testUrl = apiUrl;
+    let testKey = apiKey;
+
+    // If companyId provided, get credentials from database
+    if (companyId && (!apiUrl || !apiKey)) {
+      if (!supabase) {
+        return res.status(500).json({ success: false, error: 'Database not configured' });
+      }
+
+      const { data: settings, error } = await supabase
+        .from('company_settings')
+        .select('rbsoft_api_url, rbsoft_api_key')
+        .eq('company_id', companyId)
+        .single();
+
+      if (error) throw error;
+
+      testUrl = settings?.rbsoft_api_url;
+      testKey = settings?.rbsoft_api_key;
+    }
+
+    if (!testUrl || !testKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'API URL and API Key are required'
+      });
+    }
+
+    // Test the connection
+    const rbsoft = new RBsoftService(testUrl, testKey);
+    const result = await rbsoft.testConnection();
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error testing RBsoft connection:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Connection test failed'
+    });
+  }
+});
+
+/**
+ * Get RBsoft devices for a company
+ * GET /api/settings/rbsoft/devices?companyId=xxx
+ */
+app.get('/api/settings/rbsoft/devices', async (req, res) => {
+  try {
+    const { companyId } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({ success: false, error: 'companyId is required' });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    const { data: devices, error } = await supabase
+      .from('rbsoft_devices')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({ success: true, devices: devices || [] });
+
+  } catch (error) {
+    console.error('Error fetching RBsoft devices:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Add a new RBsoft device
+ * POST /api/settings/rbsoft/devices
+ * Body: { companyId, deviceId, name, phoneNumber }
+ */
+app.post('/api/settings/rbsoft/devices', async (req, res) => {
+  try {
+    const { companyId, deviceId, name, phoneNumber } = req.body;
+
+    if (!companyId || !deviceId || !name) {
+      return res.status(400).json({
+        success: false,
+        error: 'companyId, deviceId, and name are required'
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    const { data: device, error } = await supabase
+      .from('rbsoft_devices')
+      .insert({
+        company_id: companyId,
+        device_id: deviceId,
+        name: name,
+        phone_number: phoneNumber || null,
+        is_active: true,
+        status: 'unknown'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(400).json({
+          success: false,
+          error: 'A device with this ID already exists'
+        });
+      }
+      throw error;
+    }
+
+    console.log(`RBsoft device added: ${name} (${deviceId}) for company ${companyId}`);
+    res.json({ success: true, device });
+
+  } catch (error) {
+    console.error('Error adding RBsoft device:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Update an RBsoft device
+ * PUT /api/settings/rbsoft/devices/:id
+ * Body: { name, phoneNumber, isActive }
+ */
+app.put('/api/settings/rbsoft/devices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phoneNumber, isActive } = req.body;
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    const updateData = { updated_at: new Date().toISOString() };
+    if (name !== undefined) updateData.name = name;
+    if (phoneNumber !== undefined) updateData.phone_number = phoneNumber;
+    if (isActive !== undefined) updateData.is_active = isActive;
+
+    const { data: device, error } = await supabase
+      .from('rbsoft_devices')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, device });
+
+  } catch (error) {
+    console.error('Error updating RBsoft device:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Delete an RBsoft device
+ * DELETE /api/settings/rbsoft/devices/:id
+ */
+app.delete('/api/settings/rbsoft/devices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Database not configured' });
+    }
+
+    const { error } = await supabase
+      .from('rbsoft_devices')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    console.log(`RBsoft device deleted: ${id}`);
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Error deleting RBsoft device:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * RBsoft webhook for delivery status and incoming messages
+ * POST /api/rbsoft/webhook
+ */
+app.post('/api/rbsoft/webhook', async (req, res) => {
+  try {
+    const signature = req.headers['x-rbsoft-signature'];
+    const payload = JSON.stringify(req.body);
+
+    // TODO: Verify webhook signature with company's webhook secret
+    // For now, process the webhook directly
+
+    const { event, data, companyId } = req.body;
+
+    console.log(`RBsoft webhook received: ${event}`, data);
+
+    if (!supabase) {
+      return res.sendStatus(200);
+    }
+
+    switch (event) {
+      case 'message.sent':
+      case 'message.delivered':
+      case 'message.failed':
+        // Update message status in database
+        if (data.messageId) {
+          // Find message by provider message ID and update status
+          const statusMap = {
+            'message.sent': 'sent',
+            'message.delivered': 'delivered',
+            'message.failed': 'failed'
+          };
+
+          // You would need to store rbsoft message ID in sms_messages
+          // For now, log it
+          console.log(`Message ${data.messageId} status: ${statusMap[event]}`);
+        }
+        break;
+
+      case 'message.received':
+        // Handle incoming SMS from RBsoft device
+        console.log(`Incoming SMS via RBsoft: ${data.from} -> ${data.message}`);
+        break;
+
+      case 'device.online':
+      case 'device.offline':
+        // Update device status
+        if (data.deviceId) {
+          const status = event === 'device.online' ? 'online' : 'offline';
+          await supabase
+            .from('rbsoft_devices')
+            .update({
+              status: status,
+              last_seen_at: new Date().toISOString()
+            })
+            .eq('device_id', data.deviceId);
+        }
+        break;
+    }
+
+    res.sendStatus(200);
+
+  } catch (error) {
+    console.error('Error handling RBsoft webhook:', error);
+    res.sendStatus(200); // Always return 200 to prevent retries
+  }
+});
+
+/**
+ * Get or create RBsoft service instance for a company
+ */
+async function getRBsoftInstance(companyId) {
+  // Check cache
+  if (rbsoftInstances.has(companyId)) {
+    return rbsoftInstances.get(companyId);
+  }
+
+  if (!supabase) return null;
+
+  // Get company settings
+  const { data: settings, error } = await supabase
+    .from('company_settings')
+    .select('rbsoft_enabled, rbsoft_api_url, rbsoft_api_key')
+    .eq('company_id', companyId)
+    .single();
+
+  if (error || !settings?.rbsoft_enabled || !settings?.rbsoft_api_url || !settings?.rbsoft_api_key) {
+    return null;
+  }
+
+  // Create and cache instance
+  const service = new RBsoftService(settings.rbsoft_api_url, settings.rbsoft_api_key);
+  const loadBalancer = new RBsoftLoadBalancer(rbsoftRateLimiter);
+
+  const instance = { service, loadBalancer };
+  rbsoftInstances.set(companyId, instance);
+
+  return instance;
+}
+
+/**
+ * Get available RBsoft devices for a company
+ */
+async function getAvailableRBsoftDevices(companyId) {
+  if (!supabase) return [];
+
+  const { data: devices, error } = await supabase
+    .from('rbsoft_devices')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('is_active', true);
+
+  if (error) {
+    console.error('Error fetching RBsoft devices:', error);
+    return [];
+  }
+
+  return devices || [];
+}
+
+/**
+ * Check if a phone number is blacklisted for a company
+ */
+async function isPhoneBlacklisted(companyId, phoneNumber) {
+  if (!supabase) return false;
+
+  // Normalize phone number
+  const normalizedPhone = phoneNumber.replace(/\D/g, '');
+
+  const { data, error } = await supabase
+    .from('sms_blacklist')
+    .select('id')
+    .eq('company_id', companyId)
+    .or(`phone_number.eq.${phoneNumber},phone_number.eq.+${normalizedPhone},phone_number.eq.+1${normalizedPhone.slice(-10)}`);
+
+  if (error) {
+    console.error('Error checking blacklist:', error);
+    return false;
+  }
+
+  return data && data.length > 0;
+}
 
 // Shared handler for incoming calls
 function incomingCallHandler(req, res) {
@@ -4875,13 +5329,16 @@ app.post('/make-call', async (req, res) => {
 // ============ SMS API ENDPOINTS ============
 
 /**
- * Send SMS message via Twilio
+ * Send SMS message via RBsoft (if available) or Twilio (fallback)
  * POST /api/sms/send
- * Body: { to: string, body: string, conversationId: string }
+ * Body: { to: string, body: string, conversationId?: string, companyId?: string, preferredProvider?: 'rbsoft'|'twilio', mediaUrl?: string }
+ *
+ * If companyId is provided and RBsoft is enabled for that company, will try RBsoft first.
+ * Falls back to Twilio if RBsoft fails or is not configured.
  */
 app.post('/api/sms/send', async (req, res) => {
   try {
-    const { to, body, conversationId } = req.body;
+    const { to, body, conversationId, companyId, preferredProvider, mediaUrl } = req.body;
 
     // Validate inputs
     if (!to || !body) {
@@ -4899,16 +5356,82 @@ app.post('/api/sms/send', async (req, res) => {
       toNumber = '+' + toNumber;
     }
 
-    // Send via Twilio
-    const message = await twilioClient.messages.create({
-      body: body,
-      to: toNumber,
-      from: process.env.TWILIO_PHONE_NUMBER
-    });
+    // Check blacklist if company ID provided
+    if (companyId && await isPhoneBlacklisted(companyId, toNumber)) {
+      return res.status(400).json({
+        success: false,
+        error: 'This number has been blacklisted and cannot receive messages'
+      });
+    }
 
-    console.log(`SMS sent to ${toNumber}: ${message.sid}`);
+    let result = null;
 
-    // Update message status in database if conversationId provided
+    // Try RBsoft if company has it enabled and not explicitly requesting Twilio
+    if (companyId && preferredProvider !== 'twilio') {
+      try {
+        const rbsoftInstance = await getRBsoftInstance(companyId);
+
+        if (rbsoftInstance) {
+          const devices = await getAvailableRBsoftDevices(companyId);
+
+          if (devices.length > 0) {
+            // Select a device using load balancer
+            const device = rbsoftInstance.loadBalancer.selectDevice(devices);
+
+            if (device && rbsoftRateLimiter.canSend(device.device_id)) {
+              // Try to send via RBsoft
+              const rbsoftResult = await rbsoftInstance.service.sendSMS(
+                device.device_id,
+                toNumber,
+                body,
+                { mediaUrl }
+              );
+
+              if (rbsoftResult && (rbsoftResult.success || rbsoftResult.messageId)) {
+                // Record rate limit usage
+                rbsoftRateLimiter.recordSent(device.device_id);
+
+                result = {
+                  success: true,
+                  messageSid: rbsoftResult.messageId || rbsoftResult.id,
+                  status: 'sent',
+                  provider: 'rbsoft',
+                  deviceId: device.id,
+                  fromNumber: device.phone_number || 'RBsoft Device'
+                };
+
+                console.log(`SMS sent via RBsoft to ${toNumber}: ${result.messageSid} (device: ${device.name})`);
+              }
+            }
+          }
+        }
+      } catch (rbsoftError) {
+        console.error('RBsoft send failed, falling back to Twilio:', rbsoftError.message);
+        // Continue to Twilio fallback
+      }
+    }
+
+    // Fallback to Twilio if RBsoft didn't work or wasn't available
+    if (!result) {
+      const twilioMessage = await twilioClient.messages.create({
+        body: body,
+        to: toNumber,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        ...(mediaUrl && { mediaUrl: [mediaUrl] })
+      });
+
+      result = {
+        success: true,
+        messageSid: twilioMessage.sid,
+        status: twilioMessage.status,
+        provider: 'twilio',
+        fromNumber: process.env.TWILIO_PHONE_NUMBER
+      };
+
+      console.log(`SMS sent via Twilio to ${toNumber}: ${twilioMessage.sid}`);
+    }
+
+    // Update database if conversationId provided
     if (supabase && conversationId) {
       // Update the conversation's last message
       await supabase
@@ -4918,14 +5441,12 @@ app.post('/api/sms/send', async (req, res) => {
           last_message_preview: body.substring(0, 100)
         })
         .eq('id', conversationId);
+
+      // Also update the message record with provider info if we have an sms_messages record
+      // This assumes the message was already inserted before calling this endpoint
     }
 
-    res.json({
-      success: true,
-      messageSid: message.sid,
-      status: message.status,
-      fromNumber: process.env.TWILIO_PHONE_NUMBER
-    });
+    res.json(result);
 
   } catch (error) {
     console.error('Error sending SMS:', error);
@@ -4955,10 +5476,61 @@ app.post('/api/sms/incoming', async (req, res) => {
         .single();
 
       if (!conversation) {
-        // Create new conversation - need to determine company_id
-        // For now, skip if no existing conversation
-        console.log('No existing conversation found for:', From);
-      } else {
+        // Create new conversation for inbound message
+        console.log('Creating new conversation for:', From);
+
+        // Find company_id - look for a company that uses this Twilio number or get first company
+        let companyId = null;
+
+        // Try to find company from existing conversations (same Twilio number)
+        const { data: existingConv } = await supabase
+          .from('sms_conversations')
+          .select('company_id')
+          .limit(1)
+          .single();
+
+        if (existingConv) {
+          companyId = existingConv.company_id;
+        } else {
+          // Fallback: get first company from company_settings
+          const { data: company } = await supabase
+            .from('company_settings')
+            .select('company_id')
+            .limit(1)
+            .single();
+
+          if (company) {
+            companyId = company.company_id;
+          }
+        }
+
+        if (companyId) {
+          // Create the conversation
+          const { data: newConv, error: convError } = await supabase
+            .from('sms_conversations')
+            .insert({
+              company_id: companyId,
+              phone_number: From,
+              status: 'active',
+              last_message_at: new Date().toISOString(),
+              last_message_preview: Body.substring(0, 100),
+              unread_count: 1
+            })
+            .select('id, company_id')
+            .single();
+
+          if (convError) {
+            console.error('Error creating conversation:', convError);
+          } else {
+            conversation = newConv;
+            console.log('Created new conversation:', conversation.id);
+          }
+        } else {
+          console.error('No company found to assign conversation to');
+        }
+      }
+
+      if (conversation) {
         // Add message to conversation
         await supabase
           .from('sms_messages')
